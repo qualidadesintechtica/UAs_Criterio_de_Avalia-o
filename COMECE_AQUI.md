@@ -1,5 +1,11 @@
 # Publicar os resultados das UAs no GitHub
 
+## Atualização do layout
+
+Para atualizar uma instalação existente, substitua os arquivos no repositório pelos arquivos extraídos deste ZIP. O SQL deste pacote é o mesmo da primeira versão.
+
+Os cartões filtram os resultados por UA; a tabela mantém as colunas solicitadas. A opção **Comentários** agrupa a leitura por UC. **Ver pareceres** abre um painel lateral com os comentários completos e, quando disponíveis, as classificações anteriores. O botão no alto da página alterna os temas claro e escuro.
+
 Este pacote já está organizado para o GitHub Pages: `index.html` na raiz, arquivos de estilo e código ao lado dele e SDK oficial incluído na pasta `vendor`.
 
 ## 1. Proteger os dados no Supabase

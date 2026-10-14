@@ -41,6 +41,7 @@ export function buildRecords(criteria, materials) {
   const byParent=indexBy(uaMaterials,r=>text(r.monday_item_validacao));
   const byUA=indexBy(uaMaterials,r=>text(r.id_ua) ? [text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao)].join('|') : '');
   const latest=new Map();
+  const versions=new Map();
   const diagnostics={excluded:0,unmatched:0,missingSpecialists:0,duplicates:0};
   for (const row of criteria) {
     if (!isUA(row)) { diagnostics.excluded++; continue; }
@@ -60,11 +61,13 @@ export function buildRecords(criteria, materials) {
     const uaKey=JSON.stringify([ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester]);
     const record={id:text(row.subitem_id),uaKey,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),unmatched:!material && !uc,raw:row};
     const key=uaKey+'|'+norm(criterion)+(row.criterio||row.pergunta?'':'|'+text(row.subitem_id));
+    if (!versions.has(key)) versions.set(key,[]);
+    versions.get(key).push(record);
     const previous=latest.get(key);
     if (previous) diagnostics.duplicates++;
     if (!previous || later(row,previous.raw)) latest.set(key,record);
   }
-  const records=[...latest.values()];
+  const records=[...latest.entries()].map(([key,record])=>({...record,history:versions.get(key).filter(r=>r!==record).sort((a,b)=>later(a.raw,b.raw)?-1:later(b.raw,a.raw)?1:0).map(({raw,...r})=>r)}));
   diagnostics.unmatched=records.filter(r=>r.unmatched).length;
   diagnostics.missingSpecialists=records.filter(r=>!r.specialists.length).length;
   return {records,diagnostics};

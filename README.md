@@ -1,16 +1,28 @@
 # Resultados das avaliações de UAs
 
-Página estática pronta para GitHub Pages, com autenticação pelo Supabase existente do BI.
+Página estática pronta para GitHub Pages, com autenticação pelo Supabase existente do BI. Layout integrado a partir das duas referências de comentários e validação enviadas.
 
 **Antes de publicar, siga `COMECE_AQUI.md`, começando pela proteção das fontes no banco.**
 
 Filtros: esteira, UC, UA, revisor e especialistas. A tabela apresenta UC, UA, especialista, revisor, resultado e comentários. Os gráficos acompanham o mesmo recorte. Cada UA abre os critérios e pareceres completos; a exportação CSV preserva os comentários integrais.
 
+## Layout integrado
+
+- Cartões clicáveis por resultado da UA, com contagens do recorte atual.
+- Filtros compactos e etiquetas que permitem remover uma escolha individualmente.
+- Alternância entre tabela e lista de comentários agrupada por UC.
+- Painel lateral com todos os critérios da UA, comentários completos e classificações anteriores disponíveis.
+- Trechos pesquisados destacados, aviso de inconformidade sem parecer e temas claro e escuro.
+- Texto maior e ajustes de organização para celular.
+
+“Sem inconformidade” significa que os critérios avaliados no recorte não têm apontamentos, podendo haver critérios pendentes. Os cartões selecionam UAs completas do recorte; o painel lateral mostra todos os critérios registrados para a UA selecionada.
+
 ## Estrutura
 
 - `index.html`: página e login.
 - `app.mjs`: autenticação, leitura paginada, filtros, gráficos e tabela.
-- `core.mjs`: vínculos entre UC e UA, resultado vigente por critério e cálculos.
+- `core.mjs`: vínculos entre UC e UA, resultado vigente por critério, histórico disponível e cálculos.
+- `view-model.mjs`: seleção de UAs completas por resultado e destaque seguro dos trechos pesquisados.
 - `config.js`: URL do projeto, chave publicável e fontes protegidas.
 - `styles.css`: identidade Sintechtica e layout responsivo.
 - `vendor/supabase.js`: SDK oficial, sem dependência de CDN durante o acesso.
@@ -40,4 +52,4 @@ A proteção descrita cobre os endpoints deste painel e as relações de dados d
 
 ## Testes
 
-Execute `node --test tests/core.test.mjs`. O projeto não precisa de build para publicação.
+Execute `node --test tests/*.test.mjs`. O projeto não precisa de build para publicação.
