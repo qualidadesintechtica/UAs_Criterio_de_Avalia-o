@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Resultados das avaliações de Unidades de Aprendizagem. Consulte critérios, especialistas, revisores e pareceres.">
+  <meta name="theme-color" content="#2d1553">
+  <title>Resultados das UAs · Sintechtica</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/supabase.js"></script><script defer src="config.js"></script>
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<svg aria-hidden="true" class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="10"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6v15M12 6C8 3 5 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-3-1-6-1-10 2Z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M9 19h6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.4 7A8 8 0 0 1 20 12M4 12a8 8 0 0 0 14.6 5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3ZM12 9v4m0 3v1"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 14a4 4 0 0 1-4 4H8l-5 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v8ZM7 8h10M7 12h6"/></symbol>
+</defs></svg>
+<div id="boot" class="boot" role="status"><span class="spinner"></span><p>Preparando seu acesso…</p></div>
+<section id="login" class="login-screen" hidden>
+  <div class="login-story">
+    <a class="brand" href="./"><span class="brand-mark">s<span>·</span></span><span>sintechtica<small>NÚCLEO DE QUALIDADE</small></span></a>
+    <div class="login-copy"><span class="eyebrow">QUALIDADE ACADÊMICA</span><h1>Cada critério.<br>Cada parecer.<br><em>Uma visão clara.</em></h1><p>Consulte os resultados das Unidades de Aprendizagem e encontre os pontos que precisam da sua atenção.</p><div class="story-chips"><span>UCs e UAs</span><span>Critérios de avaliação</span><span>Pareceres completos</span></div></div>
+    <div class="login-foot"><svg class="icon"><use href="#i-lock"/></svg>Acesso restrito · Resultados da equipe</div>
+  </div>
+  <div class="login-form-wrap"><form id="loginForm" class="login-form">
+    <div class="login-icon"><svg class="icon"><use href="#i-lock"/></svg></div>
+    <span class="eyebrow">PAINEL DE AVALIAÇÕES</span><h2>Acesse os resultados</h2><p>Use o e-mail institucional e a senha da sua conta do BI.</p>
+    <label for="email">E-mail institucional</label><input id="email" type="email" autocomplete="username" placeholder="seu.nome@animaeducacao.com.br" required>
+    <label for="password">Senha</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="Sua senha" required><button id="showPassword" type="button" aria-label="Mostrar senha">Mostrar</button></div>
+    <p id="loginError" class="form-error" role="alert" hidden></p>
+    <button class="btn primary login-submit" id="loginSubmit" type="submit">Entrar no painel<svg class="icon"><use href="#i-arrow"/></svg></button>
+    <small class="login-note">O painel usa as permissões de acesso da sua conta institucional.</small>
+  </form></div>
+</section>
+<div id="dashboard" class="app-shell" hidden>
+  <aside class="sidebar"><a class="brand" href="./"><span class="brand-mark">s<span>·</span></span><span>sintechtica<small>NÚCLEO DE QUALIDADE</small></span></a>
+    <span class="nav-label">ACOMPANHAMENTO</span><a href="#overview" class="nav-item active"><svg class="icon"><use href="#i-grid"/></svg>Resultados das UAs</a><a href="#criteriaSection" class="nav-item"><svg class="icon"><use href="#i-check"/></svg>Critérios de avaliação</a><a href="#tableSection" class="nav-item"><svg class="icon"><use href="#i-message"/></svg>Pareceres e comentários</a>
+    <div class="side-note"><span class="side-dot"></span><strong>Qualidade em cada entrega</strong><p>Do resultado geral ao detalhe de cada Unidade de Aprendizagem.</p></div>
+    <div class="user-area"><span class="avatar" id="avatar">U</span><div><strong id="userName">Usuário</strong><small id="userEmail"></small></div><button id="logout" class="logout" title="Sair do painel">Sair</button></div>
+  </aside>
+  <main id="overview">
+    <header class="topbar"><span>Qualidade acadêmica <b>/</b> Avaliações</span><span class="access-label"><svg class="icon"><use href="#i-lock"/></svg>Acesso autenticado</span></header>
+    <div class="page-content">
+      <div class="page-heading"><div><span class="eyebrow">ACOMPANHAMENTO DA QUALIDADE</span><h1>Resultados das UAs<span class="title-dot">.</span></h1><p>Uma visão dos critérios avaliados e dos pareceres de cada entrega.</p></div><button id="refresh" class="btn secondary"><svg class="icon"><use href="#i-refresh"/></svg>Atualizar dados</button></div>
+      <div class="source-line"><span id="sourceStatus" class="source-pill"><i></i>Conectando à base</span><span id="updatedAt">Aguardando dados</span></div>
+      <div id="loadError" class="error-banner" role="alert" hidden></div><div id="dataWarning" class="warning-banner" role="status" hidden></div>
+      <section class="filter-card" aria-label="Filtros de resultados"><div class="filter-heading"><span><svg class="icon"><use href="#i-filter"/></svg>Encontre sua avaliação</span><button id="clearFilters" class="text-button">Limpar filtros</button></div><div class="filter-grid">
+        <label>Esteira<select id="filterTrack" data-filter="track"><option value="">Todas as esteiras</option></select></label>
+        <label>UC<select id="filterUC" data-filter="uc"><option value="">Todas as UCs</option></select></label>
+        <label>UA<select id="filterUA" data-filter="ua"><option value="">Todas as UAs</option></select></label>
+        <label>Revisor<select id="filterReviewer" data-filter="reviewers"><option value="">Todos os revisores</option></select></label>
+        <label>Especialistas<select id="filterSpecialist" data-filter="specialists"><option value="">Todos os especialistas</option></select></label>
+      </div></section>
+      <section class="kpi-grid" aria-label="Resumo do recorte">
+        <article class="kpi"><div><span>UAs no recorte</span><svg class="icon"><use href="#i-book"/></svg></div><strong id="kpiUA">—</strong><small>Unidades com critérios registrados</small></article>
+        <article class="kpi"><div><span>Critérios avaliados</span><svg class="icon"><use href="#i-check"/></svg></div><strong id="kpiAssessed">—</strong><small id="kpiPending">Aguardando resultados</small></article>
+        <article class="kpi accent"><div><span>Conformidade</span><svg class="icon"><use href="#i-grid"/></svg></div><strong id="kpiRate">—</strong><small>Sobre os critérios avaliados</small></article>
+        <article class="kpi attention"><div><span>Pontos de atenção</span><svg class="icon"><use href="#i-alert"/></svg></div><strong id="kpiBad">—</strong><small>Critérios com inconformidade apontada</small></article>
+      </section>
+      <div class="analysis-grid">
+        <section id="criteriaSection" class="panel criteria-panel"><div class="panel-title"><div><span class="eyebrow">VISÃO POR CRITÉRIO</span><h2>Onde concentrar a atenção</h2></div><span id="criteriaCount" class="count-pill">— critérios</span></div><p class="panel-description">Os critérios com mais inconformidades aparecem primeiro.</p><div class="legend"><span><i class="good"></i>Conforme</span><span><i class="bad"></i>Inconformidade</span><span><i class="pending"></i>Não avaliado</span></div><div id="criteriaChart" class="criteria-chart"><div class="empty-chart">Os resultados aparecerão após o carregamento.</div></div></section>
+        <section class="panel distribution-panel"><span class="eyebrow">RESULTADOS DO RECORTE</span><h2>Panorama da avaliação</h2><div class="donut-wrap"><svg viewBox="0 0 200 200" class="donut" aria-hidden="true"><circle cx="100" cy="100" r="76" class="donut-bg"/><circle id="donutGood" cx="100" cy="100" r="76"/><circle id="donutBad" cx="100" cy="100" r="76"/><circle id="donutPending" cx="100" cy="100" r="76"/></svg><div class="donut-label"><strong id="donutTotal">—</strong><small>critérios registrados</small></div></div><div class="distribution-list"><div><span><i class="good"></i>Conformes</span><strong id="totalGood">—</strong></div><div><span><i class="bad"></i>Com inconformidade</span><strong id="totalBad">—</strong></div><div><span><i class="pending"></i>Não avaliados</span><strong id="totalPending">—</strong></div></div><p class="insight" id="insight">Selecione uma esteira ou uma UC para explorar seus resultados.</p></section>
+      </div>
+      <section id="tableSection" class="panel table-panel"><div class="table-heading"><div><span class="eyebrow">DO RESULTADO AO PARECER</span><h2>Avaliações por Unidade de Aprendizagem</h2><p id="tableCount">Aguardando dados</p></div><button id="export" class="btn secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Exportar CSV</button></div><div class="table-tools"><div class="tabs" role="group" aria-label="Resultado do critério"><button data-status="all" class="selected">Todos</button><button data-status="bad">Com inconformidade</button><button data-status="pending">Não avaliados</button></div><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Buscar UA, critério ou comentário…" aria-label="Buscar nos resultados"></label></div><div class="table-scroll"><table><thead><tr><th scope="col">UC</th><th scope="col">UA</th><th scope="col">Especialista</th><th scope="col">Revisor</th><th scope="col">Resultados</th><th scope="col">Comentários</th><th scope="col"><span class="sr-only">Detalhes</span></th></tr></thead><tbody id="tableBody"><tr><td colspan="7" class="empty-table">Carregando avaliações…</td></tr></tbody></table></div><div class="table-footer"><span id="pageInfo">—</span><div><button id="prev" class="btn pagination" disabled>Anterior</button><button id="next" class="btn pagination" disabled>Próxima</button></div></div></section>
+      <details class="methodology"><summary>Como ler estes resultados</summary><p>Os totais usam a classificação mais recente por UA, critério e oferta. Critérios marcados para cálculo na base são considerados avaliados. Dentro desse conjunto, “Sim” em “Apontamos inconformidade?” indica inconformidade; os demais são considerados conformes, seguindo a regra do BI. Registros fora desse conjunto aparecem como não avaliados.</p><p>O especialista é a pessoa registrada em “Classificação feita por”. O revisor vem do campo “Revisor Validador”. Os comentários são os pareceres dos especialistas. Quando um vínculo não é identificado, o painel sinaliza a ausência e mantém o registro visível.</p></details>
+      <footer class="page-footer"><span>Sintechtica · Núcleo de Qualidade</span><span>Resultados que orientam a próxima ação.</span></footer>
+    </div>
+  </main>
+</div>
+<dialog id="detailDialog"><div class="dialog-head"><div><span class="eyebrow">AVALIAÇÃO DETALHADA</span><h2 id="dialogUA"></h2><p id="dialogUC"></p></div><button id="closeDialog" class="icon-button" aria-label="Fechar detalhes"><svg class="icon"><use href="#i-close"/></svg></button></div><div id="dialogContent"></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body></html>

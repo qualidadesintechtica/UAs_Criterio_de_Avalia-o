@@ -1,0 +1,1 @@
+window.UA_CONFIG = {"supabaseUrl": "https://nkjmgzyjjbepebzurowy.supabase.co", "publishableKey": "sb_publishable_6Tuuyz6nYSBa782OGDi1rg_XkBHmO8U", "allowedDomains": ["animaeducacao.com.br"], "criteriaView": "vw_ua_resultados_criterios_autenticados", "materialsView": "vw_ua_resultados_materiais_autenticados"};

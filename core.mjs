@@ -1,0 +1,116 @@
+export const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+export const text = value => value == null ? '' : String(value).trim();
+export function names(value) {
+  if (Array.isArray(value)) return [...new Set(value.flatMap(names))];
+  if (value && typeof value === 'object') return names(value.name || value.nome || value.text || '');
+  return [...new Set(text(value).split(/[;,|\n]+/).map(text).filter(Boolean))];
+}
+export function isTrue(v) { return v === true || ['true','1','sim','s','yes'].includes(norm(v)); }
+export function outcome(row) {
+  if (!isTrue(row.entra_no_calculo)) return 'pending';
+  return ['sim','s','yes','true','1','x'].includes(norm(row.apontamos_inconformidade)) ? 'bad' : 'good';
+}
+export function isUA(row) {
+  const c = norm(row.categoria_material);
+  if (c) return c === 'ua' || c.includes('unidade de aprendizagem');
+  return isTrue(row.eh_ua);
+}
+function stamp(row) {
+  for (const k of ['data_classificacao_especialista','sincronizado_em','ultima_atualizacao_monday','updated_at','created_at']) {
+    const s = Date.parse(row[k] || '');
+    if (Number.isFinite(s)) return s;
+  }
+  return 0;
+}
+function later(a,b) {
+  if (stamp(a) !== stamp(b)) return stamp(a) > stamp(b);
+  try { return BigInt(a.subitem_id || 0) > BigInt(b.subitem_id || 0); } catch { return text(a.subitem_id) > text(b.subitem_id); }
+}
+function indexBy(rows, key) {
+  const map = new Map();
+  for (const row of rows) { const k=key(row); if (!k) continue; if (!map.has(k)) map.set(k,[]); map.get(k).push(row); }
+  return map;
+}
+function uniqueMaterial(rows) {
+  if (!rows?.length) return null;
+  const ids = new Set(rows.map(r => [text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta)].join('|')));
+  return ids.size === 1 ? rows[0] : null;
+}
+export function buildRecords(criteria, materials) {
+  const uaMaterials=materials.filter(isUA);
+  const byParent=indexBy(uaMaterials,r=>text(r.monday_item_validacao));
+  const byUA=indexBy(uaMaterials,r=>text(r.id_ua) ? [text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao)].join('|') : '');
+  const latest=new Map();
+  const diagnostics={excluded:0,unmatched:0,missingSpecialists:0,duplicates:0};
+  for (const row of criteria) {
+    if (!isUA(row)) { diagnostics.excluded++; continue; }
+    const material=uniqueMaterial(byParent.get(text(row.parent_item_id))) || uniqueMaterial(byUA.get([text(row.id_ua),norm(row.matriz_oferta),norm(row.esteira_producao)].join('|')));
+    const uc=text(material?.titulo || row.titulo_uc || row.nome_uc || row.uc);
+    const ucId=text(material?.id_titulo || row.id_titulo);
+    const uaId=text(row.id_ua || material?.id_ua);
+    const parent=text(row.parent_item_id);
+    const criterion=text(row.criterio || row.pergunta || 'Critério não informado');
+    const specialists=names(row.classificacao_feita_por || row.especialista);
+    const reviewers=names(row.revisor_validador || material?.revisor_validador);
+    const track=text(row.esteira_producao || material?.esteira_producao);
+    const matrix=text(row.matriz_oferta || material?.matriz_oferta);
+    const semester=text(material?.semestre_oferta || row.semestre_oferta);
+    const ua=text(row.titulo_ua || material?.titulo_ua || material?.item_name || (uaId ? 'UA '+uaId : 'UA sem título'));
+    // Sem vínculo inequívoco, o item continua visível, sem inventar uma UC.
+    const uaKey=JSON.stringify([ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester]);
+    const record={id:text(row.subitem_id),uaKey,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),unmatched:!material && !uc,raw:row};
+    const key=uaKey+'|'+norm(criterion)+(row.criterio||row.pergunta?'':'|'+text(row.subitem_id));
+    const previous=latest.get(key);
+    if (previous) diagnostics.duplicates++;
+    if (!previous || later(row,previous.raw)) latest.set(key,record);
+  }
+  const records=[...latest.values()];
+  diagnostics.unmatched=records.filter(r=>r.unmatched).length;
+  diagnostics.missingSpecialists=records.filter(r=>!r.specialists.length).length;
+  return {records,diagnostics};
+}
+export function filterRecords(records, filters={}, query='', status='all', skip='') {
+  const q=norm(query);
+  return records.filter(r=> {
+    for (const field of ['track','uc','ua','reviewers','specialists']) {
+      if (field===skip || !filters[field]) continue;
+      const vals=Array.isArray(r[field]) ? r[field] : [r[field]];
+      if (!vals.length && filters[field]==='__missing__') continue;
+      if (!vals.some(v=>norm(v)===norm(filters[field]))) return false;
+    }
+    if (status!=='all' && r.status!==status) return false;
+    return !q || norm([r.uc,r.ucId,r.ua,r.uaId,r.track,r.matrix,...r.specialists,...r.reviewers,r.criterion,r.comment].join(' ')).includes(q);
+  });
+}
+export function summarize(records) {
+  const good=records.filter(r=>r.status==='good').length;
+  const bad=records.filter(r=>r.status==='bad').length;
+  const pending=records.length-good-bad;
+  return {uas:new Set(records.map(r=>r.uaKey)).size,good,bad,pending,assessed:good+bad,total:records.length,rate:good+bad ? good/(good+bad)*100 : null};
+}
+export function groupUAs(records) {
+  const groups=new Map();
+  for (const r of records) {
+    if (!groups.has(r.uaKey)) groups.set(r.uaKey,{...r,specialists:[],reviewers:[],criteria:[],comments:[]});
+    const g=groups.get(r.uaKey);g.criteria.push(r);
+    g.specialists=[...new Set([...g.specialists,...r.specialists])];g.reviewers=[...new Set([...g.reviewers,...r.reviewers])];
+    if (r.comment) g.comments.push({criterion:r.criterion,text:r.comment});
+  }
+  return [...groups.values()].map(g=>({...g,summary:summarize(g.criteria)})).sort((a,b)=> a.uc.localeCompare(b.uc,'pt-BR',{numeric:true}) || a.ua.localeCompare(b.ua,'pt-BR',{numeric:true}));
+}
+export function criteriaSummary(records) {
+  const map=new Map();
+  for (const r of records) { if (!map.has(r.criterion)) map.set(r.criterion,[]);map.get(r.criterion).push(r); }
+  return [...map.entries()].map(([name,rows])=>({name,...summarize(rows)})).sort((a,b)=> b.bad-a.bad || a.name.localeCompare(b.name,'pt-BR'));
+}
+export function escapeHTML(value) { return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+export function csvCell(value) {
+  let s=String(value??'');
+  if (/^\s*[=+@\-]/.test(s)) s="'"+s;
+  return '"'+s.replace(/"/g,'""')+'"';
+}
+export function exportCSV(records) {
+  const headings=['Esteira','UC','ID UC','UA','ID UA','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação do especialista','Comentários','Data da avaliação'];
+  const label={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado'};
+  return '\ufeff'+[headings,...records.map(r=>[r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date])].map(row=>row.map(csvCell).join(';')).join('\r\n');
+}
