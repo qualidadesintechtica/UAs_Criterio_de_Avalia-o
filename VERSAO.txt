@@ -1,5 +1,6 @@
-Comentários e avaliações — Menu e base Monday V3
-14/10/2026
+Comentários e avaliações — Edição com histórico V4
+15/10/2026
 Menu: Planilha de entrada, UA, BDQ e UC.
-Formulários, pareceres, conceitos de UC e status vinculados à base Monday sincronizada.
-Requer a execução de supabase/02_CONECTAR_MENUS_E_PARECERES_MONDAY.sql.
+Professores podem adicionar e editar comentários no painel, com autor, data e histórico.
+Original da Monday preservado; as alterações do painel são salvas no Supabase.
+Requer a execução de supabase/03_COMENTARIOS_COM_HISTORICO.sql após os SQLs 01 e 02.

@@ -4,7 +4,7 @@ Página para GitHub Pages com login institucional do BI e menu lateral **Planilh
 
 ## Instalar ou atualizar
 
-Siga `COMECE_AQUI.md`. Nesta versão, execute no Supabase `supabase/02_CONECTAR_MENUS_E_PARECERES_MONDAY.sql` após a instalação inicial do arquivo 01. Em seguida, substitua os arquivos no repositório GitHub. A execução do SQL e a publicação no GitHub não foram feitas por este pacote.
+Siga `COMECE_AQUI.md`. Nesta versão, execute no Supabase `supabase/03_COMENTARIOS_COM_HISTORICO.sql` após os arquivos 01 e 02. Em seguida, substitua os arquivos no repositório GitHub. A execução do SQL e a publicação no GitHub não foram feitas por este pacote.
 
 ## Dados da Monday
 
@@ -25,6 +25,16 @@ As fontes protegidas são:
 - `vw_materiais_monday_pareceres_autenticados`: textos integrais dos pareceres, vinculados ao item do formulário.
 
 **Atualizar dados** consulta novamente o Supabase. As mudanças feitas na Monday aparecem depois que a rotina de sincronização existente as registrar. O painel mostra a data de sincronização disponível e o horário da consulta.
+
+## Comentários dos professores
+
+No painel **Ver pareceres**, **Adicionar comentário** cria uma informação complementar e **Editar comentário** altera um texto existente. **Histórico de comentários** mostra todas as versões, inclusive o original da Monday preservado pelo banco na primeira edição. Autor, e-mail, data e número da versão são registrados a cada alteração. O texto é tratado como texto puro, com limite de 10.000 caracteres.
+
+A edição é colaborativa entre as contas institucionais já autorizadas (`@animaeducacao.com.br`), sem ampliar os domínios de acesso. A autoria usa o usuário e o e-mail da sessão no servidor. Somente a função de gravação recebe permissão de escrita; o navegador não pode atualizar ou apagar diretamente as tabelas de comentários e histórico. RLS protege a leitura. Versões desatualizadas geram conflito e mantêm o texto digitado; reenvios da mesma gravação não duplicam o histórico.
+
+**Os comentários são salvos no Supabase para o painel. Não há envio de edições à Monday.** O texto atual da Monday continua disponível separadamente; a classificação, a pontuação e os responsáveis pela avaliação não são alterados. A sincronização pode atualizar a fonte sem substituir a edição salva no painel. Se uma nova classificação do mesmo critério passar a ser a vigente, as edições da classificação anterior continuam dentro do histórico daquela classificação, e os complementos continuam no material.
+
+A busca, a lista e o CSV usam os comentários atuais. O CSV acrescenta autoria, data e versão da edição e texto atual da fonte. O histórico completo é consultado no painel. Sem o SQL 03 ou em falha de acesso aos comentários, a página informa a indisponibilidade e desativa a edição.
 
 ## Organização
 
@@ -49,6 +59,8 @@ Os cartões selecionam materiais inteiros do recorte. Requer atenção considera
 - `core.mjs`: vínculos, critérios vigentes, histórico e cálculos.
 - `navigation.mjs`: quatro menus e categorias.
 - `monday-data.mjs`: integração dos formulários e pareceres reais.
+- `portal-comments.mjs`: aplicação das edições, complementos, vínculos estáveis e mensagens de conflito.
+- `supabase/03_COMENTARIOS_COM_HISTORICO.sql`: tabelas, RLS e gravação transacional com versões.
 - `view-model.mjs`: seleção de materiais completos e destaque seguro da pesquisa.
 - `config.js`: URL, chave publicável e nomes das fontes.
 - `vendor/supabase.js`: SDK oficial.
@@ -57,4 +69,4 @@ Nunca use chave administrativa em `config.js`. As views verificam a sessão e o 
 
 ## Verificação
 
-Execute `node --test tests/*.test.mjs`. Foram conferidos os campos das fontes reais, a adaptação dos dados sincronizados e os testes de categorias, vínculos, conceitos, pareceres, histórico, filtros e exportação. A execução dos SQLs, o login institucional completo, a inspeção visual em navegador e a publicação no GitHub não foram realizados aqui.
+Execute `node --test tests/*.test.mjs`. Foram conferidos os campos das fontes reais, a adaptação dos dados sincronizados e os testes de categorias, vínculos, conceitos, pareceres, histórico, filtros e exportação. Nesta versão, passaram 38 testes de lógica e 12 verificações locais da gravação em PostgreSQL embarcado (PGlite), incluindo histórico, permissão, conflitos, reenvios e preservação da fonte. A instalação foi executada duas vezes nessa base de teste. Também foram exercitados, em DOM simulado, os fluxos de adicionar, editar, abrir histórico, tratar conflito e encerrar a sessão. A execução dos SQLs no seu projeto Supabase, o login institucional completo, a inspeção visual em navegador e a publicação no GitHub não foram realizados aqui.

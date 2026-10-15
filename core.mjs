@@ -126,7 +126,7 @@ export function csvCell(value) {
   return '"'+s.replace(/"/g,'""')+'"';
 }
 export function exportCSV(records) {
-  const headings=['Categoria','Esteira','UC','ID UC','Material','ID material','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação registrada','Comentários','Data da avaliação','Status Monday','Origem'];
+  const headings=['Categoria','Esteira','UC','ID UC','Material','ID material','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação registrada','Comentários','Data da avaliação','Status Monday','Origem','Autor da última edição do comentário','E-mail do autor do comentário','Data da edição do comentário','Versão do comentário','Texto atual da fonte Monday'];
   const label={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro textual'};
-  return '\ufeff'+[headings,...records.map(r=>[r.kind||'UA',r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date,r.materialStatus||'',r.sourceLabel||'Critérios de validação Monday'])].map(row=>row.map(csvCell).join(';')).join('\r\n');
+  return '\ufeff'+[headings,...records.map(r=>[r.kind||'UA',r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date,r.materialStatus||'',r.portal?(r.portalAddition?'Comentário do painel':'Avaliação Monday · comentário editado no painel'):r.sourceLabel||'Critérios de validação Monday',r.portal?.updated_name||'',r.portal?.updated_email||'',r.portal?.updated_at||'',r.portal?.revision||'',r.mondayComment??''])].map(row=>row.map(csvCell).join(';')).join('\r\n');
 }
