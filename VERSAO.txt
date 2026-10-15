@@ -1,3 +1,5 @@
-Resultados das UAs — Layout Integrado V2
+Comentários e avaliações — Menu e base Monday V3
 14/10/2026
-Cartões por resultado, filtros compactos, tabela e lista por UC, painel lateral, histórico disponível, pesquisa destacada e temas claro/escuro.
+Menu: Planilha de entrada, UA, BDQ e UC.
+Formulários, pareceres, conceitos de UC e status vinculados à base Monday sincronizada.
+Requer a execução de supabase/02_CONECTAR_MENUS_E_PARECERES_MONDAY.sql.

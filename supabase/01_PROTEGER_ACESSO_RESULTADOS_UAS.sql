@@ -37,7 +37,8 @@ as
 select
   chave_material, monday_item_validacao, id_titulo, id_ua,
   titulo, titulo_ua, item_name, esteira_producao, matriz_oferta,
-  semestre_oferta, categoria_material, eh_ua, revisor_validador
+  semestre_oferta, categoria_material, eh_ua, revisor_validador,
+  status_validacao, sincronizado_esteira, sincronizado_validacao
 from public.vw_materiais_bi_consolidada
 where (select auth.uid()) is not null
   and lower(split_part(coalesce((select auth.jwt()) ->> 'email', ''), '@', 2))

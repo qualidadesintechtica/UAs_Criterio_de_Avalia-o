@@ -1,8 +1,8 @@
 import {norm,groupUAs,escapeHTML} from './core.mjs';
 
 export function uaOutcome(group) {
-  if (group.summary.bad>0) return 'bad';
-  if (group.summary.assessed>0) return 'good';
+  if (group.summary.bad>0||group.requiresAdjustment) return 'bad';
+  if (group.summary.assessed>0||group.materialStatuses?.some(s=>norm(s)==='validado')) return 'good';
   return 'pending';
 }
 

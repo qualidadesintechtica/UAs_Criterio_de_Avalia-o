@@ -1,55 +1,60 @@
-# Resultados das avaliações de UAs
+# Comentários e avaliações dos materiais — Monday
 
-Página estática pronta para GitHub Pages, com autenticação pelo Supabase existente do BI. Layout integrado a partir das duas referências de comentários e validação enviadas.
+Página para GitHub Pages com login institucional do BI e menu lateral **Planilha de entrada, UA, BDQ e UC**.
 
-**Antes de publicar, siga `COMECE_AQUI.md`, começando pela proteção das fontes no banco.**
+## Instalar ou atualizar
 
-Filtros: esteira, UC, UA, revisor e especialistas. A tabela apresenta UC, UA, especialista, revisor, resultado e comentários. Os gráficos acompanham o mesmo recorte. Cada UA abre os critérios e pareceres completos; a exportação CSV preserva os comentários integrais.
+Siga `COMECE_AQUI.md`. Nesta versão, execute no Supabase `supabase/02_CONECTAR_MENUS_E_PARECERES_MONDAY.sql` após a instalação inicial do arquivo 01. Em seguida, substitua os arquivos no repositório GitHub. A execução do SQL e a publicação no GitHub não foram feitas por este pacote.
 
-## Layout integrado
+## Dados da Monday
 
-- Cartões clicáveis por resultado da UA, com contagens do recorte atual.
-- Filtros compactos e etiquetas que permitem remover uma escolha individualmente.
-- Alternância entre tabela e lista de comentários agrupada por UC.
-- Painel lateral com todos os critérios da UA, comentários completos e classificações anteriores disponíveis.
-- Trechos pesquisados destacados, aviso de inconformidade sem parecer e temas claro e escuro.
-- Texto maior e ajustes de organização para celular.
+A página usa a sincronização já existente entre Monday e Supabase:
 
-“Sem inconformidade” significa que os critérios avaliados no recorte não têm apontamentos, podendo haver critérios pendentes. Os cartões selecionam UAs completas do recorte; o painel lateral mostra todos os critérios registrados para a UA selecionada.
-
-## Estrutura
-
-- `index.html`: página e login.
-- `app.mjs`: autenticação, leitura paginada, filtros, gráficos e tabela.
-- `core.mjs`: vínculos entre UC e UA, resultado vigente por critério, histórico disponível e cálculos.
-- `view-model.mjs`: seleção de UAs completas por resultado e destaque seguro dos trechos pesquisados.
-- `config.js`: URL do projeto, chave publicável e fontes protegidas.
-- `styles.css`: identidade Sintechtica e layout responsivo.
-- `vendor/supabase.js`: SDK oficial, sem dependência de CDN durante o acesso.
-- `supabase/01_PROTEGER_ACESSO_RESULTADOS_UAS.sql`: preparação das permissões de leitura e das fontes institucionais.
-
-## Mapeamento
-
-| Campo exibido | Fonte |
+| Menu | Categorias registradas na fonte |
 | --- | --- |
-| UC | `titulo` e `id_titulo` da base de materiais |
-| UA | `titulo_ua` e `id_ua` |
-| Especialista | `classificacao_feita_por` |
-| Revisor | `revisor_validador` |
-| Comentários | `parecer_especialista` de cada critério |
+| Planilha de entrada | Planilha de Entrada / PE |
+| UA | Unidade de Aprendizagem / UA |
+| BDQ | Banco de questões / BDQ / Avaliação A1 / Avaliação A3 |
+| UC | UC / Unidade Curricular |
 
-O vínculo prioriza o ID do item Monday. Relações ambíguas continuam visíveis como UC não localizada. UAs de ofertas distintas permanecem separadas. A classificação mais recente é selecionada pela data e pelo ID do subitem.
+As fontes protegidas são:
 
-## Cálculos
+- `vw_ua_resultados_criterios_autenticados`: critérios formais, classificação, especialista, revisor e parecer da esteira.
+- `vw_ua_resultados_materiais_autenticados`: IDs, nomes, esteira, matriz, semestre e status atual do material.
+- `vw_materiais_monday_avaliacoes_autenticadas`: formulários, avaliador, conceito final e os sete indicadores de UC com suas pontuações.
+- `vw_materiais_monday_pareceres_autenticados`: textos integrais dos pareceres, vinculados ao item do formulário.
 
-Só entram Unidades de Aprendizagem. `entra_no_calculo=true` define os critérios avaliados. Dentro desse conjunto, `apontamos_inconformidade=Sim` indica inconformidade; os demais são conformes, seguindo o BI existente. Registros fora desse conjunto não entram no percentual de conformidade.
+**Atualizar dados** consulta novamente o Supabase. As mudanças feitas na Monday aparecem depois que a rotina de sincronização existente as registrar. O painel mostra a data de sincronização disponível e o horário da consulta.
 
-## Acesso
+## Organização
 
-A página usa o login institucional já cadastrado, sem criar novas contas. O SQL verifica a sessão e o domínio institucional no banco. A sessão fica na aba do navegador, e os resultados são removidos ao sair. Nunca substitua a chave publicável em `config.js` por uma chave administrativa.
+Os filtros de esteira, UC, material, revisor e especialistas afetam a tabela, os cartões, os gráficos e a exportação. A opção Comentários agrupa a leitura por UC. O painel lateral mostra o material completo, as classificações e os pareceres atuais e anteriores disponíveis. O menu também fica disponível no celular.
 
-A proteção descrita cobre os endpoints deste painel e as relações de dados de que dependem. Outros endpoints, funções ou aplicações existentes precisam de suas próprias políticas de acesso.
+Os vínculos priorizam o ID do material da validação, o código exato da UA e o código da UC. Relações ambíguas ficam sem associação automática; o código do formulário continua visível. O especialista é o responsável pela classificação formal, quando fornecido pela fonte. O revisor do formulário vem de `avaliador`. Campos ausentes permanecem sinalizados como não informados.
 
-## Testes
+## Cálculos e classificações
 
-Execute `node --test tests/*.test.mjs`. O projeto não precisa de build para publicação.
+- Critérios formais: seguem a regra do BI para `entra_no_calculo` e `apontamos_inconformidade`.
+- UC: os conceitos e as pontuações são preservados. A média considera as pontuações registradas; não é um percentual de respostas Sim/Não.
+- Parecer textual: aparece na leitura e na exportação, sem entrar como resposta de conformidade.
+- Status do material: usa o status atual da esteira quando houver um vínculo exato; caso contrário, usa o conceito final registrado no formulário.
+- Registros sem resposta individual continuam visíveis. A falta de resposta não gera uma reprovação automática.
+
+Os cartões selecionam materiais inteiros do recorte. Requer atenção considera inconformidade formal ou status de ajustes registrado. Classificadas/Avaliadas considera resultado de critério ou validação registrada. Sem classificação indica que esses resultados não estão disponíveis no recorte.
+
+## Arquivos principais
+
+- `index.html`, `styles.css`: layout, menu, tabela, lista, gráficos e painel lateral.
+- `app.mjs`: login, consulta paginada, seleção da seção e interação.
+- `core.mjs`: vínculos, critérios vigentes, histórico e cálculos.
+- `navigation.mjs`: quatro menus e categorias.
+- `monday-data.mjs`: integração dos formulários e pareceres reais.
+- `view-model.mjs`: seleção de materiais completos e destaque seguro da pesquisa.
+- `config.js`: URL, chave publicável e nomes das fontes.
+- `vendor/supabase.js`: SDK oficial.
+
+Nunca use chave administrativa em `config.js`. As views verificam a sessão e o domínio institucional no banco; os SQLs fecham a leitura anônima direta das fontes deste painel e preservam o acesso autenticado existente do BI. Outras aplicações e endpoints mantêm suas próprias regras.
+
+## Verificação
+
+Execute `node --test tests/*.test.mjs`. Foram conferidos os campos das fontes reais, a adaptação dos dados sincronizados e os testes de categorias, vínculos, conceitos, pareceres, histórico, filtros e exportação. A execução dos SQLs, o login institucional completo, a inspeção visual em navegador e a publicação no GitHub não foram realizados aqui.

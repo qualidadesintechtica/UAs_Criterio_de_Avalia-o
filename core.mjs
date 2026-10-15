@@ -15,6 +15,14 @@ export function isUA(row) {
   if (c) return c === 'ua' || c.includes('unidade de aprendizagem');
   return isTrue(row.eh_ua);
 }
+export function materialKind(row) {
+  if(isUA(row))return 'UA';
+  const category=norm(row.categoria_material);
+  if(category==='pe'||/^planilhas? de entrada\b/.test(category))return 'PE';
+  if(category==='bdq'||/^bancos? de questoes\b/.test(category)||['avaliacao a1','avaliacao a3'].includes(category))return 'BDQ';
+  if(category==='uc'||/^unidades? curriculares\b/.test(category))return 'UC';
+  return null;
+}
 function stamp(row) {
   for (const k of ['data_classificacao_especialista','sincronizado_em','ultima_atualizacao_monday','updated_at','created_at']) {
     const s = Date.parse(row[k] || '');
@@ -36,15 +44,16 @@ function uniqueMaterial(rows) {
   const ids = new Set(rows.map(r => [text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta)].join('|')));
   return ids.size === 1 ? rows[0] : null;
 }
-export function buildRecords(criteria, materials) {
-  const uaMaterials=materials.filter(isUA);
+export function buildRecords(criteria, materials,kind='UA') {
+  if(!['UA','PE','BDQ','UC'].includes(kind))throw new RangeError('Categoria de material não reconhecida.');
+  const uaMaterials=materials.filter(row=>materialKind(row)===kind);
   const byParent=indexBy(uaMaterials,r=>text(r.monday_item_validacao));
   const byUA=indexBy(uaMaterials,r=>text(r.id_ua) ? [text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao)].join('|') : '');
   const latest=new Map();
   const versions=new Map();
   const diagnostics={excluded:0,unmatched:0,missingSpecialists:0,duplicates:0};
   for (const row of criteria) {
-    if (!isUA(row)) { diagnostics.excluded++; continue; }
+    if (materialKind(row)!==kind) { diagnostics.excluded++; continue; }
     const material=uniqueMaterial(byParent.get(text(row.parent_item_id))) || uniqueMaterial(byUA.get([text(row.id_ua),norm(row.matriz_oferta),norm(row.esteira_producao)].join('|')));
     const uc=text(material?.titulo || row.titulo_uc || row.nome_uc || row.uc);
     const ucId=text(material?.id_titulo || row.id_titulo);
@@ -56,10 +65,10 @@ export function buildRecords(criteria, materials) {
     const track=text(row.esteira_producao || material?.esteira_producao);
     const matrix=text(row.matriz_oferta || material?.matriz_oferta);
     const semester=text(material?.semestre_oferta || row.semestre_oferta);
-    const ua=text(row.titulo_ua || material?.titulo_ua || material?.item_name || (uaId ? 'UA '+uaId : 'UA sem título'));
+    const ua=text(row.titulo_ua || material?.titulo_ua || material?.item_name || (kind==='UC'?uc:'') || (uaId ? kind+' '+uaId : 'Material sem título'));
     // Sem vínculo inequívoco, o item continua visível, sem inventar uma UC.
-    const uaKey=JSON.stringify([ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester]);
-    const record={id:text(row.subitem_id),uaKey,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),unmatched:!material && !uc,raw:row};
+    const uaKey=JSON.stringify([kind,ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester]);
+    const record={id:text(row.subitem_id),kind,uaKey,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),materialStatus:text(material?.status_validacao||row.status_validacao),unmatched:!material && !uc,raw:row};
     const key=uaKey+'|'+norm(criterion)+(row.criterio||row.pergunta?'':'|'+text(row.subitem_id));
     if (!versions.has(key)) versions.set(key,[]);
     versions.get(key).push(record);
@@ -86,10 +95,14 @@ export function filterRecords(records, filters={}, query='', status='all', skip=
   });
 }
 export function summarize(records) {
-  const good=records.filter(r=>r.status==='good').length;
-  const bad=records.filter(r=>r.status==='bad').length;
-  const pending=records.length-good-bad;
-  return {uas:new Set(records.map(r=>r.uaKey)).size,good,bad,pending,assessed:good+bad,total:records.length,rate:good+bad ? good/(good+bad)*100 : null};
+  const evaluations=records.filter(r=>!r.commentOnly);
+  const good=evaluations.filter(r=>r.status==='good').length;
+  const bad=evaluations.filter(r=>r.status==='bad').length;
+  const rated=evaluations.filter(r=>r.status==='rated').length;
+  const pending=evaluations.length-good-bad-rated;
+  const result={uas:new Set(records.map(r=>r.uaKey)).size,good,bad,pending,assessed:good+bad+rated,total:evaluations.length,rate:good+bad ? good/(good+bad)*100 : null};
+  if(rated){const scores=evaluations.filter(r=>r.status==='rated'&&typeof r.score==='number'&&Number.isFinite(r.score)).map(r=>r.score);result.rated=rated;result.score=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;}
+  return result;
 }
 export function groupUAs(records) {
   const groups=new Map();
@@ -99,11 +112,11 @@ export function groupUAs(records) {
     g.specialists=[...new Set([...g.specialists,...r.specialists])];g.reviewers=[...new Set([...g.reviewers,...r.reviewers])];
     if (r.comment) g.comments.push({criterion:r.criterion,text:r.comment});
   }
-  return [...groups.values()].map(g=>({...g,summary:summarize(g.criteria)})).sort((a,b)=> a.uc.localeCompare(b.uc,'pt-BR',{numeric:true}) || a.ua.localeCompare(b.ua,'pt-BR',{numeric:true}));
+  return [...groups.values()].map(g=>({...g,summary:summarize(g.criteria),materialStatuses:[...new Set(g.criteria.map(r=>text(r.materialStatus)).filter(Boolean))],requiresAdjustment:g.criteria.some(r=>norm(r.materialStatus).includes('ajustes'))})).sort((a,b)=> a.uc.localeCompare(b.uc,'pt-BR',{numeric:true}) || a.ua.localeCompare(b.ua,'pt-BR',{numeric:true}));
 }
 export function criteriaSummary(records) {
   const map=new Map();
-  for (const r of records) { if (!map.has(r.criterion)) map.set(r.criterion,[]);map.get(r.criterion).push(r); }
+  for (const r of records) { if(r.commentOnly)continue;if (!map.has(r.criterion)) map.set(r.criterion,[]);map.get(r.criterion).push(r); }
   return [...map.entries()].map(([name,rows])=>({name,...summarize(rows)})).sort((a,b)=> b.bad-a.bad || a.name.localeCompare(b.name,'pt-BR'));
 }
 export function escapeHTML(value) { return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -113,7 +126,7 @@ export function csvCell(value) {
   return '"'+s.replace(/"/g,'""')+'"';
 }
 export function exportCSV(records) {
-  const headings=['Esteira','UC','ID UC','UA','ID UA','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação do especialista','Comentários','Data da avaliação'];
-  const label={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado'};
-  return '\ufeff'+[headings,...records.map(r=>[r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date])].map(row=>row.map(csvCell).join(';')).join('\r\n');
+  const headings=['Categoria','Esteira','UC','ID UC','Material','ID material','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação registrada','Comentários','Data da avaliação','Status Monday','Origem'];
+  const label={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro textual'};
+  return '\ufeff'+[headings,...records.map(r=>[r.kind||'UA',r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date,r.materialStatus||'',r.sourceLabel||'Critérios de validação Monday'])].map(row=>row.map(csvCell).join(';')).join('\r\n');
 }
