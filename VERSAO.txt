@@ -1,11 +1,15 @@
-V6 · ULIFE · 16/10/2026
+V6.1 · NOMES DA PLANILHA DE ENTRADA · 16/10/2026
 Resultados e comentários dos materiais — Sintechtica
 Domínios autorizados: @animaeducacao.com.br e @ulife.com.br.
-Atualização única: supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql.
-Marca visível na tela: V6 · 16/10/2026.
+Preparação da base: supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql (não repetir se já instalado).
+Marca visível na tela: V6.1 · 16/10/2026.
 Inclui esteiras globais, filtro Lote e seleções mantidas entre as quatro abas.
 Cartões: Liberada; Em validação; Requer análise do design; Validadas.
 Tabela: UC; UA; Unidade da UA. Clique para abrir os comentários.
 Tema claro off-white; resumos e gráficos abaixo dos filtros removidos.
 Login, conexão, edição, histórico, busca, lista, paginação e exportação preservados.
 Arquivos com identificador de versão para evitar reutilização dos recursos antigos.
+
+Correção V6.1: o título da UC substitui o código nas colunas UC e UA da Planilha de entrada.
+Códigos e vínculos preservados, com referência original disponível nos detalhes.
+Nenhum SQL novo: se o SQL 05 já estiver instalado, atualize somente os arquivos da página.

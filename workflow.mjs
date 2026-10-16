@@ -1,4 +1,4 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names} from './core.mjs?v=v6-ulife-20261016';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names} from './core.mjs?v=v6-1-nomes-pe-20261016';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 

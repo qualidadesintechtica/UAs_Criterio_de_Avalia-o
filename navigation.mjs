@@ -1,4 +1,4 @@
-import {materialKind,buildRecords} from './core.mjs?v=v6-ulife-20261016';
+import {materialKind,buildRecords} from './core.mjs?v=v6-1-nomes-pe-20261016';
 
 export const SECTIONS={
   PE:{label:'Planilha de entrada',title:'Planilhas de entrada',plural:'planilhas',itemLabel:'Planilha',allLabel:'Todas as planilhas',tableTitle:'Avaliações das planilhas de entrada'},

@@ -103,7 +103,7 @@ export function filterRecords(records, filters={}, query='', status='all', skip=
       if (!vals.some(v=>norm(v)===norm(filters[field]))) return false;
     }
     if (status!=='all' && r.status!==status) return false;
-    return !q || norm([r.uc,r.ucId,r.ua,r.displayUA,r.uaId,r.unitSourceId,r.unitLabel,r.track,r.batch,r.matrix,...r.specialists,...r.reviewers,r.criterion,r.comment].join(' ')).includes(q);
+    return !q || norm([r.uc,r.ucId,r.ua,r.displayUA,r.sourceName,r.uaId,r.unitSourceId,r.unitLabel,r.track,r.batch,r.matrix,...r.specialists,...r.reviewers,r.criterion,r.comment].join(' ')).includes(q);
   });
 }
 export function summarize(records) {

@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel} from './core.mjs?v=v6-ulife-20261016';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel} from './core.mjs?v=v6-1-nomes-pe-20261016';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 

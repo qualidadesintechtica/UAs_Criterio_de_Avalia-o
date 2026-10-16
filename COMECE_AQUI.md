@@ -1,6 +1,20 @@
-# Publicar a V6 com acesso Ulife
+# Publicar a V6.1 — nomes na Planilha de entrada
 
-## Atualizar o banco
+## Aplicar esta correção
+
+**Se o SQL 05 já foi executado, não precisa executar nenhum SQL novamente.** Esta correção altera os arquivos da página.
+
+1. Extraia o ZIP e substitua todo o conteúdo na raiz publicada do GitHub Pages, incluindo o novo arquivo **pe-names.mjs**.
+2. Aguarde a publicação e recarregue a página com **Ctrl + F5**.
+3. Confira a marca **V6.1 · 16/10/2026** e abra **Planilha de entrada**.
+
+As colunas UC e UA passam a mostrar o título da UC encontrado na base, em vez do código `_PP`. Filtros, busca e exportação usam o nome. Os códigos continuam preservados nos vínculos e em **Referência da planilha**, no painel de comentários.
+
+Campos de título vazios, códigos repetidos no lugar do nome e variações de maiúsculas não descartam um nome disponível. Quando o ID da UC está vazio, a busca também considera o código exato da UA ou da chave composta do material. Não há associação por semelhança de nomes.
+
+Se o nome estiver ausente ou houver títulos conflitantes para o mesmo código, a página mostra **Nome da UC não localizado**, com a referência original nos detalhes. O nome deve ser corrigido na base; a página não inventa títulos.
+
+## Se o SQL 05 ainda não foi executado
 
 1. Extraia o ZIP em uma pasta nova.
 2. Abra o projeto Supabase do BI → **SQL Editor → New query**.
@@ -14,10 +28,10 @@ Os comentários e seus históricos anteriores são preservados. O script usa uma
 ## Substituir os arquivos da página
 
 1. No repositório GitHub, abra a pasta usada pelo GitHub Pages.
-2. Envie **todo o conteúdo extraído do ZIP**, substituindo os arquivos anteriores e incluindo os arquivos novos. Mantenha **index.html na raiz publicada**, junto de config.js, app.mjs, auth-policy.mjs, release.mjs, workflow.mjs, os outros módulos e as pastas vendor e supabase.
+2. Envie **todo o conteúdo extraído do ZIP**, substituindo os arquivos anteriores e incluindo os arquivos novos. Mantenha **index.html na raiz publicada**, junto de config.js, app.mjs, auth-policy.mjs, release.mjs, workflow.mjs, pe-names.mjs, os outros módulos e as pastas vendor e supabase.
 3. Não envie o ZIP fechado como se ele fosse a página. Não coloque os arquivos dentro de uma segunda pasta abaixo da raiz publicada.
 4. Aguarde a publicação terminar no GitHub. Abra a página e recarregue com **Ctrl + F5**.
-5. Confira a marca **V6 · 16/10/2026** no login e no topo do painel. Se essa marca não aparecer, a página exibida ainda não é a V6.
+5. Confira a marca **V6.1 · 16/10/2026** no login e no topo do painel. Se essa marca não aparecer, a página exibida ainda não é a V6.1.
 
 Os arquivos da V6 usam um identificador de versão nos links do CSS, da configuração, do SDK e dos módulos. Isso reduz a reutilização de arquivos antigos pelo navegador. A marca visível permite verificar o HTML que foi publicado. O painel também consulta a regra de acesso no banco e avisa quando a atualização V6 ainda não foi confirmada.
 

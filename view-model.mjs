@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-ulife-20261016';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-1-nomes-pe-20261016';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';

@@ -1,12 +1,20 @@
-# Comentários e avaliações dos materiais — V6
+# Comentários e avaliações dos materiais — V6.1
 
 Página para GitHub Pages com login institucional do BI, menu lateral **Planilha de entrada, UA, BDQ e UC**, filtros compartilhados e comentários com histórico.
 
+## Correção dos nomes na Planilha de entrada
+
+Na V6.1, UC e UA mostram o título da UC consultado na base. O rótulo deixa de usar o nome bruto do formulário terminado em `_PP`. A resolução ignora nomes vazios ou preenchidos com o próprio código e aceita diferenças de caixa e espaços para reconhecer o mesmo título. Pode usar o código da UA ou a chave composta quando o ID da UC estiver ausente. Códigos próximos não são associados automaticamente e títulos conflitantes permanecem sinalizados.
+
+Identificadores de UC, material, origem, agrupamento e comentário permanecem iguais. O nome bruto do formulário é mantido em `sourceName` e aparece nos detalhes como Referência da planilha. A busca pelo código continua disponível. Filtros e exportação usam o título corrigido.
+
+A correção atua somente na seção PE; não muda a autorização, as consultas ao banco nem as respostas da avaliação. Não é necessário repetir o SQL 05 se ele já foi instalado.
+
 ## Instalar ou atualizar
 
-Siga `COMECE_AQUI.md`. Execute somente `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql` para esta atualização. O arquivo reúne a preparação das views, lote, status, comentários e domínio Ulife sobre as fontes existentes do BI. Instala a estrutura de comentários quando ausente e preserva os registros já existentes. Os arquivos 01 a 04 permanecem como histórico e não devem ser executados depois do 05.
+Siga `COMECE_AQUI.md`. Para uma base ainda não preparada, execute `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql`. Para atualizar uma V6 já instalada, substitua somente os arquivos da página, incluindo `pe-names.mjs`. O arquivo reúne a preparação das views, lote, status, comentários e domínio Ulife sobre as fontes existentes do BI. Instala a estrutura de comentários quando ausente e preserva os registros já existentes. Os arquivos 01 a 04 permanecem como histórico e não devem ser executados depois do 05.
 
-Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. A página deve mostrar **V6 · 16/10/2026** no login e no painel. CSS, configuração, SDK e módulos têm links com versão para reduzir a reutilização de arquivos anteriores.
+Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. A página deve mostrar **V6.1 · 16/10/2026** no login e no painel. CSS, configuração, SDK e módulos têm links com versão para reduzir a reutilização de arquivos anteriores.
 
 A execução do SQL no seu projeto e a publicação no GitHub não foram feitas por este pacote.
 
@@ -87,6 +95,7 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 - `monday-data.mjs`: formulários e pareceres sincronizados.
 - `workflow.mjs`: status, catálogo global de filtros, inventário e linhas da tabela.
 - `portal-comments.mjs`: comentários, versões e mensagens de conflito.
+- `pe-names.mjs`: nomes da Planilha de entrada sem alterar os vínculos das avaliações e dos comentários.
 - `auth-policy.mjs`: validação dos domínios autorizados no cliente.
 - `release.mjs`: versão visível da entrega.
 - `view-model.mjs`: destaque seguro da pesquisa e funções de resultado dos critérios.
@@ -97,10 +106,12 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Execute `node --test tests/*.test.mjs`: passaram **54 testes de lógica**, incluindo os 50 testes anteriores e os casos de acesso Ânima/Ulife, maiúsculas, sufixos falsos, subdomínios e endereços inválidos.
+Execute `node --test tests/*.test.mjs`: passaram **62 testes de lógica**, incluindo os 54 da V6 e oito da resolução de nomes, com verificação de vínculos, nomes ausentes, conflitos, filtros, busca, exportação e preservação de comentários e os casos de acesso Ânima/Ulife, maiúsculas, sufixos falsos, subdomínios e endereços inválidos.
 
 Em PostgreSQL embarcado (PGlite), nove verificações confirmaram a migração V5 → V6 sem perda do histórico, leitura das quatro views e dos comentários pelos dois domínios, gravação Ulife com autoria, conflitos, reenvios, proteção contra exclusão, bloqueio de outros domínios e anônimos, repetição segura do script e instalação usando somente o SQL 05 sobre as fontes do BI.
 
-Em DOM simulado, foram verificados login Ulife, bloqueio de domínio externo, marca V6, links com versão, filtros nas quatro abas, cartões, tabela de três colunas, abertura dos comentários, criação, edição, histórico, texto seguro, lista, alternância do tema e saída da sessão.
+Na V6.1, uma simulação adicional verificou nomes nas duas colunas da Planilha, campos de título vazios, filtros por nome, referência original, abertura e edição de comentários e busca pelo código.
+
+Na V6, em DOM simulado, foram verificados login Ulife, bloqueio de domínio externo, marca V6, links com versão, filtros nas quatro abas, cartões, tabela de três colunas, abertura dos comentários, criação, edição, histórico, texto seguro, lista, alternância do tema e saída da sessão.
 
 A execução no seu projeto Supabase, o login institucional real, a inspeção visual em navegador e a publicação no GitHub não foram realizadas aqui.

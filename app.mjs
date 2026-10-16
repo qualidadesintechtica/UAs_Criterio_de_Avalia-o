@@ -1,11 +1,12 @@
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-ulife-20261016';
-import {RELEASE} from './release.mjs?v=v6-ulife-20261016';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-ulife-20261016';
-import {highlightHTML} from './view-model.mjs?v=v6-ulife-20261016';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows} from './workflow.mjs?v=v6-ulife-20261016';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-ulife-20261016';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-ulife-20261016';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-ulife-20261016';
+import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-1-nomes-pe-20261016';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-1-nomes-pe-20261016';
+import {RELEASE} from './release.mjs?v=v6-1-nomes-pe-20261016';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-1-nomes-pe-20261016';
+import {highlightHTML} from './view-model.mjs?v=v6-1-nomes-pe-20261016';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows} from './workflow.mjs?v=v6-1-nomes-pe-20261016';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-1-nomes-pe-20261016';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-1-nomes-pe-20261016';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-1-nomes-pe-20261016';
 const $=id=>document.getElementById(id);
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
@@ -101,14 +102,15 @@ async function load(){
     const criteria=results[0].value,materials=results[1].value;
     const formError=results.slice(2,4).some(r=>r.status==='rejected');
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
-    state.baseSections=includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials);
+    state.baseSections=resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials);
     state.commentsReady=results[4].status==='fulfilled';state.portalComments=state.commentsReady?results[4].value:[];
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
     state.sectionErrors={};if(formError){for(const key of ['PE','BDQ','UC'])state.sectionErrors[key]='Os formulários desta seção não puderam ser consultados. Atualize os dados ou confira a configuração da conexão.';}
     state.records=state.sections[state.section].records;state.loaded=true;state.page=1;
     source('Monday · base sincronizada','connected');
     $('updatedAt').textContent=(formData.lastSync?'Sincronização Monday: '+new Date(formData.lastSync).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · ':'')+'Consulta: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const warnings=[];if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
+    const missingPlanNames=new Set(state.sections.PE.records.filter(r=>!r.courseNameResolved).map(r=>r.uaKey)).size;
+    const warnings=[];if(missingPlanNames)warnings.push('Nome da UC não localizado em '+nf.format(missingPlanNames)+' planilha(s). A referência original permanece nos detalhes.');if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
     if(results[5].status!=='fulfilled'||!results[5].value)warnings.push('A base ainda não confirmou a atualização V6. Solicite a atualização do painel ao responsável para habilitar o acesso Ulife e os recursos desta versão.');
     if(materials.length&&!Object.hasOwn(materials[0],'bloco'))warnings.push('Solicite a atualização V6 da base para disponibilizar o lote e os status completos neste painel.');
@@ -207,7 +209,7 @@ function openMaterialDetails(key,unit=null){
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  $('dialogContent').innerHTML='<div class="detail-meta"><div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  $('dialogContent').innerHTML='<div class="detail-meta">'+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
 }
 function formatDateTime(value){if(/^\d{4}-\d{2}-\d{2}$/.test(value||''))return formatDate(value);const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Data não informada';}
