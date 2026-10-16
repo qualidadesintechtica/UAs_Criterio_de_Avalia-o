@@ -1,11 +1,20 @@
-import {norm,text,names,materialKind} from './core.mjs';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel} from './core.mjs';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 
 function unique(rows){
   if(!rows?.length)return null;
-  const identities=new Set(rows.map(r=>[text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta)].join('|')));
+  const identities=new Set(rows.map(r=>[text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta),norm(r.bloco||r.lote)].join('|')));
   return identities.size===1?rows[0]:null;
+}
+function courseContext(rows){
+  if(!rows?.length)return null;
+  const ids=new Set(rows.map(r=>text(r.id_titulo)).filter(Boolean));
+  if(ids.size!==1||rows.some(r=>!text(r.id_titulo)))return null;
+  const common=field=>{const values=new Set(rows.map(r=>text(r[field])));return values.size===1?[...values][0]:'';};
+  return {id_titulo:[...ids][0],titulo:common('titulo'),esteira_producao:common('esteira_producao'),
+    matriz_oferta:common('matriz_oferta'),semestre_oferta:common('semestre_oferta'),bloco:common('bloco'),
+    contextOnly:true};
 }
 function index(rows,field){const result=new Map();for(const r of rows){const key=norm(r[field]);if(!key)continue;if(!result.has(key))result.set(key,[]);result.get(key).push(r);}return result;}
 function latest(rows){return [...rows].sort((a,b)=>stamp(b)-stamp(a)||text(b.id).localeCompare(text(a.id),undefined,{numeric:true}))[0];}
@@ -20,14 +29,16 @@ export function adaptMondayForms(assessments,comments,materials){
   for(const id of eventIDs){
     const assessment=forms.get(id);const notes=commentsByForm.get(id)||[];const r=assessment||latest(notes);
     const kind=materialKind(r);if(!kind)continue;
-    const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[13])$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
-    const material=unique(byID.get(norm(r.validacao_material_item_id)))||unique(byUA.get(norm(originalName)))||unique(byUC.get(norm(codeUC)))||(kind==='PE'?unique(byName.get(norm(originalName))):null);
+    const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[13]|PP)$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
+    const material=unique(byID.get(norm(r.validacao_material_item_id)))||unique(byUA.get(norm(originalName)))||unique((byUC.get(norm(codeUC))||[]).filter(m=>materialKind(m)===kind&&!text(m.id_ua)))||courseContext(byUC.get(norm(codeUC)))||(kind==='PE'?courseContext(byName.get(norm(originalName))):null);
     const ucId=text(material?.id_titulo||(match?codeUC:''));const uc=text(material?.titulo||codeUC||'UC não localizada');
     const matrix=text(material?.matriz_oferta||r.matriz_oferta);const track=text(material?.esteira_producao||r.esteira_producao)||'Não informada';const semester=text(material?.semestre_oferta||r.semestre_oferta);
     const uaId=kind==='UA'?text(material?.id_ua||originalName):kind==='BDQ'?originalName:ucId||codeUC;
-    const ua=kind==='UC'?uc:kind==='PE'?originalName:text(material?.titulo_ua||unit||material?.item_name||originalName);
-    const key=JSON.stringify([kind,ucId||codeUC,uaId,matrix,track,semester]);
-    const common={kind,uaKey:key,uc,ucId,ua,uaId,parent:text(r.validacao_material_item_id),track,matrix,semester,specialists:names(material?.especialista_modelagem),reviewers:names(r.avaliador||material?.revisor_validador),date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
+    const ua=kind==='UC'?uc:kind==='PE'?originalName:text(material?.titulo_ua||originalName||material?.item_name);
+    const displayUA=kind==='UC'&&/^UA\d+$/i.test(unit)?text(material?.titulo_ua)||originalName:ua;
+    const batch=text(material?.bloco||r.bloco||r.lote);
+    const key=materialGroupKey(kind,ucId||codeUC,uaId,matrix,track,semester,batch);
+    const common={kind,uaKey:key,uc,ucId,ua,uaId,parent:text(r.validacao_material_item_id),track,matrix,semester,batch,displayUA,unitSourceId:kind==='UC'?originalName:uaId,unitLabel:unitLabel({...material,id_ua:kind==='UC'?originalName:uaId}),materialKey:text(material?.chave_material),specialists:names(material?.especialista_modelagem),reviewers:names(r.avaliador||material?.revisor_validador),date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
     let added=false;
     if(kind==='UC'&&assessment){
       for(let i=1;i<=7;i++){

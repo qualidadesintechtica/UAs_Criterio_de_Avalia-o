@@ -1,19 +1,37 @@
-import {norm, names, buildRecords, filterRecords, summarize, groupUAs, criteriaSummary, escapeHTML as esc, exportCSV} from './core.mjs';
-import {countUAOutcomes,selectUAOutcome,highlightHTML,uaOutcome} from './view-model.mjs';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs';
+import {highlightHTML} from './view-model.mjs';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows} from './workflow.mjs';
 import {SECTIONS,buildSections} from './navigation.mjs';
 import {adaptMondayForms,mergeMondayData} from './monday-data.mjs';
 import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs';
 const $=id=>document.getElementById(id);
 const nf=new Intl.NumberFormat('pt-BR');
-const percent=n=>n==null?'—':n.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},portalComments:[],commentsReady:false,dialogKey:null,detailRecords:[],editor:null,saving:false};
-const uaLabels={all:'Todas as UAs',bad:'Com inconformidade',good:'Sem inconformidade',pending:'Sem avaliação'};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],editor:null,saving:false};
+const uaLabels={...WORKFLOW_LABELS};
 let client;
-const defaults={track:'Todas as esteiras',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
+const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
 function source(label,kind=''){ $('sourceStatus').className='source-pill '+kind;$('sourceStatus').innerHTML='<i></i>'+esc(label); }
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{$('toast').hidden=true;},4000);}
-function clearSensitive(){state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;state.dialogKey=null;state.detailRecords=[];state.editor=null;state.saving=false;state.user=null;state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];state.loaded=false;state.loading=false;state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;$('search').value='';$('commentsOnly').checked=false;for(const b of $('detailDialog').querySelectorAll('button'))b.disabled=false;$('detailDialog').close();document.body.classList.remove('drawer-open');$('dialogContent').replaceChildren();$('dialogUA').textContent='';$('dialogUC').textContent='';$('tableBody').innerHTML='<tr><td colspan="7" class="empty-table">Entre para consultar as avaliações.</td></tr>';$('criteriaChart').replaceChildren();$('commentList').replaceChildren();$('filterChips').replaceChildren();$('filterChips').hidden=true;for(const id of ['countAll','countBad','countGood','countPending','navCountPE','navCountUA','navCountBDQ','navCountUC'])$(id).textContent='—';$('kpiPending').textContent='Aguardando resultados';$('criteriaCount').textContent='— critérios';$('tableCount').textContent='Aguardando dados';$('pageInfo').textContent='—';$('updatedAt').textContent='Aguardando dados';$('insight').textContent='Selecione uma esteira ou uma UC para explorar seus resultados.';for(const id of ['donutGood','donutBad','donutPending','donutRated'])$(id).style.strokeDasharray='0 1000';source('Conectando à base');document.querySelectorAll('[data-ua-status]').forEach(b=>b.disabled=true);$('userName').textContent='Usuário';$('userEmail').textContent='';$('loadError').hidden=true;$('loadError').textContent='';$('dataWarning').hidden=true;$('dataWarning').textContent='';for(const id of ['kpiUA','kpiAssessed','kpiRate','kpiBad','donutTotal','totalGood','totalBad','totalPending','totalRated'])$(id).textContent='—';for(const select of document.querySelectorAll('[data-filter]'))select.innerHTML='<option value="">'+esc(defaults[select.dataset.filter])+'</option>';$('dashboard').hidden=true;$('login').hidden=false;$('boot').hidden=true;}
+function clearSensitive(){
+  state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
+  state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.editor=null;state.saving=false;state.user=null;
+  state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
+  state.loaded=false;state.loading=false;state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;
+  $('search').value='';$('commentsOnly').checked=false;
+  for(const b of $('detailDialog').querySelectorAll('button'))b.disabled=false;
+  $('detailDialog').close();document.body.classList.remove('drawer-open');
+  $('dialogContent').replaceChildren();$('dialogUA').textContent='';$('dialogUC').textContent='';
+  $('tableBody').innerHTML='<tr><td colspan="3" class="empty-table">Entre para consultar as avaliações.</td></tr>';
+  $('commentList').replaceChildren();$('filterChips').replaceChildren();$('filterChips').hidden=true;
+  for(const id of ['countReleased','countValidating','countDesign','countValidated','navCountPE','navCountUA','navCountBDQ','navCountUC'])$(id).textContent='—';
+  $('tableCount').textContent='Aguardando dados';$('pageInfo').textContent='—';$('updatedAt').textContent='Aguardando dados';
+  source('Conectando à base');document.querySelectorAll('[data-ua-status]').forEach(b=>b.disabled=true);
+  $('userName').textContent='Usuário';$('userEmail').textContent='';$('loadError').hidden=true;$('loadError').textContent='';
+  $('dataWarning').hidden=true;$('dataWarning').textContent='';
+  for(const select of document.querySelectorAll('[data-filter]'))select.innerHTML='<option value="">'+esc(defaults[select.dataset.filter])+'</option>';
+  $('dashboard').hidden=true;$('login').hidden=false;$('boot').hidden=true;
+}
 function showLogin(message=''){clearSensitive();$('loginError').textContent=message;$('loginError').hidden=!message;$('password').value='';}
 async function activate(user){
   if (!window.UA_CONFIG.allowedDomains.includes(norm(user.email).split('@').pop())) { await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui um domínio institucional autorizado.');return; }
@@ -60,7 +78,7 @@ async function load(){
     const {data:auth,error:authError}=await client.auth.getUser();
     if(authError||!auth.user){showLogin('Sua sessão expirou. Entre novamente.');return;}
     if(!window.UA_CONFIG.allowedDomains.includes(norm(auth.user.email).split('@').pop())){await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui acesso institucional.');return;}
-    const criteriaColumns='subitem_id,parent_item_id,matriz_oferta,id_ua,titulo_ua,pergunta,criterio,classificacao_especialista,parecer_especialista,classificacao_feita_por,data_classificacao_especialista,apontamos_inconformidade,esteira_producao,categoria_material,revisor_validador,entra_no_calculo';
+    const criteriaColumns='*';
     const materialColumns='*';
     const formsColumns='id,monday_item_id,nome_item,data_avaliacao,data_avaliacao_hora,avaliador,categoria_material,matriz_oferta,conceito_final,validacao_material_item_id,indicador_1,indicador_2,indicador_3,indicador_4,indicador_5,indicador_6,indicador_7,indicador_1_score,indicador_2_score,indicador_3_score,indicador_4_score,indicador_5_score,indicador_6_score,indicador_7_score,synced_at,updated_at';
     const commentsColumns='id,monday_item_id,nome_item,avaliador,categoria_material,matriz_oferta,numero_criterio,criterio_id,criterio_titulo,parecer_id,parecer_titulo,parecer,tipo_formulario,data_avaliacao,data_avaliacao_hora,updated_at,synced_at';
@@ -76,7 +94,7 @@ async function load(){
     const criteria=results[0].value,materials=results[1].value;
     const formError=results.slice(2,4).some(r=>r.status==='rejected');
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
-    state.baseSections=mergeMondayData(buildSections(criteria,materials),formData);
+    state.baseSections=includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials);
     state.commentsReady=results[4].status==='fulfilled';state.portalComments=state.commentsReady?results[4].value:[];
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
     state.sectionErrors={};if(formError){for(const key of ['PE','BDQ','UC'])state.sectionErrors[key]='Os formulários desta seção não puderam ser consultados. Atualize os dados ou confira a configuração da conexão.';}
@@ -85,54 +103,37 @@ async function load(){
     $('updatedAt').textContent=(formData.lastSync?'Sincronização Monday: '+new Date(formData.lastSync).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · ':'')+'Consulta: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const warnings=[];if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
+    if(materials.length&&!Object.hasOwn(materials[0],'bloco'))warnings.push('Execute o SQL 04 para disponibilizar o lote e os status completos neste painel.');
     $('dataWarning').textContent=warnings.join(' ');$('dataWarning').hidden=!warnings.length;
     renderNavigation();updateSectionLabels();render();
   }catch(error){
     if(run!==state.run)return;
     source('Falha ao atualizar','failed');$('loadError').textContent=friendly(error)+(state.loaded?' Os resultados abaixo são da última consulta concluída.':'');$('loadError').hidden=false;
-    if(!state.loaded){$('updatedAt').textContent='Consulta não concluída';$('tableBody').innerHTML='<tr><td colspan="7" class="empty-table">Não foi possível consultar as avaliações. Clique em Atualizar dados para tentar novamente.</td></tr>';}
+    if(!state.loaded){$('updatedAt').textContent='Consulta não concluída';$('tableBody').innerHTML='<tr><td colspan="3" class="empty-table">Não foi possível consultar as avaliações. Clique em Atualizar dados para tentar novamente.</td></tr>';}
   }finally{clearTimeout(timeout);if(run===state.run){state.loading=false;$('refresh').disabled=false;}}
 }
 function renderFilters(){
   for(const select of document.querySelectorAll('[data-filter]')){
-    const field=select.dataset.filter;
-    const available=selectUAOutcome(baseScope(field),state.status);
-    const values=new Set();let missing=false;
-    for(const r of available){const list=Array.isArray(r[field])?r[field]:[r[field]];if(!list.length)missing=true;list.forEach(v=>values.add(v));}
+    const field=select.dataset.filter,{values,missing}=filterOptions(state.sections,field,state.filters);
     const current=state.filters[field]||'';
-    // Mantém uma escolha anterior visível quando o novo recorte não tem registros.
-    if(current&&current!=='__missing__')values.add(current);
-    select.innerHTML='<option value="">'+esc(defaults[field])+'</option>'+[...values].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true})).map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+(missing||current==='__missing__'?'<option value="__missing__">Não informado</option>':'');
+    select.innerHTML='<option value="">'+esc(defaults[field])+'</option>'+values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+(missing?'<option value="__missing__">Não informado</option>':'');
     select.value=current;
   }
 }
-function renderSummary(){
-  const s=summarize(state.filtered);$('kpiUA').textContent=nf.format(s.uas);$('kpiAssessed').textContent=nf.format(s.assessed);$('kpiPending').textContent=nf.format(s.pending)+' critério(s) não avaliado(s)';$('kpiRate').textContent=state.section==='UC'&&s.rated?(s.score==null?'—':s.score.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})):percent(s.rate);$('kpiBad').textContent=nf.format(groupUAs(state.filtered).filter(g=>uaOutcome(g)==='bad').length);
-  $('donutTotal').textContent=nf.format(s.total);$('totalGood').textContent=nf.format(s.good);$('totalBad').textContent=nf.format(s.bad);$('totalPending').textContent=nf.format(s.pending);$('totalRated').textContent=nf.format(s.rated||0);$('distributionRated').hidden=!(s.rated>0);$('ratedLegend').hidden=!(s.rated>0);
-  let offset=0;const circumference=2*Math.PI*76;
-  for(const [id,value] of [['donutGood',s.good],['donutBad',s.bad],['donutPending',s.pending],['donutRated',s.rated||0]]){const len=s.total?value/s.total*circumference:0;$(id).style.strokeDasharray=len+' '+circumference;$(id).style.strokeDashoffset=-offset;offset+=len;}
-  $('insight').textContent=!s.total?(state.filtered.length?'Há registros e pareceres recebidos, com respostas individuais dos critérios indisponíveis nesta fonte. Consulte os comentários e o status Monday.':'Nenhum registro encontrado neste recorte. Ajuste os filtros para ampliar a consulta.'):s.rated?nf.format(s.rated)+' critério(s) classificado(s) por conceito. Consulte os níveis registrados e a média das pontuações.':s.bad?nf.format(s.bad)+' critério(s) sinaliza(m) inconformidade. Abra os pareceres para entender os ajustes necessários.':s.pending?'Há '+nf.format(s.pending)+' critério(s) ainda fora do cálculo. A conformidade considera apenas as avaliações concluídas.':'Nenhuma inconformidade apontada nos critérios avaliados deste recorte.';
-  const criteria=criteriaSummary(state.filtered);$('criteriaCount').textContent=nf.format(criteria.length)+' critérios';
-  $('criteriaChart').innerHTML=criteria.length?criteria.map(c=>'<div class="criterion-row"><div class="criterion-line"><span>'+esc(c.name)+'</span><strong>'+(c.rated&&c.score!=null?c.score.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):percent(c.rate))+' <small>· '+nf.format(c.total)+'</small></strong></div><div class="bar-track" role="img" aria-label="'+esc(c.name+': '+c.good+' conformes, '+c.bad+' com inconformidade e '+c.pending+' não avaliados e '+(c.rated||0)+' por conceito')+'"><span class="good" style="width:'+c.good/c.total*100+'%"></span><span class="bad" style="width:'+c.bad/c.total*100+'%"></span><span class="pending" style="width:'+c.pending/c.total*100+'%"></span><span class="rated" style="width:'+(c.rated||0)/c.total*100+'%"></span></div></div>').join(''):'<div class="empty-chart">Nenhum critério encontrado nos filtros atuais.</div>';
-}
-function people(list){return list.length?list.map(p=>'<span>'+esc(p)+'</span>').join('<br>'):'<span class="no-comment">Não informado</span>';}
 function updateSectionLabels(){
-  const section=SECTIONS[state.section];uaLabels.all=section.allLabel;uaLabels.bad=state.section==='UC'?'Com ajustes':'Requer atenção';uaLabels.good=state.section==='UC'?'Avaliadas':'Classificadas';uaLabels.pending='Sem classificação';
+  const section=SECTIONS[state.section];uaLabels.all=section.allLabel;
   $('pageTitle').innerHTML=esc(section.title)+'<span class="title-dot">.</span>';
-  $('pageSubtitle').textContent='Confira os critérios, as classificações e os pareceres registrados na Monday.';
-  $('breadcrumbSection').textContent=section.label;$('allMaterialsLabel').textContent=section.allLabel;
-  $('cardBadLabel').textContent=uaLabels.bad;$('cardGoodLabel').textContent=uaLabels.good;$('cardPendingLabel').textContent=uaLabels.pending;
-  $('cardBadHelp').textContent='Critério ou status solicita ajuste';$('cardGoodHelp').textContent='Com resultado ou validação registrada';$('cardPendingHelp').textContent='Resultado do critério indisponível';
-  $('materialFilterLabel').textContent=section.itemLabel;$('materialColumn').textContent=section.itemLabel;
-  $('kpiMaterialLabel').textContent=section.plural+' no recorte';$('kpiMaterialHelp').textContent='Materiais com registros sincronizados';
-  $('kpiQualityLabel').textContent=state.section==='UC'?'Média dos conceitos':'Conformidade';$('kpiQualityHelp').textContent=state.section==='UC'?'Pontuação registrada na Monday':'Sobre critérios com resultado Sim/Não';
-  $('tableTitle').textContent=section.tableTitle;$('search').placeholder='Buscar material, critério ou comentário…';defaults.ua=section.allLabel;
+  $('pageSubtitle').textContent='Acompanhe os status e clique no material para consultar ou editar os comentários.';
+  $('breadcrumbSection').textContent=section.label;
+  $('materialFilterLabel').textContent='UA / material';$('materialColumn').textContent='UA';
+  $('tableTitle').textContent=section.tableTitle;$('search').placeholder='Buscar UC, UA, unidade ou comentário…';
+  defaults.ua='Todas as UAs / materiais';
 }
 function renderNavigation(){
   document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];$('navCount'+key).textContent=state.loaded?(state.sectionErrors[key]&&!rows.length?'!':nf.format(new Set(rows.map(r=>r.uaKey)).size)):'—';$('navCount'+key).title=state.sectionErrors[key]||'Materiais com registros nesta fonte';});
 }
 function selectSection(key){
-  if(!SECTIONS[key])return;state.section=key;state.records=state.sections[key]?.records||[];state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;$('search').value='';$('commentsOnly').checked=false;$('detailDialog').close();updateSectionLabels();renderNavigation();if(state.loaded)render();
+  if(!SECTIONS[key])return;state.section=key;state.records=state.sections[key]?.records||[];state.page=1;$('detailDialog').close();updateSectionLabels();renderNavigation();if(state.loaded)render();
 }
 function baseScope(skip='') {
   let rows=filterRecords(state.records,state.filters,'','all',skip);
@@ -141,13 +142,13 @@ function baseScope(skip='') {
   return rows;
 }
 function renderCards(scope){
-  const counts=countUAOutcomes(scope);
-  for(const [key,id] of [['all','countAll'],['bad','countBad'],['good','countGood'],['pending','countPending']])$(id).textContent=nf.format(counts[key]);
+  const counts=countWorkflow(scope);
+  for(const [key,id] of [['released','countReleased'],['validating','countValidating'],['design','countDesign'],['validated','countValidated']])$(id).textContent=nf.format(counts[key]);
   document.querySelectorAll('[data-ua-status]').forEach(b=>{const selected=b.dataset.uaStatus===state.status;b.disabled=!state.loaded;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
   $('selectionLabel').textContent=uaLabels[state.status];
 }
 function renderChips(){
-  const labels={track:'Esteira',uc:'UC',ua:SECTIONS[state.section].itemLabel,reviewers:'Revisor',specialists:'Especialista'};
+  const labels={track:'Esteira',batch:'Lote',uc:'UC',ua:SECTIONS[state.section].itemLabel,reviewers:'Revisor',specialists:'Especialista'};
   let html=Object.entries(state.filters).filter(([,v])=>v).map(([key,value])=>'<button data-clear-filter="'+key+'" aria-label="Remover filtro de '+esc(labels[key])+'">'+esc(labels[key])+': '+esc(value==='__missing__'?'Não informado':value)+'<span aria-hidden="true">×</span></button>').join('');
   if(state.status!=='all')html+='<button data-clear-filter="status" aria-label="Remover filtro de resultado">'+esc(uaLabels[state.status])+'<span aria-hidden="true">×</span></button>';
   if(state.query)html+='<button data-clear-filter="query" aria-label="Limpar pesquisa">Busca: '+esc(state.query)+'<span aria-hidden="true">×</span></button>';
@@ -156,25 +157,24 @@ function renderChips(){
 }
 function previewComment(group){return group.comments.find(c=>state.query&&norm(c.text).includes(norm(state.query)))||group.comments[0];}
 function renderTable(){
-  state.groups=groupUAs(state.filtered);const groups=state.groups;const pages=Math.max(1,Math.ceil(groups.length/state.size));state.page=Math.min(state.page,pages);
-  const start=(state.page-1)*state.size;const rows=groups.slice(start,start+state.size);
-  $('tableCount').textContent=nf.format(groups.length)+' '+SECTIONS[state.section].plural+' · '+nf.format(state.filtered.length)+' registro(s) no recorte';
-  $('tableBody').innerHTML=rows.length?rows.map((g,i)=>{
-    const s=g.summary;const badges=(s.good?'<span class="tag good">'+s.good+' conforme(s)</span>':'')+(s.bad?'<span class="tag bad">'+s.bad+' inconformidade(s)</span>':'')+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+(!s.total?'<span class="tag comment">Registro Monday</span>':'');
-    const comment=previewComment(g);
-    const comments=comment?'<span class="comment-label">'+highlightHTML(comment.criterion,state.query)+'</span><div class="comment-snippet">'+highlightHTML(comment.text,state.query)+'</div><small>'+nf.format(g.comments.length)+' parecer(es) · Leia no painel lateral</small>':'<span class="no-comment">Sem comentário registrado</span>';
-    return '<tr><td><strong>'+highlightHTML(g.uc,state.query)+'</strong><small>'+(g.ucId?'ID '+esc(g.ucId)+' · ':'')+esc(g.track)+'</small></td><td><strong>'+highlightHTML(g.ua,state.query)+'</strong><small>'+(g.uaId?'ID '+esc(g.uaId)+' · ':'')+esc([g.matrix,g.semester].filter(Boolean).join(' · '))+'</small>'+(g.materialStatuses.length?'<small class="material-status">Status Monday: '+esc(g.materialStatuses.join('; '))+'</small>':'')+'</td><td>'+people(g.specialists)+'</td><td>'+people(g.reviewers)+'</td><td class="result-tags">'+badges+'</td><td>'+comments+'</td><td><button class="view-button" data-detail="'+(start+i)+'" aria-label="Ver pareceres de '+esc(g.ua)+'">Ver pareceres <span aria-hidden="true">↗</span></button></td></tr>';
-  }).join(''):'<tr><td colspan="7" class="empty-table">'+(state.records.length?'Nenhuma avaliação encontrada. Ajuste ou limpe os filtros.':state.sectionErrors[state.section]||'Não há registros sincronizados de '+SECTIONS[state.section].title.toLowerCase()+' nesta fonte para esta conta.')+'</td></tr>';
-  renderCommentList(rows,start);
-  $('pageInfo').textContent=groups.length?nf.format(start+1)+'–'+nf.format(start+rows.length)+' de '+nf.format(groups.length)+' '+SECTIONS[state.section].plural+' · Página '+state.page+' de '+pages:'Nenhum material neste recorte';$('prev').disabled=state.page<=1;$('next').disabled=state.page>=pages;$('export').disabled=!state.filtered.length;
+  state.groups=groupUAs(state.filtered);const groups=state.groups;
+  const entries=state.view==='table'?materialTableRows(groups):groups.map((group,detailIndex)=>({group,detailIndex,name:group.ua,unit:group.unitLabel}));
+  const pages=Math.max(1,Math.ceil(entries.length/state.size));state.page=Math.min(state.page,pages);
+  const start=(state.page-1)*state.size;const rows=entries.slice(start,start+state.size);
+  $('tableCount').textContent=nf.format(groups.length)+' '+SECTIONS[state.section].plural+' · '+nf.format(state.filtered.length)+' registro(s) no recorte · Clique na UA para abrir os comentários.';
+  $('tableBody').innerHTML=rows.length?rows.map(({group:g,detailIndex:index,name,unit,unitId})=>
+    '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+highlightHTML(name,state.query)+'</span><span aria-hidden="true">↗</span></button></td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td></tr>'
+  ).join(''):'<tr><td colspan="3" class="empty-table">'+esc(state.records.length?'Nenhum material encontrado. Ajuste ou limpe os filtros.':state.sectionErrors[state.section]||'Não há registros sincronizados de '+SECTIONS[state.section].title.toLowerCase()+' nesta fonte para esta conta.')+'</td></tr>';
+  renderCommentList(rows);
+  $('pageInfo').textContent=entries.length?nf.format(start+1)+'–'+nf.format(start+rows.length)+' de '+nf.format(entries.length)+' linha(s)'+' · Página '+state.page+' de '+pages:'Nenhum material neste recorte';$('prev').disabled=state.page<=1;$('next').disabled=state.page>=pages;$('export').disabled=!state.filtered.length;
   $('tableView').hidden=state.view!=='table';$('commentList').hidden=state.view!=='list';
   document.querySelectorAll('[data-view]').forEach(b=>{const selected=b.dataset.view===state.view;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
 }
-function renderCommentList(rows,start){
-  const byUC=new Map();rows.forEach((g,i)=>{const key=g.ucId||g.uc;if(!byUC.has(key))byUC.set(key,{uc:g.uc,id:g.ucId,rows:[]});byUC.get(key).rows.push({g,index:start+i});});
-  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=uaOutcome(g);return '<button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span></span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
+function renderCommentList(rows){
+  const byUC=new Map(),seen=new Set();rows.forEach(({group:g,detailIndex:index})=>{if(seen.has(index))return;seen.add(index);const key=g.ucId||g.uc;if(!byUC.has(key))byUC.set(key,{uc:g.uc,id:g.ucId,rows:[]});byUC.get(key).rows.push({g,index});});
+  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span></span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
 }
-function render(){const scope=baseScope();state.filtered=selectUAOutcome(scope,state.status);renderFilters();renderCards(scope);renderChips();renderSummary();renderTable();}
+function render(){const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);renderChips();renderTable();}
 function portalHistoryMarkup(note){
   return '<details class="previous-versions comment-history" data-history-id="'+esc(note.id)+'"><summary>Histórico de comentários · versão '+note.revision+'</summary><div class="comment-history-content" aria-live="polite"></div></details>';
 }
@@ -187,17 +187,19 @@ function criterionCard(r,index){
   const monday=portal&&!r.portalAddition?'<details class="previous-versions"><summary>Texto atual da fonte Monday</summary><p class="comment source-comment">'+esc(r.mondayComment||'Sem comentário na fonte.')+'</p><small>A avaliação e a classificação da fonte permanecem registradas.</small></details>':'';
   return '<article class="detail-criterion '+r.status+'"><div><h3>'+highlightHTML(r.criterion,state.query)+'</h3><span class="tag '+r.status+'">'+esc(r.portalAddition?'Comentário do painel':r.status==='rated'?r.classification:statusLabel[r.status])+'</span></div>'+(r.question&&r.question!==r.criterion?'<p class="question">'+esc(r.question)+'</p>':'')+'<p class="comment">'+highlightHTML(r.comment||'Sem comentário registrado para este critério.',state.query)+'</p>'+attribution+'<small>Classificação: '+esc(r.classification||'Não informada')+' · Responsável pela avaliação: '+esc(r.specialists.join('; ')||'Não informado')+(r.date?' · '+esc(formatDate(r.date)):'')+'</small><small>'+esc(r.sourceLabel||'Critérios da esteira — Monday')+'</small>'+edit+'<div data-editor-slot="'+index+'"></div>'+(portal?portalHistoryMarkup(portal):'')+monday+versions+'</article>';
 }
-function showDetails(index){
-  const selected=state.groups[index];if(selected)openMaterialDetails(selected.uaKey);
+function showDetails(index,unit=null){
+  const selected=state.groups[index];if(selected)openMaterialDetails(selected.uaKey,unit);
 }
-function openMaterialDetails(key){
-  const g=groupUAs(state.records.filter(r=>r.uaKey===key))[0];if(!g)return;
-  state.dialogKey=key;state.editor=null;
-  $('dialogUA').textContent=g.ua;$('dialogUC').textContent=g.uc+(g.ucId?' · ID '+g.ucId:'');
+function openMaterialDetails(key,unit=null){
+  const records=state.records.filter(r=>r.uaKey===key);
+  const selected=unit?records.filter(r=>(r.unitSourceId||r.uaId||r.ua)===unit):records;
+  const g=groupUAs(selected)[0];if(!g)return;
+  state.dialogKey=key;state.dialogUnit=unit;state.editor=null;
+  $('dialogUA').textContent=unit?(g.displayUA||g.ua):g.ua;$('dialogUC').textContent=g.uc+(g.ucId?' · ID '+g.ucId:'');
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  $('dialogContent').innerHTML='<div class="detail-meta"><div><b>Esteira / Matriz</b>'+esc([g.track,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div><div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, execute o SQL 03.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  $('dialogContent').innerHTML='<div class="detail-meta"><div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, execute o SQL 03.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
 }
 function formatDateTime(value){if(/^\d{4}-\d{2}-\d{2}$/.test(value||''))return formatDate(value);const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Data não informada';}
@@ -225,7 +227,7 @@ async function saveComment(event){
   event.preventDefault();if(state.saving||!state.editor||!state.user)return;
   const validated=validateComment($('commentBody').value);const errorBox=$('commentEditorError');
   if(validated.error){errorBox.textContent=validated.error;errorBox.hidden=false;return;}
-  const editor={...state.editor},run=state.run,key=state.dialogKey;errorBox.hidden=true;setCommentBusy(true);
+  const editor={...state.editor},run=state.run,key=state.dialogKey,unit=state.dialogUnit;errorBox.hidden=true;setCommentBusy(true);
   try{
     const {data,error}=await client.rpc('nq_salvar_comentario',{p_source_key:editor.sourceKey,p_body:validated.body,
       p_comment_id:editor.id,p_expected_revision:editor.revision,p_mode:editor.mode,p_expected_source_body:editor.sourceBody});
@@ -233,7 +235,7 @@ async function saveComment(event){
     const saved=data?.[0];if(!saved?.id)throw new Error('Resposta de gravação incompleta');
     state.portalComments=state.portalComments.filter(c=>c.id!==saved.id);state.portalComments.push(saved);
     state.sections=applyPortalComments(state.baseSections,state.portalComments);state.records=state.sections[state.section].records;
-    setCommentBusy(false);state.editor=null;renderNavigation();render();openMaterialDetails(key);
+    setCommentBusy(false);state.editor=null;renderNavigation();render();openMaterialDetails(key,unit);
     toast('Comentário salvo. As versões anteriores continuam no histórico.');
     const updatedIndex=state.detailRecords.findIndex(r=>r.portal?.id===saved.id);
     const savedArticle=$('dialogContent').querySelector('[data-editor-slot="'+updatedIndex+'"]')?.closest('article');
@@ -281,19 +283,19 @@ $('refresh').addEventListener('click',load);
 document.querySelectorAll('[data-filter]').forEach(select=>select.addEventListener('change',()=>{state.filters[select.dataset.filter]=select.value;state.page=1;render();}));
 $('clearFilters').addEventListener('click',()=>{state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;$('search').value='';$('commentsOnly').checked=false;if(state.loaded)render();});
 document.querySelectorAll('[data-ua-status]').forEach(b=>b.addEventListener('click',()=>{if(!state.loaded)return;state.status=state.status===b.dataset.uaStatus?'all':b.dataset.uaStatus;state.page=1;render();}));
-document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;if(state.loaded)renderTable();}));
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;state.page=1;if(state.loaded)renderTable();}));
 $('commentsOnly').addEventListener('change',()=>{state.commentsOnly=$('commentsOnly').checked;state.page=1;if(state.loaded)render();});
 $('filterChips').addEventListener('click',e=>{const b=e.target.closest('[data-clear-filter]');if(!b)return;const key=b.dataset.clearFilter;if(key==='status')state.status='all';else if(key==='query'){state.query='';$('search').value='';}else if(key==='comments'){state.commentsOnly=false;$('commentsOnly').checked=false;}else delete state.filters[key];state.page=1;render();});
 let searchTimer;$('search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.query=$('search').value;state.page=1;if(state.loaded)render();},150);});
 $('prev').addEventListener('click',()=>{state.page--;renderTable();});$('next').addEventListener('click',()=>{state.page++;renderTable();});
-for(const id of ['tableBody','commentList'])$(id).addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(b)showDetails(Number(b.dataset.detail));});
+for(const id of ['tableBody','commentList'])$(id).addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(b)showDetails(Number(b.dataset.detail),b.dataset.unitId||null);});
 for(const id of ['closeDialog','closeDrawer'])$(id).addEventListener('click',()=>{$('detailDialog').close();});
-$('detailDialog').addEventListener('close',()=>{document.body.classList.remove('drawer-open');state.editor=null;state.detailRecords=[];state.dialogKey=null;});
+$('detailDialog').addEventListener('close',()=>{document.body.classList.remove('drawer-open');state.editor=null;state.detailRecords=[];state.dialogKey=null;state.dialogUnit=null;});
 $('detailDialog').addEventListener('cancel',e=>{if(state.saving)e.preventDefault();});
 $('dialogContent').addEventListener('submit',e=>{if(e.target.id==='commentEditor')saveComment(e);});
 $('dialogContent').addEventListener('input',e=>{if(e.target.id==='commentBody')updateCommentChars();});
 $('dialogContent').addEventListener('toggle',e=>{if(e.target.matches('.comment-history'))loadCommentHistory(e.target);},true);
-$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
+$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
 $('export').addEventListener('click',()=>{if(!state.loaded||!state.filtered.length)return;const url=URL.createObjectURL(new Blob([exportCSV(state.filtered)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Resultados_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exportação concluída com o recorte selecionado.');});
 document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>selectSection(b.dataset.section)));

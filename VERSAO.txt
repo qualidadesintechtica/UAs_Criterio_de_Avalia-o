@@ -1,6 +1,8 @@
-Comentários e avaliações — Edição com histórico V4
+Comentários e avaliações — Filtros globais e visualização V5
 15/10/2026
-Menu: Planilha de entrada, UA, BDQ e UC.
-Professores podem adicionar e editar comentários no painel, com autor, data e histórico.
-Original da Monday preservado; as alterações do painel são salvas no Supabase.
-Requer a execução de supabase/03_COMENTARIOS_COM_HISTORICO.sql após os SQLs 01 e 02.
+Esteiras das quatro abas, filtro Lote e manutenção das seleções entre abas.
+Cartões: Liberada; Em validação; Requer análise do design; Validadas.
+Tabela: UC; UA; Unidade da UA. Clique para abrir os comentários.
+Resumos e gráficos abaixo dos filtros removidos; tema claro off-white.
+Login, base, comentários, edição, histórico, lista e exportação preservados.
+Atualização: supabase/04_LOTE_E_STATUS_MATERIAIS.sql, após os SQLs 01 a 03.

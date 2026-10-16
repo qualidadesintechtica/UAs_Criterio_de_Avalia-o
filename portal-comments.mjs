@@ -3,6 +3,7 @@ import {text} from './core.mjs';
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){
   if(record.portalAddition)return record.portal.source_key;
+  if(record.inventoryOnly&&record.materialKey)return 'material:'+record.materialKey;
   if(record.raw?.subitem_id!=null)return 'criterio:'+text(record.raw.subitem_id);
   if(record.id?.startsWith('comment:'))return 'parecer:'+record.id.slice(8);
   if(record.sourceEvent)return 'avaliacao:'+record.sourceEvent+':'+(record.criterionKey||'metadata');
@@ -20,13 +21,14 @@ export function applyPortalComments(sections,comments){
   };
   return Object.fromEntries(Object.entries(sections).map(([kind,section])=>{
     const records=[];
+    const attached=new Set();
     for(const original of section.records){
       records.push(overlayRecord(original));
       // Complementos ancorados a uma classificação anterior continuam no material.
-      const refs=[original,...(original.history||[])];
-      const seen=new Set();
-      for(const ref of refs)for(const note of (bySource.get(commentSourceKey(ref))||[]).filter(c=>c.mode==='addition')){
-        if(seen.has(note.id))continue;seen.add(note.id);
+      const refs=[original,...(original.history||[])].map(ref=>({key:commentSourceKey(ref),criterion:ref.criterion}));
+      if(original.materialKey)refs.push({key:'material:'+original.materialKey,criterion:'Registro do material'});
+      for(const ref of refs)for(const note of (bySource.get(ref.key)||[]).filter(c=>c.mode==='addition'||(c.mode==='source'&&c.source_key.startsWith('material:')&&c.source_key!==commentSourceKey(original)))){
+        if(attached.has(note.id))continue;attached.add(note.id);
         records.push({...original,
           id:'portal:'+note.id,criterion:'Comentário do professor',question:'Referência: '+ref.criterion,
           comment:note.body,status:'comment',commentOnly:true,metadataOnly:false,
