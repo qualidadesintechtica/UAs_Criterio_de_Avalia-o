@@ -1,10 +1,18 @@
-# Comentários e avaliações dos materiais — V5
+# Comentários e avaliações dos materiais — V6
 
 Página para GitHub Pages com login institucional do BI, menu lateral **Planilha de entrada, UA, BDQ e UC**, filtros compartilhados e comentários com histórico.
 
 ## Instalar ou atualizar
 
-Siga `COMECE_AQUI.md`. A atualização desta versão é `supabase/04_LOTE_E_STATUS_MATERIAIS.sql`, após os SQLs 01, 02 e 03. O script acrescenta colunas às views existentes e atualiza a função de comentários sem remover registros nem versões anteriores. A execução dos SQLs no seu projeto e a publicação no GitHub não foram feitas por este pacote.
+Siga `COMECE_AQUI.md`. Execute somente `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql` para esta atualização. O arquivo reúne a preparação das views, lote, status, comentários e domínio Ulife sobre as fontes existentes do BI. Instala a estrutura de comentários quando ausente e preserva os registros já existentes. Os arquivos 01 a 04 permanecem como histórico e não devem ser executados depois do 05.
+
+Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. A página deve mostrar **V6 · 16/10/2026** no login e no painel. CSS, configuração, SDK e módulos têm links com versão para reduzir a reutilização de arquivos anteriores.
+
+A execução do SQL no seu projeto e a publicação no GitHub não foram feitas por este pacote.
+
+## Domínios autorizados
+
+São permitidos `@animaeducacao.com.br` e `@ulife.com.br`, com conta cadastrada no BI. A mesma regra protege as quatro views de avaliações/materiais, as políticas de leitura de comentários/histórico e a função de gravação. O SQL 05 centraliza a verificação em `nq_painel_acesso_institucional`, sem elevar privilégios. Domínios externos, subdomínios não autorizados e usuários anônimos continuam bloqueados no painel. A inclusão de domínio não cria contas nem muda senhas. O carregamento verifica a regra no servidor e avisa quando a página V6 encontra uma base ainda não atualizada.
 
 ## Dados da Monday
 
@@ -62,7 +70,7 @@ Foram removidos os indicadores e gráficos abaixo dos filtros. O detalhamento de
 
 Adicionar comentário cria uma informação complementar. Editar comentário modifica um texto existente. Histórico de comentários mostra cada versão, inclusive o original da Monday preservado pelo banco na primeira edição. Autor, e-mail, data e número da versão são registrados no servidor. O texto é tratado como texto puro, com limite de 10.000 caracteres.
 
-A edição continua colaborativa entre as contas institucionais já autorizadas (`@animaeducacao.com.br`). A função de gravação verifica a sessão e o domínio. O navegador não recebe INSERT, UPDATE ou DELETE diretamente nas tabelas. RLS protege a leitura. Versões desatualizadas geram conflito e mantêm o texto digitado; reenvios da mesma gravação não duplicam o histórico.
+A edição continua colaborativa entre as contas institucionais já autorizadas (`@animaeducacao.com.br` ou `@ulife.com.br`). A função de gravação verifica a sessão e o domínio. O navegador não recebe INSERT, UPDATE ou DELETE diretamente nas tabelas. RLS protege a leitura. Versões desatualizadas geram conflito e mantêm o texto digitado; reenvios da mesma gravação não duplicam o histórico.
 
 Materiais sem avaliação também podem receber comentários. Quando os critérios chegam depois, seus comentários continuam no material. Edições vinculadas a classificações anteriores continuam acessíveis no histórico da classificação.
 
@@ -79,18 +87,20 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 - `monday-data.mjs`: formulários e pareceres sincronizados.
 - `workflow.mjs`: status, catálogo global de filtros, inventário e linhas da tabela.
 - `portal-comments.mjs`: comentários, versões e mensagens de conflito.
+- `auth-policy.mjs`: validação dos domínios autorizados no cliente.
+- `release.mjs`: versão visível da entrega.
 - `view-model.mjs`: destaque seguro da pesquisa e funções de resultado dos critérios.
 - `supabase/`: instalação incremental das fontes e da gravação protegida.
 - `config.js`, `vendor/supabase.js`: configuração pública e SDK.
 
-Nunca use uma chave administrativa em `config.js`. As consultas e gravações continuam condicionadas à sessão e ao domínio institucional no banco. O script 04 não amplia os domínios nem remove proteções anteriores.
+Nunca use uma chave administrativa em `config.js`. As consultas e gravações continuam condicionadas à sessão e ao domínio institucional no banco. O SQL 05 acrescenta somente o domínio Ulife à autorização institucional e mantém as proteções dos comentários e do histórico.
 
 ## Verificação
 
-Execute `node --test tests/*.test.mjs`: passaram **50 testes de lógica**, incluindo os testes anteriores de vínculos, critérios, conceitos, pareceres, histórico, filtros e exportação, além dos novos testes de lote, catálogo global, unidade e status.
+Execute `node --test tests/*.test.mjs`: passaram **54 testes de lógica**, incluindo os 50 testes anteriores e os casos de acesso Ânima/Ulife, maiúsculas, sufixos falsos, subdomínios e endereços inválidos.
 
-Em PostgreSQL embarcado (PGlite), a instalação completa e a repetição do SQL 04 foram verificadas. Seis verificações confirmaram a preservação de comentários antigos e seu histórico, novas colunas, edição após a migração, comentários em materiais sem avaliação, conflitos e controle de acesso.
+Em PostgreSQL embarcado (PGlite), nove verificações confirmaram a migração V5 → V6 sem perda do histórico, leitura das quatro views e dos comentários pelos dois domínios, gravação Ulife com autoria, conflitos, reenvios, proteção contra exclusão, bloqueio de outros domínios e anônimos, repetição segura do script e instalação usando somente o SQL 05 sobre as fontes do BI.
 
-Em DOM simulado, foram exercitados filtros nas quatro abas, manutenção das escolhas, cartões, tabela com três colunas, clique na linha, lista, tema, unidade de UC, visão completa, gravação, edição, histórico, conflitos e encerramento da sessão.
+Em DOM simulado, foram verificados login Ulife, bloqueio de domínio externo, marca V6, links com versão, filtros nas quatro abas, cartões, tabela de três colunas, abertura dos comentários, criação, edição, histórico, texto seguro, lista, alternância do tema e saída da sessão.
 
 A execução no seu projeto Supabase, o login institucional real, a inspeção visual em navegador e a publicação no GitHub não foram realizadas aqui.

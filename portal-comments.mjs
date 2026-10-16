@@ -1,4 +1,4 @@
-import {text} from './core.mjs';
+import {text} from './core.mjs?v=v6-ulife-20261016';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){
@@ -50,7 +50,7 @@ export function validateComment(value){
 
 export function commentError(error){
   if(/NQ_COMMENT_CONFLICT|NQ_SOURCE_CHANGED/.test(error?.message||''))return 'Este registro mudou enquanto você editava. Seu texto foi mantido. Copie-o, atualize os dados e confira a versão mais recente antes de tentar novamente.';
-  if(error?.code==='PGRST202'||error?.code==='42P01'||error?.code==='PGRST205')return 'A edição de comentários ainda não foi instalada. Solicite a execução do SQL 03 no Supabase e atualize os dados.';
+  if(error?.code==='PGRST202'||error?.code==='42P01'||error?.code==='PGRST205')return 'A edição de comentários ainda não foi instalada. Solicite a execução do SQL 05 no Supabase e atualize os dados.';
   if(error?.code==='42501'||error?.code==='PGRST301'||error?.status===401||error?.status===403)return 'Sua sessão expirou ou sua conta não tem permissão para gravar. Seu texto foi mantido; copie-o antes de entrar novamente.';
   if(/NQ_SOURCE_NOT_FOUND/.test(error?.message||''))return 'O registro de origem não está disponível. Seu texto foi mantido; copie-o e atualize os dados.';
   return 'Não foi possível confirmar a gravação. Seu texto foi mantido. Tente novamente; o histórico evita duplicar uma gravação já concluída.';

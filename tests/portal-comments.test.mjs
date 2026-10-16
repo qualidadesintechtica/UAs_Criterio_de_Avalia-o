@@ -78,7 +78,7 @@ test('valida vazio, limite de caracteres e texto puro',()=>{
 });
 test('explica conflito, sessão e instalação sem expor mensagens brutas',()=>{
   assert.match(commentError({message:'NQ_COMMENT_CONFLICT'}),/Seu texto foi mantido/);
-  assert.match(commentError({code:'PGRST202'}),/SQL 03/);
+  assert.match(commentError({code:'PGRST202'}),/SQL 05/);
   assert.match(commentError({code:'42501'}),/sessão expirou/);
   assert.ok(!commentError({message:'secret internal query'}).includes('secret'));
 });

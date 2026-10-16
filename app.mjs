@@ -1,9 +1,11 @@
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs';
-import {highlightHTML} from './view-model.mjs';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows} from './workflow.mjs';
-import {SECTIONS,buildSections} from './navigation.mjs';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-ulife-20261016';
+import {RELEASE} from './release.mjs?v=v6-ulife-20261016';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-ulife-20261016';
+import {highlightHTML} from './view-model.mjs?v=v6-ulife-20261016';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows} from './workflow.mjs?v=v6-ulife-20261016';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-ulife-20261016';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-ulife-20261016';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-ulife-20261016';
 const $=id=>document.getElementById(id);
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
@@ -34,7 +36,7 @@ function clearSensitive(){
 }
 function showLogin(message=''){clearSensitive();$('loginError').textContent=message;$('loginError').hidden=!message;$('password').value='';}
 async function activate(user){
-  if (!window.UA_CONFIG.allowedDomains.includes(norm(user.email).split('@').pop())) { await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui um domínio institucional autorizado.');return; }
+  if (!isInstitutionalEmail(user.email,window.UA_CONFIG.allowedDomains)) { await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui um domínio institucional autorizado.');return; }
   state.user=user;const name=user.user_metadata?.nome || user.user_metadata?.full_name || user.email.split('@')[0];
   $('userName').textContent=name;$('userEmail').textContent=user.email;$('avatar').textContent=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   $('boot').hidden=true;$('login').hidden=true;$('dashboard').hidden=false;
@@ -68,6 +70,10 @@ async function readAll(table,columns,order,signal,kind){
   }
   return rows;
 }
+async function readAccessPolicy(signal){
+  const {data,error}=await client.rpc('nq_painel_acesso_institucional',{}).abortSignal(signal);
+  if(error)throw error;return data===true;
+}
 async function load(){
   if(state.loading)return;
   state.loading=true;const run=++state.run;const controller=new AbortController();state.controller=controller;const signal=controller.signal;
@@ -77,7 +83,7 @@ async function load(){
   try{
     const {data:auth,error:authError}=await client.auth.getUser();
     if(authError||!auth.user){showLogin('Sua sessão expirou. Entre novamente.');return;}
-    if(!window.UA_CONFIG.allowedDomains.includes(norm(auth.user.email).split('@').pop())){await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui acesso institucional.');return;}
+    if(!isInstitutionalEmail(auth.user.email,window.UA_CONFIG.allowedDomains)){await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui acesso institucional.');return;}
     const criteriaColumns='*';
     const materialColumns='*';
     const formsColumns='id,monday_item_id,nome_item,data_avaliacao,data_avaliacao_hora,avaliador,categoria_material,matriz_oferta,conceito_final,validacao_material_item_id,indicador_1,indicador_2,indicador_3,indicador_4,indicador_5,indicador_6,indicador_7,indicador_1_score,indicador_2_score,indicador_3_score,indicador_4_score,indicador_5_score,indicador_6_score,indicador_7_score,synced_at,updated_at';
@@ -87,7 +93,8 @@ async function load(){
       readAll(window.UA_CONFIG.materialsView,materialColumns,'chave_material',signal,'materials'),
       readAll(window.UA_CONFIG.assessmentsView,formsColumns,'id',signal,'forms'),
       readAll(window.UA_CONFIG.commentsView,commentsColumns,'id',signal,'comments'),
-      readAll('nq_comentarios','*','id',signal,'portal')
+      readAll('nq_comentarios','*','id',signal,'portal'),
+      readAccessPolicy(signal)
     ]);
     if(run!==state.run)return;
     for(const result of results.slice(0,2))if(result.status==='rejected')throw result.reason;
@@ -103,7 +110,8 @@ async function load(){
     $('updatedAt').textContent=(formData.lastSync?'Sincronização Monday: '+new Date(formData.lastSync).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · ':'')+'Consulta: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const warnings=[];if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
-    if(materials.length&&!Object.hasOwn(materials[0],'bloco'))warnings.push('Execute o SQL 04 para disponibilizar o lote e os status completos neste painel.');
+    if(results[5].status!=='fulfilled'||!results[5].value)warnings.push('A base ainda não confirmou a atualização V6. Solicite a atualização do painel ao responsável para habilitar o acesso Ulife e os recursos desta versão.');
+    if(materials.length&&!Object.hasOwn(materials[0],'bloco'))warnings.push('Solicite a atualização V6 da base para disponibilizar o lote e os status completos neste painel.');
     $('dataWarning').textContent=warnings.join(' ');$('dataWarning').hidden=!warnings.length;
     renderNavigation();updateSectionLabels();render();
   }catch(error){
@@ -199,7 +207,7 @@ function openMaterialDetails(key,unit=null){
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  $('dialogContent').innerHTML='<div class="detail-meta"><div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, execute o SQL 03.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  $('dialogContent').innerHTML='<div class="detail-meta"><div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div><div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
 }
 function formatDateTime(value){if(/^\d{4}-\d{2}-\d{2}$/.test(value||''))return formatDate(value);const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Data não informada';}
@@ -273,7 +281,7 @@ async function start(){
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();if(!client)return;
   const email=$('email').value.trim();
-  if(!window.UA_CONFIG.allowedDomains.includes(norm(email).split('@').pop())){$('loginError').textContent='Use seu e-mail @animaeducacao.com.br cadastrado no BI.';$('loginError').hidden=false;return;}
+  if(!isInstitutionalEmail(email,window.UA_CONFIG.allowedDomains)){$('loginError').textContent='Use seu e-mail @animaeducacao.com.br ou @ulife.com.br cadastrado no BI.';$('loginError').hidden=false;return;}
   $('loginSubmit').disabled=true;$('loginError').hidden=true;
   try{const {data,error}=await client.auth.signInWithPassword({email,password:$('password').value});$('password').value='';if(error)throw error;if(!data.user)throw new Error('Login não concluído');await activate(data.user);}catch(error){$('loginError').textContent=friendly(error);$('loginError').hidden=false;}finally{$('loginSubmit').disabled=false;}
 });
@@ -302,5 +310,6 @@ document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click
 function setTheme(theme){document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-label',theme==='dark'?'Ativar tema claro':'Ativar tema escuro');$('themeToggle').title=theme==='dark'?'Tema claro':'Tema escuro';}
 let initialTheme;try{initialTheme=localStorage.getItem('ua-results-theme');}catch{}setTheme(initialTheme==='dark'||initialTheme==='light'?initialTheme:window.matchMedia?.('(prefers-color-scheme: dark)').matches?'dark':'light');
 $('themeToggle').addEventListener('click',()=>{const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';setTheme(theme);try{localStorage.setItem('ua-results-theme',theme);}catch{}});
+document.querySelectorAll('[data-release]').forEach(el=>{el.textContent=RELEASE.version+' · '+RELEASE.date;});
 updateSectionLabels();renderNavigation();
 start();

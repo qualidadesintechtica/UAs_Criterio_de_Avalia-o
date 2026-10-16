@@ -1,52 +1,45 @@
-# Atualizar a página no GitHub Pages — V5
+# Publicar a V6 com acesso Ulife
 
-## Se você já usa a versão anterior
+## Atualizar o banco
 
-1. No Supabase do BI, abra **SQL Editor → New query**.
-2. Execute `supabase/04_LOTE_E_STATUS_MATERIAIS.sql`. Ele deve ser executado depois dos arquivos 01, 02 e 03. Se ainda não instalou a edição de comentários, execute o arquivo 03 antes do 04.
-3. Extraia este ZIP e substitua os arquivos e pastas no repositório GitHub, mantendo `index.html` na raiz.
-4. Aguarde a atualização do GitHub Pages e recarregue a página com **Ctrl + F5**.
-5. Entre com a conta institucional do BI e clique em **Atualizar dados**.
+1. Extraia o ZIP em uma pasta nova.
+2. Abra o projeto Supabase do BI → **SQL Editor → New query**.
+3. Copie e execute todo o arquivo **supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql**.
+4. Aguarde a mensagem **V6 instalada: domínios Ânima e Ulife, lote, status e histórico preservado.**
 
-O SQL 04 acrescenta lote e status às consultas protegidas e mantém os comentários e históricos existentes. Ele também permite comentar materiais que ainda não receberam avaliação. Esse SQL não foi executado no seu projeto nesta entrega.
+O arquivo 05 reúne a atualização das consultas, o lote, os status, os comentários e os dois domínios. Ele funciona sobre as fontes da Monday já existentes no seu BI e não exige executar os arquivos 01 a 04 antes. Se você já executou esses arquivos, execute somente o 05 nesta atualização. Não execute um SQL antigo depois do 05.
 
-Não execute novamente os SQLs antigos depois do 04. Em uma instalação nova, siga a ordem abaixo.
+Os comentários e seus históricos anteriores são preservados. O script usa uma transação: se falhar, a execução é desfeita. O SQL não foi executado no seu projeto nesta entrega.
 
-## Primeira instalação
+## Substituir os arquivos da página
 
-1. Execute `supabase/01_PROTEGER_ACESSO_RESULTADOS_UAS.sql`.
-2. Execute `supabase/02_CONECTAR_MENUS_E_PARECERES_MONDAY.sql`.
-3. Execute `supabase/03_COMENTARIOS_COM_HISTORICO.sql`.
-4. Execute `supabase/04_LOTE_E_STATUS_MATERIAIS.sql`.
-5. Envie os arquivos e pastas deste ZIP ao repositório em **Add file → Upload files**.
-6. Em **Settings → Pages**, selecione **Deploy from a branch → main → / (root)** e clique em **Save**.
+1. No repositório GitHub, abra a pasta usada pelo GitHub Pages.
+2. Envie **todo o conteúdo extraído do ZIP**, substituindo os arquivos anteriores e incluindo os arquivos novos. Mantenha **index.html na raiz publicada**, junto de config.js, app.mjs, auth-policy.mjs, release.mjs, workflow.mjs, os outros módulos e as pastas vendor e supabase.
+3. Não envie o ZIP fechado como se ele fosse a página. Não coloque os arquivos dentro de uma segunda pasta abaixo da raiz publicada.
+4. Aguarde a publicação terminar no GitHub. Abra a página e recarregue com **Ctrl + F5**.
+5. Confira a marca **V6 · 16/10/2026** no login e no topo do painel. Se essa marca não aparecer, a página exibida ainda não é a V6.
 
-Se ocorrer um erro no SQL, resolva a instalação antes de publicar. Os scripts usam transações.
+Os arquivos da V6 usam um identificador de versão nos links do CSS, da configuração, do SDK e dos módulos. Isso reduz a reutilização de arquivos antigos pelo navegador. A marca visível permite verificar o HTML que foi publicado. O painel também consulta a regra de acesso no banco e avisa quando a atualização V6 ainda não foi confirmada.
 
-## O que mudou
+## Acesso
 
-- **Esteiras**: o filtro reúne as esteiras presentes nas quatro abas, inclusive na Planilha de entrada.
-- **Lote**: novo filtro, com os valores do campo Bloco da base.
-- **Filtros compartilhados**: esteira, lote, UC, UA/material, revisor e especialistas funcionam nas quatro abas. As escolhas são mantidas ao trocar de aba. Pesquisa, cartão selecionado e opção Somente com comentários também são mantidos. Use **Limpar filtros** para voltar à visão completa.
-- **Cartões superiores**: Liberada, Em validação, Requer análise do design e Validadas. Clique no cartão para filtrar; clique novamente para mostrar todos os status.
-- **Resumo inferior**: removidos os indicadores e gráficos abaixo dos filtros.
-- **Tabela**: somente UC, UA e Unidade da UA. Clique na linha ou no nome da UA para abrir os comentários. O nome da UA também funciona pelo teclado.
-- **Tema claro**: fundo e superfícies em off-white. O tema escuro continua disponível.
+São permitidos **@animaeducacao.com.br** e **@ulife.com.br**, com uma conta já cadastrada no Supabase do BI. Liberar o domínio não cria contas e não muda senhas. Não use chave administrativa nos arquivos da página.
 
-Os cartões seguem o status registrado na base, sem transformar uma inconformidade de critério em status do material. Materiais pausados ou com outros status continuam na visão completa e podem ficar fora dos quatro cartões. O botão **Limpar filtros** remove também o cartão selecionado.
+A permissão dos dois domínios está na página e no banco: leitura das avaliações, dos pareceres, dos comentários e do histórico, além da gravação de comentários. Outros domínios e acesso anônimo continuam bloqueados para este painel.
 
-Na aba UC, as unidades aparecem em linhas distintas. O clique abre os registros da unidade selecionada; **Ver todos os registros da UC** mantém o acesso à visão completa.
+## Como conferir as alterações
 
-Os filtros não são apagados ao trocar de aba. Se a aba não tiver registros correspondentes às escolhas atuais, a tabela ficará vazia até você alterar ou limpar os filtros.
+- **Esteira** oferece o catálogo conjunto das quatro abas, inclusive na Planilha de entrada.
+- **Lote** usa o campo Bloco da base.
+- Os seis filtros mantêm as seleções ao trocar entre Planilha de entrada, UA, BDQ e UC.
+- Os cartões são **Liberada**, **Em validação**, **Requer análise do design** e **Validadas**. Clique novamente no cartão selecionado para mostrar todos os status.
+- Os indicadores e gráficos abaixo dos filtros foram removidos.
+- A tabela mostra somente **UC, UA e Unidade da UA**. Clique na linha ou no nome da UA para abrir os comentários.
+- O tema claro usa **off-white**; o tema escuro continua disponível.
+- Login, busca, lista de comentários, paginação, exportação, edição e histórico foram mantidos.
 
-## O que foi preservado
+Na aba UC, cada unidade aparece em sua linha. O clique abre os registros daquela unidade; **Ver todos os registros da UC** mantém o acesso à visão completa.
 
-Login institucional, menu lateral, conexão com a base Monday já sincronizada no Supabase, busca, lista de comentários, paginação, exportação CSV, edição dos comentários e histórico com autor, data e versões anteriores.
+As escolhas não são apagadas ao trocar de aba. Uma aba sem resultados para o recorte atual fica vazia. Use **Limpar filtros** para voltar à visão completa.
 
-Na opção **Ver pareceres**, use **Adicionar comentário**, **Editar comentário** e **Histórico de comentários**. As edições continuam colaborativas entre as contas institucionais autorizadas. O original da Monday fica preservado; a edição no painel não altera o texto nem a classificação na Monday.
-
-O CSV mantém os campos anteriores e acrescenta UA de referência, Unidade da UA e Lote.
-
-O botão **Atualizar dados** consulta novamente o Supabase. As mudanças feitas na Monday aparecem depois que a sincronização existente as registrar.
-
-Use seu e-mail `@animaeducacao.com.br` e a senha cadastrada no BI. Nunca coloque uma chave administrativa do Supabase nos arquivos da página.
+As edições continuam salvas no painel, com autor, data e versões anteriores. O original da Monday permanece preservado. A edição no painel não altera o texto nem a classificação da Monday.

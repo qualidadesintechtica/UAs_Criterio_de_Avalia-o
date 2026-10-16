@@ -1,8 +1,11 @@
-Comentários e avaliações — Filtros globais e visualização V5
-15/10/2026
-Esteiras das quatro abas, filtro Lote e manutenção das seleções entre abas.
+V6 · ULIFE · 16/10/2026
+Resultados e comentários dos materiais — Sintechtica
+Domínios autorizados: @animaeducacao.com.br e @ulife.com.br.
+Atualização única: supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql.
+Marca visível na tela: V6 · 16/10/2026.
+Inclui esteiras globais, filtro Lote e seleções mantidas entre as quatro abas.
 Cartões: Liberada; Em validação; Requer análise do design; Validadas.
 Tabela: UC; UA; Unidade da UA. Clique para abrir os comentários.
-Resumos e gráficos abaixo dos filtros removidos; tema claro off-white.
-Login, base, comentários, edição, histórico, lista e exportação preservados.
-Atualização: supabase/04_LOTE_E_STATUS_MATERIAIS.sql, após os SQLs 01 a 03.
+Tema claro off-white; resumos e gráficos abaixo dos filtros removidos.
+Login, conexão, edição, histórico, busca, lista, paginação e exportação preservados.
+Arquivos com identificador de versão para evitar reutilização dos recursos antigos.
