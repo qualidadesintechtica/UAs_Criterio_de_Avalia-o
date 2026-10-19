@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-1-nomes-pe-20261016';
+import {text} from './core.mjs?v=v6-2-categoria-pe-20261019';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

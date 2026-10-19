@@ -17,8 +17,9 @@ export function isUA(row) {
 }
 export function materialKind(row) {
   if(isUA(row))return 'UA';
-  const category=norm(row.categoria_material);
-  if(category==='pe'||/^planilhas? de entrada\b/.test(category))return 'PE';
+  const category=norm(row.categoria_material).replace(/\s+/g,' ');
+  // Na base de validações, Plano de Produção é a categoria da Planilha de entrada.
+  if(category==='pe'||category==='plano de producao'||/^planilhas? de entrada\b/.test(category))return 'PE';
   if(category==='bdq'||/^bancos? de questoes\b/.test(category)||['avaliacao a1','avaliacao a3'].includes(category))return 'BDQ';
   if(category==='uc'||/^unidades? curriculares\b/.test(category))return 'UC';
   return null;

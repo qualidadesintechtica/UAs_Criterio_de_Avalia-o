@@ -8,7 +8,7 @@ const material={monday_item_validacao:'10',id_titulo:'UC_SAU_TESTE_26',id_ua:'UC
 const form={id:'form1',monday_item_id:'100',nome_item:'UC_SAU_TESTE_26_UA01',avaliador:'Revisor real',categoria_material:'UC',data_avaliacao:'2026-10-14',synced_at:'2026-10-14T20:00:00Z',conceito_final:'Validado',indicador_1:'Excelente',indicador_1_score:1};
 test('menu reconhece as categorias reais, incluindo A1 e A3 como BDQ',()=>{
   for(const [category,kind] of [['Planilha de Entrada','PE'],['Unidade de Aprendizagem','UA'],['UC','UC'],['Avaliação A1','BDQ'],['Avaliação A3','BDQ']])assert.equal(materialKind({categoria_material:category}),kind);
-  assert.equal(materialKind({categoria_material:'Plano de Produção'}),null);
+  assert.equal(materialKind({categoria_material:'Plano de Produção'}),'PE');
 });
 test('cada seção recebe somente sua categoria',()=>{
   const rows=['Planilha de Entrada','Unidade de Aprendizagem','Avaliação A1','UC'].map((category,i)=>({categoria_material:category,subitem_id:String(i),parent_item_id:String(i+10),criterio:'Critério',entra_no_calculo:true}));

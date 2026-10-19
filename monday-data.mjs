@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel} from './core.mjs?v=v6-1-nomes-pe-20261016';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel} from './core.mjs?v=v6-2-categoria-pe-20261019';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 
@@ -20,6 +20,22 @@ function index(rows,field){const result=new Map();for(const r of rows){const key
 function latest(rows){return [...rows].sort((a,b)=>stamp(b)-stamp(a)||text(b.id).localeCompare(text(a.id),undefined,{numeric:true}))[0];}
 function stamp(row){for(const key of ['data_avaliacao_hora','data_avaliacao','updated_at','synced_at']){const n=Date.parse(row[key]||'');if(Number.isFinite(n))return n;}return 0;}
 
+function entryPlanMaterial(row,code,byID,byUA,byUC,byName){
+  const pick=(rows,checkOffer=false)=>{
+    const candidates=(rows||[]).filter(m=>materialKind(m)==='PE'&&(!checkOffer||
+      [['matriz_oferta',row.matriz_oferta],['esteira_producao',row.esteira_producao],
+        ['semestre_oferta',row.semestre_oferta],['bloco',row.bloco||row.lote]]
+        .every(([field,value])=>!text(value)||norm(m[field])===norm(value))));
+    // Uma UC pode ter mais de um plano, lote ou oferta. Só um vínculo inequívoco
+    // permite herdar o status do material e reuni-lo ao formulário.
+    const sources=new Set(candidates.map(m=>text(m.monday_item_validacao)||text(m.chave_material)));
+    return sources.size<=1?unique(candidates):null;
+  };
+  return pick(byID.get(norm(row.validacao_material_item_id)))||
+    pick(byUA.get(norm(row.nome_item)),true)||pick(byUC.get(norm(code)),true)||
+    pick(byName.get(norm(row.nome_item)),true);
+}
+
 export function adaptMondayForms(assessments,comments,materials){
   const byID=index(materials,'monday_item_validacao'),byUA=index(materials,'id_ua'),byUC=index(materials,'id_titulo'),byName=index(materials,'titulo');
   const forms=new Map();for(const r of assessments){const key=text(r.monday_item_id);if(!forms.has(key)||stamp(r)>stamp(forms.get(key)))forms.set(key,r);}
@@ -30,15 +46,21 @@ export function adaptMondayForms(assessments,comments,materials){
     const assessment=forms.get(id);const notes=commentsByForm.get(id)||[];const r=assessment||latest(notes);
     const kind=materialKind(r);if(!kind)continue;
     const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[13]|PP)$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
-    const material=unique(byID.get(norm(r.validacao_material_item_id)))||unique(byUA.get(norm(originalName)))||unique((byUC.get(norm(codeUC))||[]).filter(m=>materialKind(m)===kind&&!text(m.id_ua)))||courseContext(byUC.get(norm(codeUC)))||(kind==='PE'?courseContext(byName.get(norm(originalName))):null);
+    const material=kind==='PE'
+      ?entryPlanMaterial(r,codeUC,byID,byUA,byUC,byName)||courseContext(byUC.get(norm(codeUC)))||courseContext(byName.get(norm(originalName)))
+      :unique(byID.get(norm(r.validacao_material_item_id)))||unique(byUA.get(norm(originalName)))||unique((byUC.get(norm(codeUC))||[]).filter(m=>materialKind(m)===kind&&!text(m.id_ua)))||courseContext(byUC.get(norm(codeUC)));
+    const linkedPlan=kind==='PE'&&material&&!material.contextOnly;
     const ucId=text(material?.id_titulo||(match?codeUC:''));const uc=text(material?.titulo||codeUC||'UC não localizada');
     const matrix=text(material?.matriz_oferta||r.matriz_oferta);const track=text(material?.esteira_producao||r.esteira_producao)||'Não informada';const semester=text(material?.semestre_oferta||r.semestre_oferta);
-    const uaId=kind==='UA'?text(material?.id_ua||originalName):kind==='BDQ'?originalName:ucId||codeUC;
+    const uaId=kind==='UA'?text(material?.id_ua||originalName):kind==='BDQ'?originalName:linkedPlan?text(material.id_ua):ucId||codeUC;
     const ua=kind==='UC'?uc:kind==='PE'?originalName:text(material?.titulo_ua||originalName||material?.item_name);
     const displayUA=kind==='UC'&&/^UA\d+$/i.test(unit)?text(material?.titulo_ua)||originalName:ua;
     const batch=text(material?.bloco||r.bloco||r.lote);
-    const key=materialGroupKey(kind,ucId||codeUC,uaId,matrix,track,semester,batch);
-    const common={kind,uaKey:key,uc,ucId,ua,uaId,parent:text(r.validacao_material_item_id),track,matrix,semester,batch,displayUA,unitSourceId:kind==='UC'?originalName:uaId,unitLabel:unitLabel({...material,id_ua:kind==='UC'?originalName:uaId}),materialKey:text(material?.chave_material),specialists:names(material?.especialista_modelagem),reviewers:names(r.avaliador||material?.revisor_validador),date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
+    const parent=text(linkedPlan?material.monday_item_validacao:r.validacao_material_item_id);
+    const key=linkedPlan
+      ?materialGroupKey(kind,text(material.id_titulo)||parent||uaId,uaId||parent||text(material.chave_material),matrix,track,semester,batch)
+      :materialGroupKey(kind,ucId||codeUC,uaId,matrix,track,semester,batch);
+    const common={kind,uaKey:key,uc,ucId,ua,uaId,parent,track,matrix,semester,batch,displayUA,unitSourceId:kind==='UC'?originalName:uaId,unitLabel:unitLabel({...material,id_ua:kind==='UC'?originalName:uaId}),materialKey:text(material?.chave_material),specialists:names(material?.especialista_modelagem),reviewers:names(r.avaliador||material?.revisor_validador),date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
     let added=false;
     if(kind==='UC'&&assessment){
       for(let i=1;i<=7;i++){
