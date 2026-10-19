@@ -1,8 +1,20 @@
-# Comentários e avaliações dos materiais — V6.4
+# Comentários e avaliações dos materiais — V6.5
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Alterações desta versão
+## Leitura de UA e UC — V6.5
+
+O painel de UA e UC aproveita mais a largura da tela e apresenta um registro por vez. O menu lateral reúne os critérios, o status de cada um e a indicação de comentário. Os botões Anterior e Próximo permitem percorrer os registros sem rolar uma sequência de cartões. Uma busca localiza critérios ou textos dos comentários no menu.
+
+Esteira, lote, matriz, especialistas, revisores e o status original ficam em **Dados do material**, recolhidos inicialmente. O resumo da avaliação e o botão Adicionar comentário permanecem acessíveis acima da área de leitura. Comentários extensos e históricos abertos podem exigir rolagem dentro da área de leitura. O menu possui rolagem própria quando há muitos registros.
+
+Em telas menores, **Ir para critério** substitui o menu lateral. Na UC, a abertura por unidade e a opção Ver todos os registros da UC foram preservadas. Os critérios e os complementos continuam acessíveis em ambas as visões.
+
+Editar e adicionar comentários usa as mesmas origens e a mesma função de gravação. Trocar de critério com uma edição aberta mantém o texto e solicita salvar ou cancelar. Após salvar, o painel mostra o registro editado ou o novo complemento. Histórico, autoria, versões, classificação e texto original da Monday continuam disponíveis.
+
+Esta mudança de visualização **não exige SQL novo**. Se a V6.4 já está instalada com o SQL 08, basta substituir todos os arquivos da página, incluindo `review-panel.css`. Planilha de entrada e BDQ mantêm sua apresentação anterior.
+
+## Correções da V6.4 preservadas
 
 - **Requer análise do design** passa a incluir Ajustes - MODELAGEM e Ajustes - Modelagens da Monday, em todas as abas. O status original continua preservado nos detalhes e no CSV.
 - **Planilha de entrada** recebe a coluna Esteira, mantendo UC, UA, Unidade da UA e o acesso aos comentários pelo clique.
@@ -12,13 +24,13 @@ Os bancos são conferidos também na tabela sincronizada do quadro de validaçõ
 
 Gestor corresponde ao campo `gestor_validacao_nq`. Revisor corresponde ao `revisor_validador` atribuído ao banco. O avaliador do formulário continua registrado e pesquisável. Não se atribuem responsáveis de uma UA ou de uma oferta ambígua a um BDQ.
 
-## Atualizar
+## Base necessária para as correções da V6.4
 
-**Se o SQL 07 já está instalado, execute somente `supabase/08_GESTOR_DOS_MATERIAIS.sql`**, depois substitua todos os arquivos da página. Se ainda não está instalado, siga COMECE_AQUI.md: em instalação nova, execute 05, 07 e 08, nessa ordem. Não execute SQL antigo depois do 08.
+**Se o SQL 08 já está instalado, não repita scripts nesta atualização visual. Se somente o SQL 07 está instalado, execute `supabase/08_GESTOR_DOS_MATERIAIS.sql`**, depois substitua todos os arquivos da página. Se ainda não está instalado, siga COMECE_AQUI.md: em instalação nova, execute 05, 07 e 08, nessa ordem. Não execute SQL antigo depois do 08.
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.4 · 19/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.5 · 19/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
@@ -103,6 +115,7 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 ## Arquivos principais
 
 - `index.html`, `styles.css`: menu, filtros, cartões, tabela, lista e painel de comentários.
+- `review-panel.css`: largura, menu de critérios e área de leitura de UA/UC; adaptações para telas menores.
 - `app.mjs`: autenticação, consultas e interações.
 - `source-loading.mjs`: limite independente da consulta dos planos e mensagens que distinguem falha de comunicação de tempo excedido.
 - `core.mjs`: vínculos, critérios vigentes, histórico, filtros e exportação.
@@ -123,8 +136,10 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 Passaram 96 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
-Em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
+Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
 Em DOM simulado, foram verificados Esteira na Planilha, Gestor e Revisor no BDQ, os três tipos de banco, quatro/cinco/três/três colunas nas abas, linhas vazias com colspan correto, pesquisa por gestor, abertura de comentários e texto seguro. Também foram verificadas falhas independentes das fontes complementares e a preservação da última consulta concluída.
 
-A inspeção em navegador real, o login institucional, a execução do SQL 08 no projeto de produção e a publicação no GitHub não foram realizadas nesta entrega.
+Na V6.5, o DOM simulado também verificou UA com sete critérios; UC por unidade e completa com quatorze indicadores; menu, busca, seletor, Anterior/Próximo, limites da navegação e um cartão aberto por vez. Foram verificadas edição durante troca de critério, gravação mantendo o registro selecionado, complemento no critério atual, conflito sem perda de texto, leitura do original e das versões anteriores, HTML seguro e limpeza da sessão. As verificações de Planilha e BDQ passaram junto das novas interações. Os arquivos SQL e as regras de dados não foram alterados.
+
+A inspeção visual em navegador real, o login institucional e a publicação no GitHub não foram realizados nesta entrega. Não foi executado SQL em produção.

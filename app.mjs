@@ -1,18 +1,18 @@
-import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {RELEASE} from './release.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {highlightHTML} from './view-model.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
+import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {RELEASE} from './release.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {highlightHTML} from './view-model.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-5-leitura-ua-uc-20261019';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
@@ -20,7 +20,7 @@ function source(label,kind=''){ $('sourceStatus').className='source-pill '+kind;
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{$('toast').hidden=true;},4000);}
 function clearSensitive(){
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
-  state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.editor=null;state.saving=false;state.user=null;
+  state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
   state.loaded=false;state.loading=false;state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;
   $('search').value='';$('commentsOnly').checked=false;
@@ -213,28 +213,76 @@ function render(){const scope=baseScope();state.filtered=selectWorkflow(scope,st
 function portalHistoryMarkup(note){
   return '<details class="previous-versions comment-history" data-history-id="'+esc(note.id)+'"><summary>Histórico de comentários · versão '+note.revision+'</summary><div class="comment-history-content" aria-live="polite"></div></details>';
 }
-function criterionCard(r,index){
+function criterionCard(r,index,compact=false){
   const previous=r.history||[];
   const versions=previous.length?'<details class="previous-versions"><summary>'+previous.length+' classificação(ões) anterior(es) da Monday</summary>'+previous.map(v=>'<div class="previous-version"><span class="tag '+v.status+'">'+esc(v.status==='rated'?v.classification:statusLabel[v.status])+'</span><small>'+esc(v.date?formatDate(v.date):'Data não informada')+' · '+esc(v.specialists.join('; ')||'Responsável não informado')+'</small><p>'+highlightHTML(v.comment||'Sem parecer registrado.',state.query)+'</p><small>Classificação: '+esc(v.classification||'Não informada')+'</small>'+(v.portal?'<small>Editado no painel por '+esc(v.portal.updated_name)+' · '+esc(formatDateTime(v.portal.updated_at))+'</small>'+portalHistoryMarkup(v.portal):'')+'</div>').join('')+'</details>':'';
   const portal=r.portal;
   const attribution=portal?'<small class="comment-attribution">'+(r.portalAddition?'Registrado':'Editado')+' no painel por <strong>'+esc(portal.updated_name)+'</strong> · '+esc(portal.updated_email)+' · '+esc(formatDateTime(portal.updated_at))+' · versão '+portal.revision+'</small>':'';
   const edit=commentSourceKey(r)?'<div class="comment-actions"><button type="button" class="btn secondary comment-edit" data-edit-comment="'+index+'"'+(!state.commentsReady?' disabled':'')+'>'+(r.comment?'Editar comentário':'Adicionar informação')+'</button></div>':'';
   const monday=portal&&!r.portalAddition?'<details class="previous-versions"><summary>Texto atual da fonte Monday</summary><p class="comment source-comment">'+esc(r.mondayComment||'Sem comentário na fonte.')+'</p><small>A avaliação e a classificação da fonte permanecem registradas.</small></details>':'';
-  return '<article class="detail-criterion '+r.status+'"><div><h3>'+highlightHTML(r.criterion,state.query)+'</h3><span class="tag '+r.status+'">'+esc(r.portalAddition?'Comentário do painel':r.status==='rated'?r.classification:statusLabel[r.status])+'</span></div>'+(r.question&&r.question!==r.criterion?'<p class="question">'+esc(r.question)+'</p>':'')+'<p class="comment">'+highlightHTML(r.comment||'Sem comentário registrado para este critério.',state.query)+'</p>'+attribution+'<small>Classificação: '+esc(r.classification||'Não informada')+' · Responsável pela avaliação: '+esc(r.specialists.join('; ')||'Não informado')+(r.date?' · '+esc(formatDate(r.date)):'')+'</small><small>'+esc(r.sourceLabel||'Critérios da esteira — Monday')+'</small>'+edit+'<div data-editor-slot="'+index+'"></div>'+(portal?portalHistoryMarkup(portal):'')+monday+versions+'</article>';
+  const editor=edit+'<div data-editor-slot="'+index+'"></div>';
+  return '<article class="detail-criterion '+r.status+'" data-record-card="'+index+'"><div><h3>'+highlightHTML(r.criterion,state.query)+'</h3><span class="tag '+r.status+'">'+esc(r.portalAddition?'Comentário do painel':r.status==='rated'?r.classification:statusLabel[r.status])+'</span></div>'+(r.question&&r.question!==r.criterion?'<p class="question">'+esc(r.question)+'</p>':'')+(compact?editor:'')+'<p class="comment">'+highlightHTML(r.comment||'Sem comentário registrado para este critério.',state.query)+'</p>'+attribution+'<small>Classificação: '+esc(r.classification||'Não informada')+' · Responsável pela avaliação: '+esc(r.specialists.join('; ')||'Não informado')+(r.date?' · '+esc(formatDate(r.date)):'')+'</small><small>'+esc(r.sourceLabel||'Critérios da esteira — Monday')+'</small>'+(compact?'':editor)+(portal?portalHistoryMarkup(portal):'')+monday+versions+'</article>';
 }
 function showDetails(index,unit=null){
   const selected=state.groups[index];if(selected)openMaterialDetails(selected.uaKey,unit);
 }
-function openMaterialDetails(key,unit=null){
+function reviewRecordLabel(r){return r.portalAddition?'Comentário do professor':r.status==='rated'?r.classification:statusLabel[r.status]||'Registro';}
+function reviewPanelMarkup(g,meta,canAdd){
+  const s=g.summary,records=state.detailRecords;
+  return '<div class="review-overview"><div class="review-counts" aria-label="Resumo da avaliação"><strong>'+s.assessed+' de '+s.total+' avaliados</strong><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div>'+
+    '<details class="review-material-info"><summary>Dados do material <span>Esteira, lote e responsáveis</span></summary><div class="review-material-body">'+meta+(g.materialStatuses.length?'<p class="review-source-status"><b>Status Monday:</b> '+esc(g.materialStatuses.join('; '))+'</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas. O original da Monday e as versões anteriores ficam no histórico.</p></div></details>'+
+    (state.dialogUnit&&g.kind==='UC'?'<button type="button" class="text-button review-full-uc" data-show-full-uc>Ver todos os registros da UC</button>':'')+
+    (!state.commentsReady?'<p class="comment-setup-note review-setup-note">Comentários do painel indisponíveis. Atualize os dados para editar.</p>':'')+
+    '<div class="review-workspace"><aside class="review-sidebar" aria-label="Navegação pelos critérios"><div class="review-nav-heading"><strong>Critérios e comentários</strong><span>'+records.length+' registro(s)</span></div><label class="review-nav-search"><span class="sr-only">Buscar critério ou comentário neste material</span><input id="reviewSearch" type="search" placeholder="Buscar neste material" autocomplete="off"></label><nav id="reviewNav" class="review-nav" aria-label="Selecionar critério ou comentário">'+records.map((r,i)=>'<button type="button" class="review-nav-item" data-review-index="'+i+'" aria-pressed="false" aria-controls="reviewReader"><span class="review-nav-number">'+(i+1)+'</span><span class="review-nav-text"><strong>'+highlightHTML(r.criterion,state.query)+'</strong><span><i class="review-status-dot '+esc(r.status)+'" aria-hidden="true"></i>'+esc(reviewRecordLabel(r))+(r.comment?' · Com comentário':'')+'</span></span></button>').join('')+'<p id="reviewNavEmpty" class="review-nav-empty" hidden>Nenhum registro encontrado neste menu.</p></nav></aside>'+
+    '<section class="review-detail" aria-label="Leitura do critério"><div class="review-reader-toolbar"><label class="review-mobile-picker" for="reviewCriterionSelect">Ir para critério<select id="reviewCriterionSelect" aria-controls="reviewReader">'+records.map((r,i)=>'<option value="'+i+'">'+(i+1)+'. '+esc(r.criterion)+' · '+esc(reviewRecordLabel(r))+'</option>').join('')+'</select></label><span id="reviewPosition" aria-live="polite" aria-atomic="true"></span><div class="review-step-buttons"><button type="button" class="btn secondary" data-review-step="-1" aria-label="Registro anterior">← Anterior</button><button type="button" class="btn secondary" data-review-step="1" aria-label="Próximo registro">Próximo →</button></div></div><div id="reviewReader" class="review-reader" role="region" aria-label="Critério selecionado" tabindex="-1"></div></section></div>';
+}
+function syncReviewNavigation(){
+  if(!state.reviewMode)return;
+  const index=state.detailIndex,records=state.detailRecords;
+  for(const b of $('dialogContent').querySelectorAll('[data-review-index]')){
+    const selected=Number(b.dataset.reviewIndex)===index;
+    b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));
+  }
+  const picker=$('reviewCriterionSelect');if(picker){picker.value=String(index);picker.disabled=state.saving;}
+  if($('reviewPosition'))$('reviewPosition').textContent='Registro '+(index+1)+' de '+records.length;
+  for(const b of $('dialogContent').querySelectorAll('[data-review-step]'))b.disabled=state.saving||(Number(b.dataset.reviewStep)<0?index===0:index>=records.length-1);
+}
+function renderReviewRecord(index){
+  if(!state.reviewMode||!Number.isInteger(index)||index<0||index>=state.detailRecords.length)return;
+  state.detailIndex=index;
+  $('reviewReader').innerHTML='<div id="newCommentSlot"></div>'+criterionCard(state.detailRecords[index],index,true);
+  $('reviewReader').scrollTop=0;syncReviewNavigation();
+  const selected=$('reviewNav').querySelector('[data-review-index="'+index+'"]');
+  if(selected&&!selected.hidden)selected.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function selectReviewRecord(index){
+  if(state.saving)return;
+  if(state.editor){syncReviewNavigation();$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de trocar de critério.');return;}
+  renderReviewRecord(index);
+}
+function filterReviewNavigation(value){
+  const query=norm(value);let found=0;
+  for(const b of $('dialogContent').querySelectorAll('[data-review-index]')){
+    const r=state.detailRecords[Number(b.dataset.reviewIndex)];
+    const matches=norm([r.criterion,r.question,r.comment,reviewRecordLabel(r)].filter(Boolean).join(' ')).includes(query);
+    b.hidden=!matches;if(matches)found++;
+  }
+  if($('reviewNavEmpty'))$('reviewNavEmpty').hidden=found>0;
+}
+function openMaterialDetails(key,unit=null,preferredRecordId=null){
   const records=state.records.filter(r=>r.uaKey===key);
   const selected=unit?records.filter(r=>(r.unitSourceId||r.uaId||r.ua)===unit):records;
   const g=groupUAs(selected)[0];if(!g)return;
-  state.dialogKey=key;state.dialogUnit=unit;state.editor=null;
+  state.dialogKey=key;state.dialogUnit=unit;state.editor=null;state.reviewMode=state.section==='UA'||state.section==='UC';
+  $('detailDialog').classList.toggle('review-dialog',state.reviewMode);
   $('dialogUA').textContent=unit?(g.displayUA||g.ua):g.ua;$('dialogUC').textContent=g.uc+(g.ucId?' · ID '+g.ucId:'');
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  $('dialogContent').innerHTML='<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>'+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  const meta='<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>';
+  $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  state.detailIndex=Math.max(0,state.detailRecords.findIndex(r=>preferredRecordId!=null&&r.id===preferredRecordId));
+  if(state.reviewMode)renderReviewRecord(state.detailIndex);
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
 }
 function formatDateTime(value){if(/^\d{4}-\d{2}-\d{2}$/.test(value||''))return formatDate(value);const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Data não informada';}
@@ -243,13 +291,14 @@ function setCommentBusy(busy){
   for(const b of $('detailDialog').querySelectorAll('button'))b.disabled=busy||(!state.commentsReady&&(b.matches('[data-edit-comment]')||b.matches('[data-add-comment]')));
   const input=$('commentBody');if(input)input.readOnly=busy;
   const submit=$('commentSave');if(submit)submit.textContent=busy?'Salvando…':'Salvar comentário';
+  syncReviewNavigation();
 }
 function beginCommentEditor(index,addition=false){
   if(!state.commentsReady||state.saving)return;
   if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de editar outro.');return;}
   const r=state.detailRecords[index];if(!r||!commentSourceKey(r))return;
   const portal=addition?null:r.portal;
-  state.editor={sourceKey:commentSourceKey(r),mode:addition?'addition':portal?.mode||'source',
+  state.editor={recordId:r.id,sourceKey:commentSourceKey(r),mode:addition?'addition':portal?.mode||'source',
     id:portal?.id||(addition?crypto.randomUUID():null),revision:portal?.revision||0,
     sourceBody:r.mondayComment??r.comment??'',initial:addition?'':r.comment||''};
   const slot=addition?$('newCommentSlot'):$('dialogContent').querySelector('[data-editor-slot="'+index+'"]');
@@ -270,7 +319,7 @@ async function saveComment(event){
     const saved=data?.[0];if(!saved?.id)throw new Error('Resposta de gravação incompleta');
     state.portalComments=state.portalComments.filter(c=>c.id!==saved.id);state.portalComments.push(saved);
     state.sections=applyPortalComments(state.baseSections,state.portalComments);state.records=state.sections[state.section].records;
-    setCommentBusy(false);state.editor=null;renderNavigation();render();openMaterialDetails(key,unit);
+    setCommentBusy(false);state.editor=null;renderNavigation();render();openMaterialDetails(key,unit,saved.mode==='addition'?'portal:'+saved.id:editor.recordId);
     toast('Comentário salvo. As versões anteriores continuam no histórico.');
     const updatedIndex=state.detailRecords.findIndex(r=>r.portal?.id===saved.id);
     const savedArticle=$('dialogContent').querySelector('[data-editor-slot="'+updatedIndex+'"]')?.closest('article');
@@ -325,12 +374,13 @@ let searchTimer;$('search').addEventListener('input',()=>{clearTimeout(searchTim
 $('prev').addEventListener('click',()=>{state.page--;renderTable();});$('next').addEventListener('click',()=>{state.page++;renderTable();});
 for(const id of ['tableBody','commentList'])$(id).addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(b)showDetails(Number(b.dataset.detail),b.dataset.unitId||null);});
 for(const id of ['closeDialog','closeDrawer'])$(id).addEventListener('click',()=>{$('detailDialog').close();});
-$('detailDialog').addEventListener('close',()=>{document.body.classList.remove('drawer-open');state.editor=null;state.detailRecords=[];state.dialogKey=null;state.dialogUnit=null;});
+$('detailDialog').addEventListener('close',()=>{document.body.classList.remove('drawer-open');$('detailDialog').classList.remove('review-dialog');state.editor=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.dialogKey=null;state.dialogUnit=null;});
 $('detailDialog').addEventListener('cancel',e=>{if(state.saving)e.preventDefault();});
 $('dialogContent').addEventListener('submit',e=>{if(e.target.id==='commentEditor')saveComment(e);});
-$('dialogContent').addEventListener('input',e=>{if(e.target.id==='commentBody')updateCommentChars();});
+$('dialogContent').addEventListener('input',e=>{if(e.target.id==='commentBody')updateCommentChars();else if(e.target.id==='reviewSearch')filterReviewNavigation(e.target.value);});
+$('dialogContent').addEventListener('change',e=>{if(e.target.id==='reviewCriterionSelect')selectReviewRecord(Number(e.target.value));});
 $('dialogContent').addEventListener('toggle',e=>{if(e.target.matches('.comment-history'))loadCommentHistory(e.target);},true);
-$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
+$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
 $('export').addEventListener('click',()=>{if(!state.loaded||!state.filtered.length)return;const url=URL.createObjectURL(new Blob([exportCSV(state.filtered)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Resultados_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exportação concluída com o recorte selecionado.');});
 document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>selectSection(b.dataset.section)));

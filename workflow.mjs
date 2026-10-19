@@ -1,4 +1,4 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 

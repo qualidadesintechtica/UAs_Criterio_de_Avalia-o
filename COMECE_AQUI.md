@@ -1,45 +1,51 @@
-# Publicar a V6.4 — Modelagem, Esteira e BDQ
+# Publicar a V6.5 — leitura de UA e UC
 
-## 1. Atualizar a base
+## 1. Substituir os arquivos da página
 
-Se você já executou o SQL 07 da V6.3.1, execute **somente o SQL 08** nesta atualização.
+Se a V6.4 já está instalada com o SQL 08, **não é necessário executar SQL nesta atualização**.
 
 1. Extraia o ZIP.
-2. No Supabase do BI, abra SQL Editor → New query.
-3. Copie **todo o conteúdo** de `supabase/08_GESTOR_DOS_MATERIAIS.sql` e cole no editor.
-4. Com o cursor no editor, pressione Ctrl + A e clique em Run.
-5. Confira: **V6.4 instalada: gestor disponível nas consultas protegidas; comentários e histórico preservados.**
+2. Envie **todo o conteúdo extraído** para a raiz publicada da página no GitHub, substituindo os arquivos anteriores.
+3. Inclua o novo arquivo **review-panel.css** junto de index.html, styles.css, módulos e demais pastas. Não envie apenas o ZIP fechado.
+4. Aguarde a publicação e pressione Ctrl + F5.
+5. Confira **V6.5 · 19/10/2026** na página.
 
-Se o SQL 07 ainda não foi executado, execute primeiro o 07 e depois o 08. Em uma instalação nova sobre as fontes do BI, execute 05, 07 e 08, nessa ordem. Não execute arquivos antigos depois do 08.
+## 2. Usar o novo painel
 
-O SQL 08 disponibiliza o Gestor nas consultas protegidas e acrescenta uma consulta direta dos BDQs A1/A2/A3 para incluir os bancos ausentes da consolidada. Preserva os IDs dos itens e as chaves dos materiais que já estavam na página. Comentários e histórico não são apagados ou reimportados. A sincronização da Monday e a base consolidada do restante do BI permanecem como estavam.
+1. Na aba UA ou UC, clique no material como antes.
+2. O painel mostra um critério por vez. Clique em outro critério no menu lateral ou use **Anterior** e **Próximo**.
+3. Use **Buscar neste material** para localizar um critério ou um texto de comentário no menu.
+4. Abra **Dados do material** quando precisar consultar esteira, lote, matriz, especialistas, revisores ou status original.
+5. Use **Editar comentário / Adicionar informação** no critério aberto. **Adicionar comentário** cria um complemento vinculado ao registro selecionado.
+6. Salve ou cancele a edição antes de trocar de critério. Após salvar, o painel permanece no registro salvo.
+7. Abra **Histórico de comentários** para consultar versões anteriores. O texto original da Monday é preservado.
 
-## 2. Substituir os arquivos no GitHub
+Em telas menores, use **Ir para critério**. O seletor substitui o menu lateral. Textos longos e históricos podem exigir rolagem na área de leitura, mas os controles de navegação permanecem visíveis.
 
-1. Envie **todo o conteúdo extraído** para a raiz publicada da página, substituindo os arquivos anteriores.
-2. Mantenha index.html na raiz junto dos módulos, config.js e das pastas vendor e supabase. Não envie apenas o ZIP fechado.
-3. Aguarde a publicação e use Ctrl + F5.
-4. Confira **V6.4 · 19/10/2026** no topo, clique em Atualizar dados e em Limpar filtros.
+Na UC, o clique em uma unidade continua mostrando seus indicadores. **Ver todos os registros da UC** abre o conjunto completo.
 
-## 3. Conferir as alterações
+## 3. O que permanece funcionando
 
-| Aba / recurso | Alteração |
-| --- | --- |
-| Cartão Requer análise do design | Inclui Ajustes - MODELAGEM e Modelagens, em todas as abas. |
-| Planilha de entrada | UC, UA, Unidade da UA e a nova coluna Esteira. |
-| BDQ | A1, A2 e A3 identificados ao lado do nome; colunas UC, BDQ, Unidade da UA, Gestor e Revisor. |
-| UA e UC | Permanecem com UC, UA e Unidade da UA. |
+- Filtros compartilhados, busca geral, cartões, paginação e CSV.
+- Edição de comentários, autoria, datas, versões e histórico.
+- Ajustes - MODELAGEM / Modelagens em Requer análise do design.
+- Coluna Esteira na Planilha de entrada.
+- BDQ com A1, A2 e A3, Gestor e Revisor.
+- Login @animaeducacao.com.br / @ulife.com.br e temas escuro/off-white.
 
-Gestor vem de Gestor Validação NQ; Revisor vem do revisor atribuído ao material na Monday. O avaliador do formulário continua nos registros, sem ocupar o lugar do revisor atribuído. Se a fonte não informar um responsável, aparece Não informado.
+Planilha de entrada e BDQ mantêm sua apresentação anterior. Esta atualização não altera as consultas, a sincronização da Monday ou as tabelas do banco.
 
-A busca também encontra gestor, revisor atribuído e tipo do banco. O CSV mantém as colunas anteriores e acrescenta Gestor do material, Revisor atribuído na validação e Tipo de BDQ. Esteira já fazia parte do CSV e continua disponível.
+## Se a base ainda não recebeu a V6.4
 
-O clique continua abrindo os comentários, inclusive nas novas colunas. Edição, versões anteriores, filtros, paginação, login @animaeducacao.com.br / @ulife.com.br, tema escuro e claro off-white foram mantidos.
+Os scripts anteriores estão incluídos para quem ainda precisa instalá-los:
 
-As consultas de planos e BDQs são independentes. Uma falha complementar mostra um aviso e preserva as demais informações disponíveis.
+- SQL 08 já instalado: não execute scripts para a V6.5.
+- Somente SQL 07 instalado: execute **todo o conteúdo** de `supabase/08_GESTOR_DOS_MATERIAIS.sql` no SQL Editor do Supabase. A mensagem de sucesso continua dizendo V6.4, que é a versão dessa migração.
+- SQL 07 ainda não instalado: instale o 07 antes do 08.
+- Instalação nova sobre as fontes do BI: 05 → 07 → 08.
 
-## Referência de contagem
+Não execute scripts antigos depois do 08. Não selecione apenas um trecho do SQL; copie e execute o arquivo completo.
 
-No diagnóstico de 19/10/2026 às 09:21, havia 455 planos: 318 validados, 56 liberados, 30 A liberar, 2 em Modelagem, 3 N/A e 46 Pausados. Com a regra solicitada, os 2 de Modelagem entram em Requer análise do design; os outros status somam 79. Esses valores são apenas a referência daquele momento e não estão fixados na página.
+## Verificação
 
-O SQL 08 não foi executado no seu projeto e a publicação no GitHub não foi realizada nesta entrega.
+Os 96 testes de lógica passaram. A navegação de UA/UC, busca, gravação/edição, conflitos, histórico e regressões das outras abas foram verificados em DOM simulado. A inspeção visual em navegador real e a publicação no GitHub não foram realizadas nesta entrega.

@@ -1,15 +1,15 @@
-V6.4 · MODELAGEM, ESTEIRA E BDQ A1/A2/A3 · 19/10/2026
-Atualização: supabase/08_GESTOR_DOS_MATERIAIS.sql após o SQL 07.
-Se a V6.3.1 / SQL 07 já está instalada, execute somente o 08 e substitua os arquivos da página.
-Não execute SQL antigo depois do 08.
-Marca na tela: V6.4 · 19/10/2026.
+V6.5 · LEITURA DE UA E UC · 19/10/2026
+Marca na tela: V6.5 · 19/10/2026.
+Atualização visual: não exige novo SQL se o 08 já está instalado.
+Substitua todos os arquivos no GitHub e inclua review-panel.css.
 
-Ajustes - MODELAGEM / Modelagens alimenta Requer análise do design em todas as abas.
-Planilha de entrada: nova coluna Esteira.
-BDQ: A1, A2 e A3, com colunas Gestor e Revisor e identificação do tipo.
-Fonte direta da validação complementa bancos ausentes, mantendo chaves dos bancos já existentes.
-Gestor: gestor_validacao_nq. Revisor atribuído: revisor_validador. Avaliadores preservados nos registros.
-Novos campos também disponíveis na busca e na exportação.
-Comentários, histórico, filtros, paginação, consultas independentes, login institucional e temas preservados.
-96 testes de lógica; SQL 08 e interações verificados em simulação.
-Produção, login institucional real e publicação no GitHub não executados nesta entrega.
+UA e UC: painel mais largo, menu de critérios e um registro aberto por vez.
+Anterior/Próximo, busca no material e seletor para telas menores.
+Dados do material recolhidos; resumo e Adicionar comentário acessíveis.
+Edição aberta preservada ao tentar trocar de critério; registro salvo permanece selecionado.
+Comentários, origem, autoria, versões, histórico e critérios preservados.
+Planilha, BDQ A1/A2/A3, Gestor/Revisor, Modelagem no design, filtros, contagens, login e temas mantidos.
+
+96 testes de lógica passaram; interações e regressões verificadas em DOM simulado.
+SQLs anteriores, consultas e sincronização sem alterações nesta versão.
+Navegador real, login institucional e publicação no GitHub não verificados nesta entrega.

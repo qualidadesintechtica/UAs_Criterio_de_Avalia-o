@@ -1,4 +1,4 @@
-import {materialKind,buildRecords} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
+import {materialKind,buildRecords} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
 
 export const SECTIONS={
   PE:{label:'Planilha de entrada',title:'Planilhas de entrada',plural:'planilhas',itemLabel:'Planilha',allLabel:'Todas as planilhas',tableTitle:'Avaliações das planilhas de entrada'},
