@@ -1,16 +1,16 @@
-V6.3 · FONTE COMPLETA DA PLANILHA DE ENTRADA · 19/10/2026
-Domínios: @animaeducacao.com.br e @ulife.com.br.
-Atualização obrigatória: supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql.
-Se o SQL 05 já está instalado, não precisa repeti-lo. Não execute SQL antigo depois do 06.
-Marca na tela: V6.3 · 19/10/2026.
+V6.3.1 · CONSULTAS INDEPENDENTES · 19/10/2026
+Atualização obrigatória: supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql.
+Funciona com ou sem o SQL 06 anterior, após a instalação do SQL 05.
+Não execute SQL antigo depois do 07.
+Marca na tela: V6.3.1 · 19/10/2026.
 
-Causa confirmada no diagnóstico: 455 Planos de Produção sincronizados e zero na consolidada consultada pelo painel.
-A consulta protegida passa a incluir esses planos sem alterar a consolidada ou a sincronização do BI.
-Contagem por ID do item de validação, com formulários sem vínculo sinalizados fora dos totais.
-Status da coluna prevalece sobre o grupo físico; outros status discriminados acima dos filtros.
-Referência em 19/10/2026 às 09:21 (Brasília): 318 Validados; 56 Liberados; 30 A liberar; 2 Modelagem; 3 N/A; 46 Pausados; total 455.
-Números consultados da base, nunca fixados na aplicação.
+Consulta protegida dos planos separada da consulta dos demais materiais.
+Uma falha dos planos não bloqueia UA, BDQ e UC; limite próprio de 12 segundos.
+Tempo excedido no banco não é apresentado como problema de internet.
+Última consulta concluída preservada em caso de falha ao atualizar.
+IDs dos planos, comentários e versões anteriores mantidos.
+Novo arquivo obrigatório da página: source-loading.mjs.
 
-Filtros, nomes, três colunas da tabela, comentários, histórico, login Ulife, busca, lista, paginação, CSV e temas preservados.
-79 testes de lógica e validação adicional da migração SQL em PostgreSQL embarcado.
-Produção, login institucional real e publicação no GitHub não executados nesta entrega.
+Referência do diagnóstico em 19/10/2026 às 09:21: 455 planos, 318 validados e 56 liberados.
+86 testes de lógica aprovados; atualização SQL 05→07 e 06→07 e falhas de carregamento verificadas em simulação.
+SQL de produção, login institucional real e publicação não executados nesta entrega.

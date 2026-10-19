@@ -1,26 +1,28 @@
-# Comentários e avaliações dos materiais — V6.3
+# Comentários e avaliações dos materiais — V6.3.1
 
-Página para GitHub Pages com login institucional do BI, menu lateral Planilha de entrada, UA, BDQ e UC, filtros compartilhados e comentários com histórico.
+Página para GitHub Pages com login institucional, menu lateral, filtros compartilhados e comentários com histórico.
 
-## Fonte completa da Planilha de entrada
+## Correção do carregamento
 
-O diagnóstico enviado em 19/10/2026 confirmou 455 Planos de Produção na tabela sincronizada de validações e nenhum deles na base consolidada que a página consultava. A V6.2 corrigiu o nome da categoria, mas essa mudança não podia recuperar registros ausentes da consulta.
+A consulta dos planos agora é independente da consulta dos demais materiais. O SQL 07 restaura a consulta de materiais anterior e cria uma view protegida específica dos Planos de Produção, sem o JOIN e a conversão da linha inteira para JSON usados no SQL 06.
 
-O SQL 06 acrescenta esses planos à view protegida do painel, diretamente de `monday_validacao_materiais`. Não modifica `vw_materiais_bi_consolidada`, a sincronização, as demais páginas do BI, as tabelas de comentários, as políticas de histórico ou a função de gravação. A checagem institucional existente continua protegendo a leitura.
+Uma falha ou demora da fonte de planos não interrompe UA, BDQ e UC. A consulta dos planos tem um limite próprio de 12 segundos. Se não concluir, a página informa que a Planilha de entrada está indisponível e deixa seus totais em branco, mantendo os demais dados carregados. A próxima atualização tenta novamente. A fonte indisponível não é tratada como uma planilha com total zero.
 
-Cada plano é identificado pelo ID do item na Monday. Formulários e critérios vinculados a esse item compartilham a mesma identidade, sem contar uma vez por critério, parecer, código de UC ou subelemento. Os códigos e IDs das fontes dos comentários continuam preservados. O detalhe do material e o CSV mostram o ID do item de validação para conferência.
-
-Os nomes de UC e UA usam o título disponível na base. Códigos, referências originais e busca por código continuam disponíveis. Não se inventam nomes nem vínculos em situações ambíguas.
+As mensagens distinguem tempo excedido no banco, limite do carregamento e falha de comunicação. Falhas nas fontes principais indicam a fonte e, quando disponível, o código do erro. A última consulta concluída continua visível se uma atualização falhar.
 
 ## Instalar ou atualizar
 
-**Esta versão exige o SQL 06 e a substituição dos arquivos da página.** Consulte COMECE_AQUI.md.
+**Execute `supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql` e substitua todos os arquivos da página**, incluindo o novo módulo `source-loading.mjs`. O SQL 07 funciona com ou sem o SQL 06 anterior, desde que o SQL 05 esteja instalado. Em instalação nova, execute 05 e depois 07. Não repita os scripts antigos depois do 07.
 
-Se o SQL 05 já está instalado, execute somente `supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql`. Em uma instalação nova sobre as fontes existentes do BI, execute o 05 e depois o 06. Não execute SQLs antigos depois do 06.
+O SQL 07 mantém os IDs `VALIDACAO_PP_<item>`, os comentários e as versões anteriores. A função de gravação recebe somente uma busca adicional na nova view protegida, mantendo autoria, conflitos, verificação de origem e histórico. Os dois domínios institucionais e as demais proteções continuam vigentes.
 
-Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. Confira **V6.3 · 19/10/2026** no login e no painel. Recursos e módulos usam um novo identificador de versão. A página informa quando o SQL 06 ainda não está disponível e deixa os cartões da Planilha sem totais até a atualização da fonte.
+Confira **V6.3.1 · 19/10/2026** no login e no painel após a publicação. Todos os recursos usam um novo identificador de versão.
 
-No diagnóstico recebido: 318 Validados, 56 Liberados para validação, 30 A liberar, 2 em Ajustes - MODELAGEM, 3 N/A e 46 Pausados, totalizando 455 itens. São valores de conferência daquele momento, nunca números fixados na aplicação. Mudanças na Monday ou filtros ativos alteram o resultado.
+## Conferência das contagens
+
+O diagnóstico enviado em 19/10/2026 confirmou 455 Planos de Produção na tabela sincronizada e nenhum deles na consolidada que o painel consultava. A consulta específica continua trazendo esses planos por ID do item, com seus títulos, esteiras, matrizes, semestre, lote, revisor e status da coluna de validação.
+
+No diagnóstico havia 318 Validados, 56 Liberados para validação, 30 A liberar, 2 em Ajustes - MODELAGEM, 3 N/A e 46 Pausados: total de 455 itens. Esses números não são fixados na aplicação. Formulários sem vínculo continuam visíveis e editáveis, fora dos totais operacionais. Grupos físicos da Monday não substituem o status da coluna.
 
 ## Domínios autorizados
 
@@ -40,9 +42,10 @@ A página usa a sincronização existente entre Monday e Supabase.
 As fontes protegidas são:
 
 - `vw_ua_resultados_criterios_autenticados`: critérios, classificações, especialistas, revisores, pareceres, lote e status.
-- `vw_ua_resultados_materiais_autenticados`: IDs, nomes, unidade, esteira, matriz, semestre, lote e status. A V6.3 acrescenta os Planos de Produção ausentes a partir de `monday_validacao_materiais`, com `origem_material=validacao_planos`, preservando os tipos e a ordem dos 17 campos anteriores.
+- `vw_ua_resultados_materiais_autenticados`: IDs, nomes, unidade, esteira, matriz, semestre, lote e status. Na V6.3.1, essa consulta volta a usar somente a base consolidada. Os 17 campos anteriores e o marcador de origem são preservados.
 - `vw_materiais_monday_avaliacoes_autenticadas`: formulários, avaliador, conceito final e sete indicadores de UC com suas pontuações.
 - `vw_materiais_monday_pareceres_autenticados`: textos dos pareceres vinculados aos formulários.
+- `vw_ua_resultados_planilhas_validacao_autenticadas`: Planos de Produção diretamente do quadro sincronizado, consultados separadamente.
 - `nq_comentarios` e `nq_comentarios_historico`: comentários e versões salvos pelo painel.
 
 **Atualizar dados** consulta novamente o Supabase. As mudanças na Monday aparecem após a sincronização existente. A data da sincronização e o horário da consulta continuam visíveis.
@@ -94,6 +97,7 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 
 - `index.html`, `styles.css`: menu, filtros, cartões, tabela, lista e painel de comentários.
 - `app.mjs`: autenticação, consultas e interações.
+- `source-loading.mjs`: limite independente da consulta dos planos e mensagens que distinguem falha de comunicação de tempo excedido.
 - `core.mjs`: vínculos, critérios vigentes, histórico, filtros e exportação.
 - `navigation.mjs`: seções por categoria.
 - `monday-data.mjs`: formulários e pareceres sincronizados.
@@ -110,10 +114,10 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 79 testes de lógica (`node --test tests/*.test.mjs`), incluindo a reprodução da distribuição de 455 planos do diagnóstico, IDs diferentes com o mesmo código, status diferente do grupo físico, registros sem vínculo, filtros e preservação das origens dos comentários.
+Passaram 86 testes de lógica (`node --test tests/*.test.mjs`). Os novos casos verificam o limite independente da consulta, cancelamento de sessão, preservação de erros, combinação sem duplicidade e diferenciação entre fonte vazia e fonte indisponível. Os testes anteriores cobrem nomes, filtros, contagens, comentários, histórico e domínios institucionais.
 
-Em PostgreSQL embarcado (PGlite), a instalação SQL 05 → 06 foi testada com 455 itens sintéticos distribuídos conforme o diagnóstico enviado. Foram conferidos: 318 validados, 56 liberados, 81 em outros status; os 17 campos anteriores e o material de UA existente; matriz da coluna sincronizada; gravação e edição de comentários de planos; histórico anterior; instalação repetida; acesso Ânima/Ulife e bloqueio de externos e anônimos. A função de gravação permaneceu idêntica à anterior.
+Em PostgreSQL embarcado, foram verificadas as atualizações SQL 05 → 07 e SQL 06 → 07, a consulta independente dos 455 planos, os 318 validados e 56 liberados da distribuição usada nos testes, a edição de comentários criados antes do SQL 07, o histórico, a repetição segura e as permissões Ânima/Ulife, com bloqueio de externos e anônimos. Os itens dos testes são sintéticos; sua distribuição foi obtida do diagnóstico enviado.
 
-Em DOM simulado, foram conferidos os cartões, a identificação dos registros sem vínculo, os filtros, a abertura dos comentários, a indicação de fonte desatualizada e a limpeza da sessão. Isso não equivale à inspeção em um navegador real.
+No DOM simulado, uma consulta dos planos foi mantida pendente de propósito: UA carregou e a Planilha ficou com aviso e totais indisponíveis. A recuperação trouxe 455 planos/318 validados. Um erro de banco 57014 foi identificado como tempo excedido, mostrando a fonte e preservando a última consulta concluída. Também passaram as verificações dos filtros, cartões, detalhes de comentários, três colunas e limpeza da sessão.
 
-O diagnóstico real foi lido do arquivo enviado pela usuária, com consulta em 19/10/2026 às 09:21 (Brasília). O SQL 06 não foi executado no projeto de produção, e não houve publicação no GitHub ou login institucional real nesta entrega.
+A imagem enviada confirma a publicação da V6.3 e uma falha genérica de conexão; ela não contém o código técnico que permita afirmar a causa exata no servidor. A V6.3.1 remove a dependência conjunta das consultas e melhora a identificação de novas falhas. Não houve execução do SQL 07 na produção, login institucional real, inspeção em navegador real ou publicação no GitHub nesta entrega.

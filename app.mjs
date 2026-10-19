@@ -1,12 +1,13 @@
-import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {RELEASE} from './release.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {highlightHTML} from './view-model.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts} from './workflow.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-3-fonte-validacao-pe-20261019';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-3-fonte-validacao-pe-20261019';
+import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {RELEASE} from './release.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {highlightHTML} from './view-model.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials} from './workflow.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-3-1-consultas-independentes-20261019';
 const $=id=>document.getElementById(id);
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
@@ -48,7 +49,7 @@ function friendly(error){
   const m=String(error?.message||'');
   if (/invalid login|invalid_credentials/i.test(m)) return 'E-mail ou senha incorretos. Confira os dados da sua conta do BI.';
   if (/email not confirmed/i.test(m)) return 'O e-mail desta conta ainda precisa ser confirmado.';
-  if (/fetch|network|timeout|abort/i.test(m)||error?.name==='AbortError') return 'Não foi possível concluir a conexão. Verifique sua internet e tente novamente.';
+  if(connectionMessage(error))return connectionMessage(error);
   if (error?.code==='PGRST301'||error?.status===401) return 'Sua sessão expirou. Entre novamente para consultar os resultados.';
   if (error?.code==='42501'||error?.status===403) return 'Sua conta não tem permissão para consultar esta fonte de avaliações.';
   if (error?.code==='42P01'||error?.code==='PGRST205') return 'A fonte de avaliações não foi localizada na base do BI.';
@@ -96,14 +97,18 @@ async function load(){
       readAll(window.UA_CONFIG.assessmentsView,formsColumns,'id',signal,'forms'),
       readAll(window.UA_CONFIG.commentsView,commentsColumns,'id',signal,'comments'),
       readAll('nq_comentarios','*','id',signal,'portal'),
-      readAccessPolicy(signal)
+      readAccessPolicy(signal),
+      queryWithDeadline(planSignal=>readAll(window.UA_CONFIG.entryPlansView||'vw_ua_resultados_planilhas_validacao_autenticadas','*','monday_item_validacao',planSignal,'plans'),signal,12000)
     ]);
     if(run!==state.run)return;
-    for(const result of results.slice(0,2))if(result.status==='rejected')throw result.reason;
-    const criteria=results[0].value,materials=results[1].value;
+    for(let i=0;i<2;i++)if(results[i].status==='rejected'){
+      const reason=results[i].reason;const error=Object.assign(new Error(reason?.message||''),{code:reason?.code,name:reason?.name||'Error',status:reason?.status,sourceName:i===0?'critérios':'materiais'});throw error;
+    }
+    const plansReady=results[6].status==='fulfilled';
+    const criteria=results[0].value,materials=mergeEntryPlanMaterials(results[1].value,plansReady?results[6].value:[]);
     const formError=results.slice(2,4).some(r=>r.status==='rejected');
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
-    state.baseSections=entryPlanUniverse(resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials),materials);
+    state.baseSections=entryPlanUniverse(resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials),materials,plansReady);
     state.commentsReady=results[4].status==='fulfilled';state.portalComments=state.commentsReady?results[4].value:[];
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
     state.sectionErrors={};if(formError){for(const key of ['PE','BDQ','UC'])state.sectionErrors[key]='Os formulários desta seção não puderam ser consultados. Atualize os dados ou confira a configuração da conexão.';}
@@ -114,14 +119,14 @@ async function load(){
     const missingPlanNames=new Set(state.sections.PE.records.filter(r=>!r.courseNameResolved).map(r=>r.uaKey)).size;
     const warnings=[];if(missingPlanNames)warnings.push('Nome da UC não localizado em '+nf.format(missingPlanNames)+' planilha(s). A referência original permanece nos detalhes.');if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
-    if(!state.sections.PE.validationSourceReady)warnings.push('A fonte completa da Planilha de entrada ainda não foi instalada. Execute supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql e atualize os dados. Os totais dessa aba ficam indisponíveis até a atualização.');
+    if(!plansReady)warnings.push('Planilha de entrada indisponível nesta consulta. '+friendly(results[6].reason)+' Execute supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql se esta atualização ainda não foi aplicada. Os demais resultados foram carregados.');
     if(results[5].status!=='fulfilled'||!results[5].value)warnings.push('A base ainda não confirmou a atualização V6. Solicite a atualização do painel ao responsável para habilitar o acesso Ulife e os recursos desta versão.');
     if(materials.length&&!Object.hasOwn(materials[0],'bloco'))warnings.push('Solicite a atualização V6 da base para disponibilizar o lote e os status completos neste painel.');
     $('dataWarning').textContent=warnings.join(' ');$('dataWarning').hidden=!warnings.length;
     renderNavigation();updateSectionLabels();render();
   }catch(error){
     if(run!==state.run)return;
-    source('Falha ao atualizar','failed');$('loadError').textContent=friendly(error)+(state.loaded?' Os resultados abaixo são da última consulta concluída.':'');$('loadError').hidden=false;
+    source('Falha ao atualizar','failed');$('loadError').textContent=friendly(error)+(error.sourceName?' Fonte: '+error.sourceName+(error.code?' · código '+error.code:'')+'.':'')+(state.loaded?' Os resultados abaixo são da última consulta concluída.':'');$('loadError').hidden=false;
     if(!state.loaded){$('updatedAt').textContent='Consulta não concluída';$('tableBody').innerHTML='<tr><td colspan="3" class="empty-table">Não foi possível consultar as avaliações. Clique em Atualizar dados para tentar novamente.</td></tr>';}
   }finally{clearTimeout(timeout);if(run===state.run){state.loading=false;$('refresh').disabled=false;}}
 }
@@ -143,7 +148,7 @@ function updateSectionLabels(){
   defaults.ua='Todas as UAs / materiais';
 }
 function renderNavigation(){
-    document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];const incomplete=key==='PE'&&!state.sections.PE?.validationSourceReady;$('navCount'+key).textContent=state.loaded?((state.sectionErrors[key]&&!rows.length)||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';$('navCount'+key).title=state.sectionErrors[key]||(incomplete?'Atualize a fonte com o SQL 06.':'Materiais do quadro sincronizado; formulários sem vínculo não aumentam a contagem de planilhas.');});
+    document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];const incomplete=key==='PE'&&!state.sections.PE?.validationSourceReady;$('navCount'+key).textContent=state.loaded?((state.sectionErrors[key]&&!rows.length)||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';$('navCount'+key).title=state.sectionErrors[key]||(incomplete?'Atualize a fonte com o SQL 07.':'Materiais do quadro sincronizado; formulários sem vínculo não aumentam a contagem de planilhas.');});
 }
 function selectSection(key){
   if(!SECTIONS[key])return;state.section=key;state.records=state.sections[key]?.records||[];state.page=1;$('detailDialog').close();updateSectionLabels();renderNavigation();if(state.loaded)render();
@@ -161,7 +166,7 @@ function renderCards(scope){
   document.querySelectorAll('[data-ua-status]').forEach(b=>{const selected=b.dataset.uaStatus===state.status;b.disabled=!state.loaded||incomplete;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
   const others=otherWorkflowCounts(scope).map(([label,n])=>label+': '+nf.format(n));
   const unlinked=groupUAs(scope).filter(g=>g.workflowEligible===false).length;
-  $('workflowNote').textContent=incomplete?'Totais da Planilha de entrada indisponíveis: instale o SQL 06 e atualize os dados.':(state.section==='PE'?nf.format(counts.all)+' planilha(s) no quadro de validação. ':'')+(others.length?'Outros status na visão completa — '+others.join(' · ')+'. ':'')+(unlinked?nf.format(unlinked)+' registro(s) sem vínculo com um item de validação; disponíveis na tabela, fora dos totais de status.':'');
+  $('workflowNote').textContent=incomplete?'Totais da Planilha de entrada indisponíveis nesta consulta. Aplique o SQL 07, se ainda não foi instalado, e atualize os dados.':(state.section==='PE'?nf.format(counts.all)+' planilha(s) no quadro de validação. ':'')+(others.length?'Outros status na visão completa — '+others.join(' · ')+'. ':'')+(unlinked?nf.format(unlinked)+' registro(s) sem vínculo com um item de validação; disponíveis na tabela, fora dos totais de status.':'');
   $('workflowNote').hidden=!$('workflowNote').textContent;
   $('selectionLabel').textContent=uaLabels[state.status];
 }
@@ -180,7 +185,7 @@ function renderTable(){
   const pages=Math.max(1,Math.ceil(entries.length/state.size));state.page=Math.min(state.page,pages);
   const start=(state.page-1)*state.size;const rows=entries.slice(start,start+state.size);
   const unlinked=groups.filter(g=>g.workflowEligible===false).length;
-  $('tableCount').textContent=nf.format(countWorkflow(state.filtered).all)+' '+SECTIONS[state.section].plural+(unlinked?' + '+nf.format(unlinked)+' registro(s) sem vínculo de validação':'')+' · '+nf.format(state.filtered.length)+' registro(s) no recorte · Clique na UA para abrir os comentários.';
+  $('tableCount').textContent=(state.section==='PE'&&!state.sections.PE?.validationSourceReady?'Totais de validação indisponíveis':nf.format(countWorkflow(state.filtered).all)+' '+SECTIONS[state.section].plural+(unlinked?' + '+nf.format(unlinked)+' registro(s) sem vínculo de validação':''))+' · '+nf.format(state.filtered.length)+' registro(s) no recorte · Clique na UA para abrir os comentários.';
   $('tableBody').innerHTML=rows.length?rows.map(({group:g,detailIndex:index,name,unit,unitId})=>
     '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+highlightHTML(name,state.query)+(g.workflowEligible===false?'<small class="unlinked-label">Sem vínculo com item de validação</small>':'')+'</span><span aria-hidden="true">↗</span></button></td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td></tr>'
   ).join(''):'<tr><td colspan="3" class="empty-table">'+esc(state.records.length?'Nenhum material encontrado. Ajuste ou limpe os filtros.':state.sectionErrors[state.section]||'Não há registros sincronizados de '+SECTIONS[state.section].title.toLowerCase()+' nesta fonte para esta conta.')+'</td></tr>';

@@ -1,4 +1,4 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId} from './core.mjs?v=v6-3-fonte-validacao-pe-20261019';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 
@@ -21,11 +21,15 @@ export function countWorkflow(records){
   return counts;
 }
 function validationGroups(records){return groupUAs(records).filter(g=>g.criteria.some(r=>r.workflowEligible!==false));}
-export function entryPlanUniverse(sections,materials){
+export function entryPlanUniverse(sections,materials,sourceReady){
   if(!sections.PE)return sections;
-  const validationSourceReady=materials.some(m=>Object.hasOwn(m,'origem_material'));
+  const validationSourceReady=sourceReady??materials.some(m=>Object.hasOwn(m,'origem_material'));
   const mark=r=>({...r,...(validationSourceReady?{workflowEligible:Boolean(r.validationItemId)}:{}),history:(r.history||[]).map(mark)});
   return {...sections,PE:{...sections.PE,validationSourceReady,records:sections.PE.records.map(mark)}};
+}
+export function mergeEntryPlanMaterials(materials,plans){
+  const ids=new Set(plans.map(m=>entryValidationId(m)).filter(Boolean));
+  return [...materials.filter(m=>materialKind(m)!=='PE'||!ids.has(text(m.monday_item_validacao))),...plans];
 }
 export function otherWorkflowCounts(records){
   const counts=new Map();

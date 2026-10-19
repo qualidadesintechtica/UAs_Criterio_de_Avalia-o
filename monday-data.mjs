@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId} from './core.mjs?v=v6-3-fonte-validacao-pe-20261019';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 

@@ -1,26 +1,28 @@
-# Publicar a V6.3 — fonte completa da Planilha de entrada
+# Publicar a V6.3.1 — corrigir o carregamento
 
-## 1. Atualizar a consulta da base
+## 1. Executar o SQL 07
 
-Esta atualização precisa do **SQL 06**. Trocar apenas a pasta não recupera os planos que estavam ausentes da consulta.
+A atualização precisa do **SQL 07** e dos arquivos da página.
 
-1. Extraia o ZIP em uma pasta nova.
+1. Extraia o ZIP.
 2. No Supabase do BI, abra **SQL Editor → New query**.
-3. Abra `supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql`, copie todo o conteúdo e cole na consulta nova.
-4. Com o cursor no editor, pressione **Ctrl + A** e clique em **Run** para executar o arquivo inteiro.
-5. Confira a mensagem **V6.3 instalada: Planos de Produção incluídos na consulta protegida.** O resultado também mostra a quantidade atual de planos, validados e liberados.
+3. Abra `supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql`, copie todo o conteúdo e cole no editor.
+4. Com o cursor no editor, pressione **Ctrl + A** e clique em **Run**.
+5. Confira: **V6.3.1 instalada: consulta dos planos separada e comentários preservados.**
 
-Se o SQL 05 ainda não foi instalado, execute `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql` e depois o SQL 06. Se o 05 já está instalado, não precisa repeti-lo. Não execute os arquivos antigos depois do 06.
+Se você já executou o SQL 06, execute agora somente o 07. Se o SQL 06 não foi executado, o 07 também funciona diretamente sobre a instalação do SQL 05. Em uma base nova, execute primeiro o 05 e depois o 07. Não execute 05 ou 06 depois do 07.
 
-O SQL 06 altera somente a consulta protegida usada por este painel. Mantém os dados, a base consolidada do BI, a sincronização, os comentários e o histórico. A instalação foi testada localmente; não foi executada no seu projeto nesta entrega.
+O SQL 07 preserva a base consolidada do BI, a sincronização e os comentários existentes. Mantém o identificador dos planos para que os comentários da versão anterior continuem editáveis, com as mesmas versões. Não foi executado na produção nesta entrega.
 
-## 2. Atualizar a página no GitHub
+## 2. Substituir os arquivos no GitHub
 
-1. No repositório da página, substitua **todo o conteúdo da raiz publicada** pelos arquivos extraídos.
-2. Mantenha `index.html` diretamente na raiz publicada, junto dos módulos, `config.js` e das pastas vendor e supabase. Não envie apenas o ZIP fechado.
-3. Aguarde a publicação, abra a página e pressione **Ctrl + F5**.
-4. Confira **V6.3 · 19/10/2026** no login e no topo do painel.
-5. Entre, clique em **Atualizar dados**, abra **Planilha de entrada** e clique em **Limpar filtros**.
+1. Substitua **todo o conteúdo da raiz publicada** pelos arquivos extraídos do ZIP, incluindo **source-loading.mjs**.
+2. Mantenha `index.html` diretamente na raiz, junto dos módulos, config.js e das pastas vendor e supabase.
+3. Aguarde a publicação e recarregue a página com **Ctrl + F5**.
+4. Confira **V6.3.1 · 19/10/2026** no topo.
+5. Entre, clique em **Atualizar dados**, abra Planilha de entrada e clique em **Limpar filtros**.
+
+A consulta da Planilha de entrada tem limite próprio. Caso ela falhe, as outras abas continuam disponíveis e os totais da Planilha ficam indisponíveis, com aviso. Uma falha não é apresentada como total zero. Se ocorrer outro erro nas consultas principais, a nova mensagem mostra a fonte e o código, quando disponível; envie essa mensagem para análise.
 
 ## 3. Conferir os números
 
