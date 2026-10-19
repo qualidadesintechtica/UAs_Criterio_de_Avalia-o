@@ -1,57 +1,45 @@
-# Publicar a V6.3.1 — corrigir o carregamento
+# Publicar a V6.4 — Modelagem, Esteira e BDQ
 
-## 1. Executar o SQL 07
+## 1. Atualizar a base
 
-A atualização precisa do **SQL 07** e dos arquivos da página.
+Se você já executou o SQL 07 da V6.3.1, execute **somente o SQL 08** nesta atualização.
 
 1. Extraia o ZIP.
-2. No Supabase do BI, abra **SQL Editor → New query**.
-3. Abra `supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql`, copie todo o conteúdo e cole no editor.
-4. Com o cursor no editor, pressione **Ctrl + A** e clique em **Run**.
-5. Confira: **V6.3.1 instalada: consulta dos planos separada e comentários preservados.**
+2. No Supabase do BI, abra SQL Editor → New query.
+3. Copie **todo o conteúdo** de `supabase/08_GESTOR_DOS_MATERIAIS.sql` e cole no editor.
+4. Com o cursor no editor, pressione Ctrl + A e clique em Run.
+5. Confira: **V6.4 instalada: gestor disponível nas consultas protegidas; comentários e histórico preservados.**
 
-Se você já executou o SQL 06, execute agora somente o 07. Se o SQL 06 não foi executado, o 07 também funciona diretamente sobre a instalação do SQL 05. Em uma base nova, execute primeiro o 05 e depois o 07. Não execute 05 ou 06 depois do 07.
+Se o SQL 07 ainda não foi executado, execute primeiro o 07 e depois o 08. Em uma instalação nova sobre as fontes do BI, execute 05, 07 e 08, nessa ordem. Não execute arquivos antigos depois do 08.
 
-O SQL 07 preserva a base consolidada do BI, a sincronização e os comentários existentes. Mantém o identificador dos planos para que os comentários da versão anterior continuem editáveis, com as mesmas versões. Não foi executado na produção nesta entrega.
+O SQL 08 disponibiliza o Gestor nas consultas protegidas e acrescenta uma consulta direta dos BDQs A1/A2/A3 para incluir os bancos ausentes da consolidada. Preserva os IDs dos itens e as chaves dos materiais que já estavam na página. Comentários e histórico não são apagados ou reimportados. A sincronização da Monday e a base consolidada do restante do BI permanecem como estavam.
 
 ## 2. Substituir os arquivos no GitHub
 
-1. Substitua **todo o conteúdo da raiz publicada** pelos arquivos extraídos do ZIP, incluindo **source-loading.mjs**.
-2. Mantenha `index.html` diretamente na raiz, junto dos módulos, config.js e das pastas vendor e supabase.
-3. Aguarde a publicação e recarregue a página com **Ctrl + F5**.
-4. Confira **V6.3.1 · 19/10/2026** no topo.
-5. Entre, clique em **Atualizar dados**, abra Planilha de entrada e clique em **Limpar filtros**.
+1. Envie **todo o conteúdo extraído** para a raiz publicada da página, substituindo os arquivos anteriores.
+2. Mantenha index.html na raiz junto dos módulos, config.js e das pastas vendor e supabase. Não envie apenas o ZIP fechado.
+3. Aguarde a publicação e use Ctrl + F5.
+4. Confira **V6.4 · 19/10/2026** no topo, clique em Atualizar dados e em Limpar filtros.
 
-A consulta da Planilha de entrada tem limite próprio. Caso ela falhe, as outras abas continuam disponíveis e os totais da Planilha ficam indisponíveis, com aviso. Uma falha não é apresentada como total zero. Se ocorrer outro erro nas consultas principais, a nova mensagem mostra a fonte e o código, quando disponível; envie essa mensagem para análise.
+## 3. Conferir as alterações
 
-## 3. Conferir os números
+| Aba / recurso | Alteração |
+| --- | --- |
+| Cartão Requer análise do design | Inclui Ajustes - MODELAGEM e Modelagens, em todas as abas. |
+| Planilha de entrada | UC, UA, Unidade da UA e a nova coluna Esteira. |
+| BDQ | A1, A2 e A3 identificados ao lado do nome; colunas UC, BDQ, Unidade da UA, Gestor e Revisor. |
+| UA e UC | Permanecem com UC, UA e Unidade da UA. |
 
-O diagnóstico enviado em 19/10/2026 às 09:21 (Brasília) tinha:
+Gestor vem de Gestor Validação NQ; Revisor vem do revisor atribuído ao material na Monday. O avaliador do formulário continua nos registros, sem ocupar o lugar do revisor atribuído. Se a fonte não informar um responsável, aparece Não informado.
 
-| Status da coluna de validação | Quantidade |
-| --- | ---: |
-| Validado | 318 |
-| Liberado para validação - NQ | 56 |
-| A liberar | 30 |
-| Ajustes - MODELAGEM | 2 |
-| N/A | 3 |
-| Pausado | 46 |
-| Total de planos | 455 |
+A busca também encontra gestor, revisor atribuído e tipo do banco. O CSV mantém as colunas anteriores e acrescenta Gestor do material, Revisor atribuído na validação e Tipo de BDQ. Esteira já fazia parte do CSV e continua disponível.
 
-Os quatro cartões continuam Liberada, Em validação, Requer análise do design e Validadas. Os demais status são discriminados acima dos filtros e continuam disponíveis na visão completa. Ajustes - MODELAGEM permanece como Modelagem, sem ser convertido em análise do design.
+O clique continua abrindo os comentários, inclusive nas novas colunas. Edição, versões anteriores, filtros, paginação, login @animaeducacao.com.br / @ulife.com.br, tema escuro e claro off-white foram mantidos.
 
-O status da coluna vale mais que o nome do grupo físico. No diagnóstico havia, por exemplo, itens A liberar dentro do grupo Validados e itens Validado no grupo Aguardando geração PDF do PP.
+As consultas de planos e BDQs são independentes. Uma falha complementar mostra um aviso e preserva as demais informações disponíveis.
 
-Cada ID da Monday conta uma vez. Critérios, subelementos, versões e comentários não aumentam o total de planos. Registros sem vínculo com um plano ficam sinalizados na tabela e fora dos totais dos cartões. Podem continuar sendo consultados e editados.
+## Referência de contagem
 
-Os valores são uma referência do momento do diagnóstico. Compare a Monday e a página com os mesmos filtros e a sincronização atualizada. Os números não estão fixados no código.
+No diagnóstico de 19/10/2026 às 09:21, havia 455 planos: 318 validados, 56 liberados, 30 A liberar, 2 em Modelagem, 3 N/A e 46 Pausados. Com a regra solicitada, os 2 de Modelagem entram em Requer análise do design; os outros status somam 79. Esses valores são apenas a referência daquele momento e não estão fixados na página.
 
-## Funcionalidades preservadas
-
-- Login institucional para @animaeducacao.com.br e @ulife.com.br, com contas já cadastradas no Supabase do BI.
-- Menu lateral, quatro abas e filtros de Esteira, Lote, UC, UA, Revisor e Especialistas mantidos ao trocar de aba.
-- Tabela com UC, UA e Unidade da UA; clique para abrir comentários.
-- Inserção e edição de comentários, autoria e versões anteriores. As edições continuam no painel, sem alteração do texto na Monday.
-- Busca, lista, paginação, CSV, tema escuro e tema claro off-white.
-
-As demais abas mantêm as consultas e as regras anteriores. O ajuste desta entrega é a fonte dos Planos de Produção na Planilha de entrada.
+O SQL 08 não foi executado no seu projeto e a publicação no GitHub não foi realizada nesta entrega.

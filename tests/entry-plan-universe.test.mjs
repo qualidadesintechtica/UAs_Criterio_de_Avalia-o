@@ -18,8 +18,8 @@ test('reproduz a distribuição dos 455 planos do diagnóstico, contando itens e
   const distribution=[['Validado',318],['Liberado para validação - NQ',56],['A liberar',30],['Ajustes - MODELAGEM',2],['N/A',3],['Pausado',46]];
   const materials=[];let id=0;for(const [status,n] of distribution)for(let i=0;i<n;i++)materials.push(plan(++id,status));
   const rows=load(materials).PE.records;
-  assert.deepEqual(countWorkflow(rows),{all:455,released:56,validating:0,design:0,validated:318,other:81});
-  assert.deepEqual(Object.fromEntries(otherWorkflowCounts(rows)),{'A liberar':30,'Ajustes - MODELAGEM':2,'N/A':3,'Pausado':46});
+  assert.deepEqual(countWorkflow(rows),{all:455,released:56,validating:0,design:2,validated:318,other:79});
+  assert.deepEqual(Object.fromEntries(otherWorkflowCounts(rows)),{'A liberar':30,'N/A':3,'Pausado':46});
   assert.equal(materialTableRows(groupUAs(rows)).length,455);
   assert.equal(groupUAs(selectWorkflow(rows,'validated')).length,318);
 });

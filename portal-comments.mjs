@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {text} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

@@ -1,16 +1,15 @@
-V6.3.1 · CONSULTAS INDEPENDENTES · 19/10/2026
-Atualização obrigatória: supabase/07_SEPARAR_CONSULTAS_E_PRESERVAR_COMENTARIOS.sql.
-Funciona com ou sem o SQL 06 anterior, após a instalação do SQL 05.
-Não execute SQL antigo depois do 07.
-Marca na tela: V6.3.1 · 19/10/2026.
+V6.4 · MODELAGEM, ESTEIRA E BDQ A1/A2/A3 · 19/10/2026
+Atualização: supabase/08_GESTOR_DOS_MATERIAIS.sql após o SQL 07.
+Se a V6.3.1 / SQL 07 já está instalada, execute somente o 08 e substitua os arquivos da página.
+Não execute SQL antigo depois do 08.
+Marca na tela: V6.4 · 19/10/2026.
 
-Consulta protegida dos planos separada da consulta dos demais materiais.
-Uma falha dos planos não bloqueia UA, BDQ e UC; limite próprio de 12 segundos.
-Tempo excedido no banco não é apresentado como problema de internet.
-Última consulta concluída preservada em caso de falha ao atualizar.
-IDs dos planos, comentários e versões anteriores mantidos.
-Novo arquivo obrigatório da página: source-loading.mjs.
-
-Referência do diagnóstico em 19/10/2026 às 09:21: 455 planos, 318 validados e 56 liberados.
-86 testes de lógica aprovados; atualização SQL 05→07 e 06→07 e falhas de carregamento verificadas em simulação.
-SQL de produção, login institucional real e publicação não executados nesta entrega.
+Ajustes - MODELAGEM / Modelagens alimenta Requer análise do design em todas as abas.
+Planilha de entrada: nova coluna Esteira.
+BDQ: A1, A2 e A3, com colunas Gestor e Revisor e identificação do tipo.
+Fonte direta da validação complementa bancos ausentes, mantendo chaves dos bancos já existentes.
+Gestor: gestor_validacao_nq. Revisor atribuído: revisor_validador. Avaliadores preservados nos registros.
+Novos campos também disponíveis na busca e na exportação.
+Comentários, histórico, filtros, paginação, consultas independentes, login institucional e temas preservados.
+96 testes de lógica; SQL 08 e interações verificados em simulação.
+Produção, login institucional real e publicação no GitHub não executados nesta entrega.

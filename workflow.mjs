@@ -1,10 +1,11 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 
 export function workflowStatus(value){
   const s=norm(value).replace(/\s+/g,' ');
   if(/^validad[oa]s?(?:\s*-.*)?$/.test(s))return 'validated';
+  if(/^(?:em\s+)?ajustes?\s*[-–—:]\s*modelage(?:m|ns)(?:\s*-.*)?$/.test(s))return 'design';
   if(/(?:requer|aguardando|em)\s+(?:a\s+)?analise.*(?:design|\bda\b)|(?:ajustes?|revisao).*?(?:design|\bda\b)/.test(s))return 'design';
   if(/^(?:em|iniciad[ao]|iniciando).*validacao|^validacao\s+(?:em andamento|iniciada)/.test(s))return 'validating';
   if(/^liberad[oa]s?(?:\s|$)/.test(s))return 'released';
@@ -30,6 +31,20 @@ export function entryPlanUniverse(sections,materials,sourceReady){
 export function mergeEntryPlanMaterials(materials,plans){
   const ids=new Set(plans.map(m=>entryValidationId(m)).filter(Boolean));
   return [...materials.filter(m=>materialKind(m)!=='PE'||!ids.has(text(m.monday_item_validacao))),...plans];
+}
+export function mergeBDQValidationMaterials(materials,banks){
+  const byID=new Map(banks.map(m=>[text(m.monday_item_validacao),m]).filter(([id])=>id));
+  const seen=new Set();
+  const merged=materials.map(m=>{
+    if(materialKind(m)!=='BDQ')return m;
+    const id=text(m.monday_item_validacao),current=byID.get(id);if(!current)return m;
+    seen.add(id);
+    const updates={};
+    for(const field of ['gestor_validacao_nq','revisor_validador','status_validacao','sincronizado_validacao'])if(Object.hasOwn(current,field))updates[field]=current[field];
+    return {...m,...updates};
+  });
+  for(const [id,m] of byID)if(!seen.has(id))merged.push(m);
+  return merged;
 }
 export function otherWorkflowCounts(records){
   const counts=new Map();
@@ -76,7 +91,7 @@ export function includeMaterialInventory(sections,materials){
     if(seen.get(kind).keys.has(uaKey)||(materialKey&&seen.get(kind).sources.has(materialKey)))continue;
     const record={kind,id:'material:'+materialKey,materialKey,uaKey,validationItemId,uc:text(m.titulo)||ucId||'UC não localizada',ucId,
       ua:text(m.titulo_ua)||uaId||text(m.item_name)||'Material sem título',uaId,parent,track,matrix,semester,batch,unitLabel:unitLabel(m),
-      specialists:[],reviewers:names(m.revisor_validador),criterion:'Registro do material',question:'',classification:'Avaliação individual não disponível',
+      specialists:[],reviewers:names(m.revisor_validador),assignedReviewers:names(m.revisor_validador),managers:names(m.gestor_validacao_nq),assessmentType:kind==='BDQ'?bdqAssessmentType(m):'',criterion:'Registro do material',question:'',classification:'Avaliação individual não disponível',
       comment:'',commentOnly:true,metadataOnly:true,inventoryOnly:true,status:'comment',date:'',materialStatus:text(m.status_validacao),
       sourceLabel:'Esteira de materiais — Monday',history:[]};
     sections[kind].records.push(record);seen.get(kind).keys.add(uaKey);if(materialKey)seen.get(kind).sources.add(materialKey);

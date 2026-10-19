@@ -1,8 +1,8 @@
-import {norm,text} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {norm,text} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
 
 const missingNames=new Set(['uc nao localizada','uc nao informado','uc nao informada','nome da uc nao localizado','nao informado','nao informada','nao localizado','nao localizada','sem titulo','null','undefined','n/a','-']);
 const clean=value=>text(value).replace(/\s+/g,' ');
-function courseCode(value){return clean(value).split('|')[0].replace(/_(?:UA\d+|A[13]|PP)$/i,'');}
+function courseCode(value){return clean(value).split('|')[0].replace(/_(?:UA\d+|A[123]|PP)$/i,'');}
 function isName(value,codes=[]){
   const name=clean(value),key=norm(name);
   return Boolean(name)&&!missingNames.has(key)&&!/^\d+$/.test(name)

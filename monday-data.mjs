@@ -1,10 +1,10 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 
 function unique(rows){
   if(!rows?.length)return null;
-  const identities=new Set(rows.map(r=>[text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta),norm(r.bloco||r.lote),entryValidationId(r)].join('|')));
+  const identities=new Set(rows.map(r=>[text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta),norm(r.bloco||r.lote),entryValidationId(r),materialKind(r)==='BDQ'?text(r.monday_item_validacao)||text(r.chave_material):''].join('|')));
   return identities.size===1?rows[0]:null;
 }
 function courseContext(rows){
@@ -45,9 +45,12 @@ export function adaptMondayForms(assessments,comments,materials){
   for(const id of eventIDs){
     const assessment=forms.get(id);const notes=commentsByForm.get(id)||[];const r=assessment||latest(notes);
     const kind=materialKind(r);if(!kind)continue;
-    const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[13]|PP)$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
+    const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[123]|PP)$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
+    const requestedBankType=kind==='BDQ'?bdqAssessmentType(r):'';
+    const bankMatches=rows=>(rows||[]).filter(m=>materialKind(m)==='BDQ'&&(!requestedBankType||bdqAssessmentType(m)===requestedBankType));
     const material=kind==='PE'
       ?entryPlanMaterial(r,codeUC,byID,byUA,byUC,byName)||courseContext(byUC.get(norm(codeUC)))||courseContext(byName.get(norm(originalName)))
+      :kind==='BDQ'?unique(bankMatches(byID.get(norm(r.validacao_material_item_id))))||unique(bankMatches(byUA.get(norm(originalName))))||unique(bankMatches(byUC.get(norm(codeUC))).filter(m=>!text(m.id_ua)))||courseContext(byUC.get(norm(codeUC)))
       :unique(byID.get(norm(r.validacao_material_item_id)))||unique(byUA.get(norm(originalName)))||unique((byUC.get(norm(codeUC))||[]).filter(m=>materialKind(m)===kind&&!text(m.id_ua)))||courseContext(byUC.get(norm(codeUC)));
     const linkedPlan=kind==='PE'&&material&&!material.contextOnly;
     const validationItemId=linkedPlan?entryValidationId(material):'';
@@ -57,11 +60,11 @@ export function adaptMondayForms(assessments,comments,materials){
     const ua=kind==='UC'?uc:kind==='PE'?originalName:text(material?.titulo_ua||originalName||material?.item_name);
     const displayUA=kind==='UC'&&/^UA\d+$/i.test(unit)?text(material?.titulo_ua)||originalName:ua;
     const batch=text(material?.bloco||r.bloco||r.lote);
-    const parent=text(linkedPlan?material.monday_item_validacao:r.validacao_material_item_id);
+    const parent=text(linkedPlan?material.monday_item_validacao:kind==='BDQ'&&material&&!material.contextOnly?material.monday_item_validacao||r.validacao_material_item_id:r.validacao_material_item_id);
     const key=linkedPlan
       ?materialGroupKey(kind,text(material.id_titulo)||parent||uaId,uaId||parent||text(material.chave_material),matrix,track,semester,batch,validationItemId)
       :materialGroupKey(kind,ucId||codeUC,uaId,matrix,track,semester,batch);
-    const common={kind,uaKey:key,validationItemId,uc,ucId,ua,uaId,parent,track,matrix,semester,batch,displayUA,unitSourceId:kind==='UC'?originalName:uaId,unitLabel:unitLabel({...material,id_ua:kind==='UC'?originalName:uaId}),materialKey:text(material?.chave_material),specialists:names(material?.especialista_modelagem),reviewers:names(r.avaliador||material?.revisor_validador),date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
+    const common={kind,uaKey:key,validationItemId,uc,ucId,ua,uaId,parent,track,matrix,semester,batch,displayUA,unitSourceId:kind==='UC'?originalName:uaId,unitLabel:unitLabel({...material,id_ua:kind==='UC'?originalName:uaId}),materialKey:text(material?.chave_material),specialists:names(material?.especialista_modelagem),reviewers:kind==='BDQ'?names([r.avaliador,material?.revisor_validador]):names(r.avaliador||material?.revisor_validador),assignedReviewers:names(material&&!material.contextOnly?material.revisor_validador:''),managers:names(material&&!material.contextOnly?material.gestor_validacao_nq:''),assessmentType:kind==='BDQ'?bdqAssessmentType(material)||bdqAssessmentType(r):'',date:text(r.data_avaliacao_hora||r.data_avaliacao),materialStatus:text(material?.status_validacao||r.conceito_final),sourceLabel:'Formulário de critérios — Monday',unmatched:!material,history:[],sourceEvent:id};
     let added=false;
     if(kind==='UC'&&assessment){
       for(let i=1;i<=7;i++){
@@ -72,7 +75,7 @@ export function adaptMondayForms(assessments,comments,materials){
     }
     for(const note of notes){
       const title=text(note.criterio_titulo||note.parecer_titulo)||(note.numero_criterio?'Critério '+note.numero_criterio:'Parecer registrado');
-      all.push({...common,id:'comment:'+text(note.id),criterion:title,criterionKey:text(note.criterio_id||note.numero_criterio||note.parecer_id||note.id),unit,question:'',classification:'Resposta do critério não disponível nesta fonte',status:'comment',comment:text(note.parecer),commentOnly:true,date:text(note.data_avaliacao_hora||note.data_avaliacao||common.date),reviewers:names(note.avaliador||r.avaliador||material?.revisor_validador),_stamp:stamp(note)});added=true;
+      all.push({...common,id:'comment:'+text(note.id),criterion:title,criterionKey:text(note.criterio_id||note.numero_criterio||note.parecer_id||note.id),unit,question:'',classification:'Resposta do critério não disponível nesta fonte',status:'comment',comment:text(note.parecer),commentOnly:true,date:text(note.data_avaliacao_hora||note.data_avaliacao||common.date),reviewers:kind==='BDQ'?names([note.avaliador,r.avaliador,material?.revisor_validador]):names(note.avaliador||r.avaliador||material?.revisor_validador),_stamp:stamp(note)});added=true;
     }
     if(!added)all.push({...common,id:'form:'+id,criterion:'Registro do formulário',criterionKey:'metadata',unit,question:'',classification:text(r.conceito_final)||'Resultado do critério não sincronizado',status:'comment',comment:'',commentOnly:true,metadataOnly:true,_stamp:stamp(r)});
   }

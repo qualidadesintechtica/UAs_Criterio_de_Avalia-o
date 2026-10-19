@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-3-1-consultas-independentes-20261019';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-4-bdq-esteira-modelagem-20261019';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';
