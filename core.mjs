@@ -42,10 +42,14 @@ function indexBy(rows, key) {
 }
 function uniqueMaterial(rows) {
   if (!rows?.length) return null;
-  const ids = new Set(rows.map(r => [text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta),norm(r.bloco||r.lote)].join('|')));
+  const ids = new Set(rows.map(r => [text(r.id_titulo),text(r.id_ua),norm(r.matriz_oferta),norm(r.esteira_producao),text(r.semestre_oferta),norm(r.bloco||r.lote),entryValidationId(r)].join('|')));
   return ids.size === 1 ? rows[0] : null;
 }
-export function materialGroupKey(kind,uc,ua,matrix,track,semester,batch=''){
+export function entryValidationId(row){
+  return row?.origem_material==='validacao_planos'?text(row.monday_item_validacao):'';
+}
+export function materialGroupKey(kind,uc,ua,matrix,track,semester,batch='',validationId=''){
+  if(kind==='PE'&&text(validationId))return JSON.stringify(['PE','validacao',text(validationId)]);
   return JSON.stringify([kind,text(uc),text(ua),text(matrix),text(track)||'Não informada',text(semester),text(batch)]);
 }
 export function unitLabel(row={}){
@@ -80,8 +84,9 @@ export function buildRecords(criteria, materials,kind='UA') {
     const batch=text(material?.bloco||material?.lote||row.bloco||row.lote);
     const ua=text(row.titulo_ua || material?.titulo_ua || material?.item_name || (kind==='UC'?uc:'') || (uaId ? kind+' '+uaId : 'Material sem título'));
     // Sem vínculo inequívoco, o item continua visível, sem inventar uma UC.
-    const uaKey=materialGroupKey(kind,ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester,batch);
-    const record={id:text(row.subitem_id),kind,uaKey,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,batch,unitLabel:unitLabel({...row,...material}),materialKey:text(material?.chave_material),specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),materialStatus:text(material?.status_validacao||row.status_validacao),unmatched:!material && !uc,raw:row};
+    const validationItemId=kind==='PE'?entryValidationId(material):'';
+    const uaKey=materialGroupKey(kind,ucId || parent || uaId,uaId || parent || text(row.subitem_id),matrix,track,semester,batch,validationItemId);
+    const record={id:text(row.subitem_id),kind,uaKey,validationItemId,uc:uc || 'UC não localizada',ucId,ua,uaId,parent,track:track || 'Não informada',matrix,semester,batch,unitLabel:unitLabel({...row,...material}),materialKey:text(material?.chave_material),specialists,reviewers,criterion,question:text(row.pergunta),classification:text(row.classificacao_especialista),comment:text(row.parecer_especialista),date:text(row.data_classificacao_especialista),status:outcome(row),materialStatus:text(material?.status_validacao||row.status_validacao),unmatched:!material && !uc,raw:row};
     const key=uaKey+'|'+norm(criterion)+(row.criterio||row.pergunta?'':'|'+text(row.subitem_id));
     if (!versions.has(key)) versions.set(key,[]);
     versions.get(key).push(record);
@@ -139,7 +144,7 @@ export function csvCell(value) {
   return '"'+s.replace(/"/g,'""')+'"';
 }
 export function exportCSV(records) {
-  const headings=['Categoria','Esteira','UC','ID UC','Material','ID material','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação registrada','Comentários','Data da avaliação','Status Monday','Origem','Autor da última edição do comentário','E-mail do autor do comentário','Data da edição do comentário','Versão do comentário','Texto atual da fonte Monday','UA de referência','Unidade da UA','Lote'];
+  const headings=['Categoria','Esteira','UC','ID UC','Material','ID material','Matriz','Semestre','Especialista','Revisor','Critério','Resultado','Classificação registrada','Comentários','Data da avaliação','Status Monday','Origem','Autor da última edição do comentário','E-mail do autor do comentário','Data da edição do comentário','Versão do comentário','Texto atual da fonte Monday','UA de referência','Unidade da UA','Lote','ID do item de validação'];
   const label={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro textual'};
-  return '\ufeff'+[headings,...records.map(r=>[r.kind||'UA',r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date,r.materialStatus||'',r.portal?(r.portalAddition?'Comentário do painel':'Avaliação Monday · comentário editado no painel'):r.sourceLabel||'Critérios de validação Monday',r.portal?.updated_name||'',r.portal?.updated_email||'',r.portal?.updated_at||'',r.portal?.revision||'',r.mondayComment??'',r.displayUA||r.ua,r.unitLabel||'',r.batch||''])].map(row=>row.map(csvCell).join(';')).join('\r\n');
+  return '\ufeff'+[headings,...records.map(r=>[r.kind||'UA',r.track,r.uc,r.ucId,r.ua,r.uaId,r.matrix,r.semester,r.specialists.join('; '),r.reviewers.join('; '),r.criterion,label[r.status],r.classification,r.comment,r.date,r.materialStatus||'',r.portal?(r.portalAddition?'Comentário do painel':'Avaliação Monday · comentário editado no painel'):r.sourceLabel||'Critérios de validação Monday',r.portal?.updated_name||'',r.portal?.updated_email||'',r.portal?.updated_at||'',r.portal?.revision||'',r.mondayComment??'',r.displayUA||r.ua,r.unitLabel||'',r.batch||'',r.validationItemId||r.parent||''])].map(row=>row.map(csvCell).join(';')).join('\r\n');
 }

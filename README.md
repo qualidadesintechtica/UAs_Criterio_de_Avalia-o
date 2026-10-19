@@ -1,32 +1,26 @@
-# Comentários e avaliações dos materiais — V6.2
+# Comentários e avaliações dos materiais — V6.3
 
-Página para GitHub Pages com login institucional do BI, menu lateral **Planilha de entrada, UA, BDQ e UC**, filtros compartilhados e comentários com histórico.
+Página para GitHub Pages com login institucional do BI, menu lateral Planilha de entrada, UA, BDQ e UC, filtros compartilhados e comentários com histórico.
 
-## Correção da categoria e das contagens da Planilha de entrada
+## Fonte completa da Planilha de entrada
 
-Na base de validações da Monday, a Planilha de entrada está cadastrada como **Plano de Produção**. A V6.1 excluía essa categoria. A V6.2 passa a reconhecer o nome exato Plano de Produção como PE, além de Planilha de Entrada e PE, tanto nos materiais quanto nos critérios, formulários e pareceres. Não é preciso renomear os itens na Monday.
+O diagnóstico enviado em 19/10/2026 confirmou 455 Planos de Produção na tabela sincronizada de validações e nenhum deles na base consolidada que a página consultava. A V6.2 corrigiu o nome da categoria, mas essa mudança não podia recuperar registros ausentes da consulta.
 
-Quando existe vínculo inequívoco com o plano, seus critérios e formulários são reunidos na mesma identidade de material, evitando contar novamente a planilha como um registro de inventário. O status atual do Plano de Produção prevalece sobre o conceito antigo do formulário. O status de uma UA da mesma UC não é usado como status da planilha.
+O SQL 06 acrescenta esses planos à view protegida do painel, diretamente de `monday_validacao_materiais`. Não modifica `vw_materiais_bi_consolidada`, a sincronização, as demais páginas do BI, as tabelas de comentários, as políticas de histórico ou a função de gravação. A checagem institucional existente continua protegendo a leitura.
 
-Os vínculos usam o ID do item de validação, o código exato ou uma UC/título exato que identifique um único plano e oferta compatível. Lotes, matrizes, semestres e esteiras distintos continuam separados. Havendo mais de um plano possível, não se escolhe um arbitrariamente: o formulário permanece sem vínculo com um material específico até a base identificá-lo. Isso ainda pode causar diferença de contagem em registros sem vínculo.
+Cada plano é identificado pelo ID do item na Monday. Formulários e critérios vinculados a esse item compartilham a mesma identidade, sem contar uma vez por critério, parecer, código de UC ou subelemento. Os códigos e IDs das fontes dos comentários continuam preservados. O detalhe do material e o CSV mostram o ID do item de validação para conferência.
 
-As referências dos comentários continuam sendo os IDs da fonte, preservando edições e histórico. Esta atualização muda apenas os arquivos da página. O SQL 05, a autenticação e as permissões não mudaram.
-
-## Correção dos nomes na Planilha de entrada
-
-Na V6.1, UC e UA mostram o título da UC consultado na base. O rótulo deixa de usar o nome bruto do formulário terminado em `_PP`. A resolução ignora nomes vazios ou preenchidos com o próprio código e aceita diferenças de caixa e espaços para reconhecer o mesmo título. Pode usar o código da UA ou a chave composta quando o ID da UC estiver ausente. Códigos próximos não são associados automaticamente e títulos conflitantes permanecem sinalizados.
-
-Os códigos da fonte e as referências dos comentários são preservados. O nome bruto do formulário é mantido em `sourceName` e aparece nos detalhes como Referência da planilha. A busca pelo código continua disponível. Filtros e exportação usam o título corrigido. Na V6.2, os formulários vinculados ao plano usam os identificadores reais desse material para o agrupamento.
-
-A correção atua somente na seção PE; não muda a autorização, as consultas ao banco nem as respostas da avaliação. Não é necessário repetir o SQL 05 se ele já foi instalado.
+Os nomes de UC e UA usam o título disponível na base. Códigos, referências originais e busca por código continuam disponíveis. Não se inventam nomes nem vínculos em situações ambíguas.
 
 ## Instalar ou atualizar
 
-Siga `COMECE_AQUI.md`. Para uma base ainda não preparada, execute `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql`. Para atualizar uma V6 já instalada, substitua somente os arquivos da página, incluindo `pe-names.mjs`. O arquivo reúne a preparação das views, lote, status, comentários e domínio Ulife sobre as fontes existentes do BI. Instala a estrutura de comentários quando ausente e preserva os registros já existentes. Os arquivos 01 a 04 permanecem como histórico e não devem ser executados depois do 05.
+**Esta versão exige o SQL 06 e a substituição dos arquivos da página.** Consulte COMECE_AQUI.md.
 
-Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. A página deve mostrar **V6.2 · 19/10/2026** no login e no painel. CSS, configuração, SDK e módulos têm links com versão para reduzir a reutilização de arquivos anteriores.
+Se o SQL 05 já está instalado, execute somente `supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql`. Em uma instalação nova sobre as fontes existentes do BI, execute o 05 e depois o 06. Não execute SQLs antigos depois do 06.
 
-A execução do SQL no seu projeto e a publicação no GitHub não foram feitas por este pacote.
+Envie todo o conteúdo extraído para a raiz publicada pelo GitHub Pages. Confira **V6.3 · 19/10/2026** no login e no painel. Recursos e módulos usam um novo identificador de versão. A página informa quando o SQL 06 ainda não está disponível e deixa os cartões da Planilha sem totais até a atualização da fonte.
+
+No diagnóstico recebido: 318 Validados, 56 Liberados para validação, 30 A liberar, 2 em Ajustes - MODELAGEM, 3 N/A e 46 Pausados, totalizando 455 itens. São valores de conferência daquele momento, nunca números fixados na aplicação. Mudanças na Monday ou filtros ativos alteram o resultado.
 
 ## Domínios autorizados
 
@@ -38,7 +32,7 @@ A página usa a sincronização existente entre Monday e Supabase.
 
 | Menu | Categorias da fonte |
 | --- | --- |
-| Planilha de entrada | Plano de Produção / Planilha de Entrada / PE |
+| Planilha de entrada | Plano de Produção do quadro de validações, além dos registros PE anteriores |
 | UA | Unidade de Aprendizagem / UA |
 | BDQ | Banco de questões / BDQ / Avaliação A1 / Avaliação A3 |
 | UC | UC / Unidade Curricular |
@@ -46,7 +40,7 @@ A página usa a sincronização existente entre Monday e Supabase.
 As fontes protegidas são:
 
 - `vw_ua_resultados_criterios_autenticados`: critérios, classificações, especialistas, revisores, pareceres, lote e status.
-- `vw_ua_resultados_materiais_autenticados`: IDs, nomes, unidade, esteira, matriz, semestre, lote e status do material.
+- `vw_ua_resultados_materiais_autenticados`: IDs, nomes, unidade, esteira, matriz, semestre, lote e status. A V6.3 acrescenta os Planos de Produção ausentes a partir de `monday_validacao_materiais`, com `origem_material=validacao_planos`, preservando os tipos e a ordem dos 17 campos anteriores.
 - `vw_materiais_monday_avaliacoes_autenticadas`: formulários, avaliador, conceito final e sete indicadores de UC com suas pontuações.
 - `vw_materiais_monday_pareceres_autenticados`: textos dos pareceres vinculados aos formulários.
 - `nq_comentarios` e `nq_comentarios_historico`: comentários e versões salvos pelo painel.
@@ -76,7 +70,7 @@ Os quatro cartões superiores filtram o status do material:
 | Requer análise do design | Solicitação de análise do design ou ajustes que mencionem Design / DA, incluindo Ajustes - Conteúdistas e DA |
 | Validadas | Validado / Validada e variantes no plural |
 
-A classificação de um critério, sua pontuação e a existência de um comentário não são usadas para inventar um status operacional. Status diferentes, como Pausado e Revalidar - NQ, permanecem na visão completa. As quatro contagens podem não somar todos os materiais por esse motivo. Se a mesma identidade reúne status simultâneos, a prioridade de apresentação é design, em validação, liberada e validada.
+Na Planilha de entrada, cada ID do item do quadro conta uma vez. Os nomes dos grupos físicos não substituem a coluna Status Validação. Formulários sem vínculo inequívoco continuam acessíveis e editáveis, identificados na tabela, mas ficam fora dos totais do quadro. A classificação de um critério, sua pontuação e a existência de um comentário não são usadas para inventar um status operacional. Status diferentes, como Pausado e Revalidar - NQ, permanecem na visão completa. As quatro contagens podem não somar todos os materiais por esse motivo. Uma nota acima dos filtros discrimina os demais status, incluindo Ajustes - MODELAGEM, A liberar, N/A e Pausado; Modelagem não é convertida automaticamente em análise do design. Se a mesma identidade reúne status simultâneos, a prioridade de apresentação é design, em validação, liberada e validada.
 
 A tabela mostra apenas **UC, UA e Unidade da UA**. A unidade vem de um campo explícito, do nome de unidade do item ou do código UA numerado. Um título de UA não é trocado pelo número da unidade. Quando o título não está disponível, o código original permanece visível.
 
@@ -94,7 +88,7 @@ Materiais sem avaliação também podem receber comentários. Quando os critéri
 
 **Os comentários são salvos no Supabase para o painel. Não há envio de edições à Monday.** O texto atual da fonte continua disponível separadamente; classificações, pontuações e responsáveis pela avaliação não são alterados.
 
-A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas anteriores e acrescenta UA de referência, Unidade da UA e Lote. Autoria, data, versão e texto da fonte continuam na exportação. O histórico completo permanece no painel.
+A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas anteriores e acrescenta UA de referência, Unidade da UA, Lote e ID do item de validação. Autoria, data, versão e texto da fonte continuam na exportação. O histórico completo permanece no painel.
 
 ## Arquivos principais
 
@@ -116,12 +110,10 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Execute `node --test tests/*.test.mjs`: passaram **73 testes de lógica**, incluindo os 62 anteriores e 11 casos da categoria Plano de Produção, reunião dos registros sem duplicar materiais, status, ofertas distintas, vínculos ambíguos, filtros, exportação e preservação de edições e histórico. Os dados dos novos testes são exemplos controlados; os totais reais da Monday não foram consultados nesta entrega.
+Passaram 79 testes de lógica (`node --test tests/*.test.mjs`), incluindo a reprodução da distribuição de 455 planos do diagnóstico, IDs diferentes com o mesmo código, status diferente do grupo físico, registros sem vínculo, filtros e preservação das origens dos comentários.
 
-Em PostgreSQL embarcado (PGlite), nove verificações confirmaram a migração V5 → V6 sem perda do histórico, leitura das quatro views e dos comentários pelos dois domínios, gravação Ulife com autoria, conflitos, reenvios, proteção contra exclusão, bloqueio de outros domínios e anônimos, repetição segura do script e instalação usando somente o SQL 05 sobre as fontes do BI.
+Em PostgreSQL embarcado (PGlite), a instalação SQL 05 → 06 foi testada com 455 itens sintéticos distribuídos conforme o diagnóstico enviado. Foram conferidos: 318 validados, 56 liberados, 81 em outros status; os 17 campos anteriores e o material de UA existente; matriz da coluna sincronizada; gravação e edição de comentários de planos; histórico anterior; instalação repetida; acesso Ânima/Ulife e bloqueio de externos e anônimos. A função de gravação permaneceu idêntica à anterior.
 
-Na V6.1, uma simulação adicional verificou nomes nas duas colunas da Planilha, campos de título vazios, filtros por nome, referência original, abertura e edição de comentários e busca pelo código.
+Em DOM simulado, foram conferidos os cartões, a identificação dos registros sem vínculo, os filtros, a abertura dos comentários, a indicação de fonte desatualizada e a limpeza da sessão. Isso não equivale à inspeção em um navegador real.
 
-Na V6, em DOM simulado, foram verificados login Ulife, bloqueio de domínio externo, marca V6, links com versão, filtros nas quatro abas, cartões, tabela de três colunas, abertura dos comentários, criação, edição, histórico, texto seguro, lista, alternância do tema e saída da sessão.
-
-A execução no seu projeto Supabase, o login institucional real, a inspeção visual em navegador e a publicação no GitHub não foram realizadas aqui.
+O diagnóstico real foi lido do arquivo enviado pela usuária, com consulta em 19/10/2026 às 09:21 (Brasília). O SQL 06 não foi executado no projeto de produção, e não houve publicação no GitHub ou login institucional real nesta entrega.

@@ -31,3 +31,6 @@
 @media(max-width:1100px){.filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filter-grid>label:last-child{grid-column:auto}.status-label{padding-right:10px}.status-card.design .status-label{font-size:11px}}
 
 .release-badge{display:inline-block;border:1px solid var(--line);border-radius:20px;background:var(--soft);color:var(--purple);font-size:10px;font-weight:600;line-height:1.5;padding:4px 9px;white-space:nowrap}.login-form>.release-badge{margin:0 0 0 8px;vertical-align:middle}.topbar-release{margin-left:auto}@media(max-width:600px){.topbar .access-label{display:none}.topbar-release{font-size:9px;padding:4px 7px}}
+
+.workflow-note{margin:-4px 0 20px;color:var(--muted);font-size:13px;line-height:1.6}
+.unlinked-label{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:4px}

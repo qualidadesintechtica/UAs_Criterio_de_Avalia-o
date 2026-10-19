@@ -1,64 +1,55 @@
-# Publicar a V6.2 — categoria e contagens da Planilha de entrada
+# Publicar a V6.3 — fonte completa da Planilha de entrada
 
-## Aplicar esta correção
+## 1. Atualizar a consulta da base
 
-**Se o SQL 05 já foi executado, não precisa executar nenhum SQL novamente.** Esta correção altera os arquivos da página.
-
-1. Extraia o ZIP e substitua todo o conteúdo na raiz publicada do GitHub Pages, incluindo o novo arquivo **pe-names.mjs**.
-2. Aguarde a publicação e recarregue a página com **Ctrl + F5**.
-3. Confira a marca **V6.2 · 19/10/2026** e abra **Planilha de entrada**.
-4. Clique em **Atualizar dados** e **Limpar filtros**. Compare com a Monday usando os mesmos filtros de lote, esteira e status.
-
-A página passa a incluir os itens cadastrados como **Plano de Produção** na base de validações, dentro de **Planilha de entrada**. Quando há vínculo inequívoco, material, critérios e formulário contam como uma só planilha, e o status é o atual do plano. Não é preciso alterar a categoria na Monday.
-
-A contagem de planilhas corresponde a materiais agrupados; a quantidade de registros inclui critérios e pareceres. As duas quantidades podem ser diferentes. Formulários sem vínculo inequívoco e status fora dos quatro cartões continuam visíveis na visão completa. Os totais reais da sua base precisam ser conferidos após a publicação; não foram consultados nesta entrega.
-
-As colunas UC e UA passam a mostrar o título da UC encontrado na base, em vez do código `_PP`. Filtros, busca e exportação usam o nome. Os códigos continuam preservados nos vínculos e em **Referência da planilha**, no painel de comentários.
-
-Campos de título vazios, códigos repetidos no lugar do nome e variações de maiúsculas não descartam um nome disponível. Quando o ID da UC está vazio, a busca também considera o código exato da UA ou da chave composta do material. Não há associação por semelhança de nomes.
-
-Se o nome estiver ausente ou houver títulos conflitantes para o mesmo código, a página mostra **Nome da UC não localizado**, com a referência original nos detalhes. O nome deve ser corrigido na base; a página não inventa títulos.
-
-## Se o SQL 05 ainda não foi executado
+Esta atualização precisa do **SQL 06**. Trocar apenas a pasta não recupera os planos que estavam ausentes da consulta.
 
 1. Extraia o ZIP em uma pasta nova.
-2. Abra o projeto Supabase do BI → **SQL Editor → New query**.
-3. Copie e execute todo o arquivo **supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql**.
-4. Aguarde a mensagem **V6 instalada: domínios Ânima e Ulife, lote, status e histórico preservado.**
+2. No Supabase do BI, abra **SQL Editor → New query**.
+3. Abra `supabase/06_INCLUIR_PLANILHAS_DA_VALIDACAO.sql`, copie todo o conteúdo e cole na consulta nova.
+4. Com o cursor no editor, pressione **Ctrl + A** e clique em **Run** para executar o arquivo inteiro.
+5. Confira a mensagem **V6.3 instalada: Planos de Produção incluídos na consulta protegida.** O resultado também mostra a quantidade atual de planos, validados e liberados.
 
-O arquivo 05 reúne a atualização das consultas, o lote, os status, os comentários e os dois domínios. Ele funciona sobre as fontes da Monday já existentes no seu BI e não exige executar os arquivos 01 a 04 antes. Se você já executou esses arquivos, execute somente o 05 nesta atualização. Não execute um SQL antigo depois do 05.
+Se o SQL 05 ainda não foi instalado, execute `supabase/05_ATUALIZAR_PAINEL_V6_ULIFE.sql` e depois o SQL 06. Se o 05 já está instalado, não precisa repeti-lo. Não execute os arquivos antigos depois do 06.
 
-Os comentários e seus históricos anteriores são preservados. O script usa uma transação: se falhar, a execução é desfeita. O SQL não foi executado no seu projeto nesta entrega.
+O SQL 06 altera somente a consulta protegida usada por este painel. Mantém os dados, a base consolidada do BI, a sincronização, os comentários e o histórico. A instalação foi testada localmente; não foi executada no seu projeto nesta entrega.
 
-## Substituir os arquivos da página
+## 2. Atualizar a página no GitHub
 
-1. No repositório GitHub, abra a pasta usada pelo GitHub Pages.
-2. Envie **todo o conteúdo extraído do ZIP**, substituindo os arquivos anteriores e incluindo os arquivos novos. Mantenha **index.html na raiz publicada**, junto de config.js, app.mjs, auth-policy.mjs, release.mjs, workflow.mjs, pe-names.mjs, os outros módulos e as pastas vendor e supabase.
-3. Não envie o ZIP fechado como se ele fosse a página. Não coloque os arquivos dentro de uma segunda pasta abaixo da raiz publicada.
-4. Aguarde a publicação terminar no GitHub. Abra a página e recarregue com **Ctrl + F5**.
-5. Confira a marca **V6.2 · 19/10/2026** no login e no topo do painel. Se essa marca não aparecer, a página exibida ainda não é a V6.2.
+1. No repositório da página, substitua **todo o conteúdo da raiz publicada** pelos arquivos extraídos.
+2. Mantenha `index.html` diretamente na raiz publicada, junto dos módulos, `config.js` e das pastas vendor e supabase. Não envie apenas o ZIP fechado.
+3. Aguarde a publicação, abra a página e pressione **Ctrl + F5**.
+4. Confira **V6.3 · 19/10/2026** no login e no topo do painel.
+5. Entre, clique em **Atualizar dados**, abra **Planilha de entrada** e clique em **Limpar filtros**.
 
-Os arquivos da V6 usam um identificador de versão nos links do CSS, da configuração, do SDK e dos módulos. Isso reduz a reutilização de arquivos antigos pelo navegador. A marca visível permite verificar o HTML que foi publicado. O painel também consulta a regra de acesso no banco e avisa quando a atualização V6 ainda não foi confirmada.
+## 3. Conferir os números
 
-## Acesso
+O diagnóstico enviado em 19/10/2026 às 09:21 (Brasília) tinha:
 
-São permitidos **@animaeducacao.com.br** e **@ulife.com.br**, com uma conta já cadastrada no Supabase do BI. Liberar o domínio não cria contas e não muda senhas. Não use chave administrativa nos arquivos da página.
+| Status da coluna de validação | Quantidade |
+| --- | ---: |
+| Validado | 318 |
+| Liberado para validação - NQ | 56 |
+| A liberar | 30 |
+| Ajustes - MODELAGEM | 2 |
+| N/A | 3 |
+| Pausado | 46 |
+| Total de planos | 455 |
 
-A permissão dos dois domínios está na página e no banco: leitura das avaliações, dos pareceres, dos comentários e do histórico, além da gravação de comentários. Outros domínios e acesso anônimo continuam bloqueados para este painel.
+Os quatro cartões continuam Liberada, Em validação, Requer análise do design e Validadas. Os demais status são discriminados acima dos filtros e continuam disponíveis na visão completa. Ajustes - MODELAGEM permanece como Modelagem, sem ser convertido em análise do design.
 
-## Como conferir as alterações
+O status da coluna vale mais que o nome do grupo físico. No diagnóstico havia, por exemplo, itens A liberar dentro do grupo Validados e itens Validado no grupo Aguardando geração PDF do PP.
 
-- **Esteira** oferece o catálogo conjunto das quatro abas, inclusive na Planilha de entrada.
-- **Lote** usa o campo Bloco da base.
-- Os seis filtros mantêm as seleções ao trocar entre Planilha de entrada, UA, BDQ e UC.
-- Os cartões são **Liberada**, **Em validação**, **Requer análise do design** e **Validadas**. Clique novamente no cartão selecionado para mostrar todos os status.
-- Os indicadores e gráficos abaixo dos filtros foram removidos.
-- A tabela mostra somente **UC, UA e Unidade da UA**. Clique na linha ou no nome da UA para abrir os comentários.
-- O tema claro usa **off-white**; o tema escuro continua disponível.
-- Login, busca, lista de comentários, paginação, exportação, edição e histórico foram mantidos.
+Cada ID da Monday conta uma vez. Critérios, subelementos, versões e comentários não aumentam o total de planos. Registros sem vínculo com um plano ficam sinalizados na tabela e fora dos totais dos cartões. Podem continuar sendo consultados e editados.
 
-Na aba UC, cada unidade aparece em sua linha. O clique abre os registros daquela unidade; **Ver todos os registros da UC** mantém o acesso à visão completa.
+Os valores são uma referência do momento do diagnóstico. Compare a Monday e a página com os mesmos filtros e a sincronização atualizada. Os números não estão fixados no código.
 
-As escolhas não são apagadas ao trocar de aba. Uma aba sem resultados para o recorte atual fica vazia. Use **Limpar filtros** para voltar à visão completa.
+## Funcionalidades preservadas
 
-As edições continuam salvas no painel, com autor, data e versões anteriores. O original da Monday permanece preservado. A edição no painel não altera o texto nem a classificação da Monday.
+- Login institucional para @animaeducacao.com.br e @ulife.com.br, com contas já cadastradas no Supabase do BI.
+- Menu lateral, quatro abas e filtros de Esteira, Lote, UC, UA, Revisor e Especialistas mantidos ao trocar de aba.
+- Tabela com UC, UA e Unidade da UA; clique para abrir comentários.
+- Inserção e edição de comentários, autoria e versões anteriores. As edições continuam no painel, sem alteração do texto na Monday.
+- Busca, lista, paginação, CSV, tema escuro e tema claro off-white.
+
+As demais abas mantêm as consultas e as regras anteriores. O ajuste desta entrega é a fonte dos Planos de Produção na Planilha de entrada.

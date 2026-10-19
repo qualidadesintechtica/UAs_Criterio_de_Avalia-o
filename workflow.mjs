@@ -1,4 +1,4 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names} from './core.mjs?v=v6-2-categoria-pe-20261019';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId} from './core.mjs?v=v6-3-fonte-validacao-pe-20261019';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 
@@ -17,12 +17,26 @@ export function materialWorkflow(group){
 }
 export function countWorkflow(records){
   const counts={all:0,released:0,validating:0,design:0,validated:0,other:0};
-  for(const g of groupUAs(records)){counts.all++;counts[materialWorkflow(g)]++;}
+  for(const g of validationGroups(records)){counts.all++;counts[materialWorkflow(g)]++;}
   return counts;
+}
+function validationGroups(records){return groupUAs(records).filter(g=>g.criteria.some(r=>r.workflowEligible!==false));}
+export function entryPlanUniverse(sections,materials){
+  if(!sections.PE)return sections;
+  const validationSourceReady=materials.some(m=>Object.hasOwn(m,'origem_material'));
+  const mark=r=>({...r,...(validationSourceReady?{workflowEligible:Boolean(r.validationItemId)}:{}),history:(r.history||[]).map(mark)});
+  return {...sections,PE:{...sections.PE,validationSourceReady,records:sections.PE.records.map(mark)}};
+}
+export function otherWorkflowCounts(records){
+  const counts=new Map();
+  for(const g of validationGroups(records).filter(g=>materialWorkflow(g)==='other')){
+    const label=g.materialStatuses.join(' / ')||'Sem status';counts.set(label,(counts.get(label)||0)+1);
+  }
+  return [...counts].sort(([a],[b])=>a.localeCompare(b,'pt-BR',{numeric:true}));
 }
 export function selectWorkflow(records,status='all'){
   if(status==='all')return records;
-  const keys=new Set(groupUAs(records).filter(g=>materialWorkflow(g)===status).map(g=>g.uaKey));
+  const keys=new Set(validationGroups(records).filter(g=>materialWorkflow(g)===status).map(g=>g.uaKey));
   return records.filter(r=>keys.has(r.uaKey));
 }
 export function materialTableRows(groups){
@@ -53,9 +67,10 @@ export function includeMaterialInventory(sections,materials){
     const kind=materialKind(m);if(!kind||!sections[kind])continue;
     const ucId=text(m.id_titulo),uaId=text(m.id_ua),parent=text(m.monday_item_validacao),materialKey=text(m.chave_material);
     const matrix=text(m.matriz_oferta),track=text(m.esteira_producao)||'Não informada',semester=text(m.semestre_oferta),batch=text(m.bloco||m.lote);
-    const uaKey=materialGroupKey(kind,ucId||parent||uaId,uaId||parent||materialKey,matrix,track,semester,batch);
+    const validationItemId=kind==='PE'?entryValidationId(m):'';
+    const uaKey=materialGroupKey(kind,ucId||parent||uaId,uaId||parent||materialKey,matrix,track,semester,batch,validationItemId);
     if(seen.get(kind).keys.has(uaKey)||(materialKey&&seen.get(kind).sources.has(materialKey)))continue;
-    const record={kind,id:'material:'+materialKey,materialKey,uaKey,uc:text(m.titulo)||ucId||'UC não localizada',ucId,
+    const record={kind,id:'material:'+materialKey,materialKey,uaKey,validationItemId,uc:text(m.titulo)||ucId||'UC não localizada',ucId,
       ua:text(m.titulo_ua)||uaId||text(m.item_name)||'Material sem título',uaId,parent,track,matrix,semester,batch,unitLabel:unitLabel(m),
       specialists:[],reviewers:names(m.revisor_validador),criterion:'Registro do material',question:'',classification:'Avaliação individual não disponível',
       comment:'',commentOnly:true,metadataOnly:true,inventoryOnly:true,status:'comment',date:'',materialStatus:text(m.status_validacao),

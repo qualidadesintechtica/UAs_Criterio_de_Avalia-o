@@ -1,4 +1,4 @@
-import {norm,text} from './core.mjs?v=v6-2-categoria-pe-20261019';
+import {norm,text} from './core.mjs?v=v6-3-fonte-validacao-pe-20261019';
 
 const missingNames=new Set(['uc nao localizada','uc nao informado','uc nao informada','nome da uc nao localizado','nao informado','nao informada','nao localizado','nao localizada','sem titulo','null','undefined','n/a','-']);
 const clean=value=>text(value).replace(/\s+/g,' ');
