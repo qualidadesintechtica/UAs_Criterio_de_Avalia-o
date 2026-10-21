@@ -2,9 +2,9 @@
 
 ## Atualizar a página
 
-Extraia o ZIP e substitua todo o conteúdo na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**. Inclua `app.mjs`, `specialist-progress.mjs`, `pe-names.mjs`, `access.css`, `index.html` e os demais arquivos da pasta. Aguarde o GitHub Pages e confira **V6.6.3 · 21/10/2026** após Ctrl + F5.
+Extraia o ZIP e substitua todo o conteúdo na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**. Inclua `app.mjs`, `specialist-progress.mjs`, `pe-names.mjs`, `access.css`, `index.html` e os demais arquivos da pasta. Aguarde o GitHub Pages e confira **V6.6.4 · 21/10/2026** após Ctrl + F5.
 
-Não há SQL novo nesta atualização. SQL 01 a 10, configuração, SDK e função de gestão de usuários foram preservados. Se a instalação anterior está funcionando, não repita os scripts. Participantes continua no menu lateral e no cabeçalho, com as mesmas permissões e operações. Consulte COMECE_AQUI.md se essa instalação ainda estiver pendente.
+As barras não exigem SQL novo. SQL 01 a 10, configuração, SDK e função de gestão de usuários foram preservados. Se a instalação anterior está funcionando, não repita esses scripts. Para o download da V6.6.4, acrescente o SQL 11 e a função nq-baixar-planilha conforme LEIA_DOWNLOAD_PLANILHAS.md. Participantes continua no menu lateral e no cabeçalho, com as mesmas permissões e operações. Consulte COMECE_AQUI.md se essa instalação ainda estiver pendente.
 
 ## Onde aparece a barra
 

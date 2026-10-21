@@ -8,7 +8,7 @@ Para corrigir o erro 57014 de critérios em uma V6.6 já instalada, siga **LEIA_
 
 1. Execute **o arquivo completo** `supabase/09_USUARIOS_E_ACESSOS.sql` no SQL Editor, depois dos scripts já instalados do painel. Uma base na V6.5 com SQL 08 precisa somente do 09. Instalação nova sobre as fontes existentes do BI: 05 → 07 → 08 → 09.
 2. Publique a Edge Function **nq-gerenciar-usuarios**, usando **todo o arquivo** `supabase/functions/nq-gerenciar-usuarios/index.ts`.
-3. Execute também o SQL 10 para a leitura paginada de critérios, se ainda não estiver instalado. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.3 · 21/10/2026** após Ctrl + F5. A atualização V6.6.3 não acrescenta SQL nem exige repetir uma instalação já disponível.
+3. Execute também o SQL 10 para a leitura paginada de critérios, se ainda não estiver instalado. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.4 · 21/10/2026** após Ctrl + F5. A instalação de acessos não precisa ser repetida se já está disponível. Para baixar planilhas na V6.6.4, acrescente o SQL 11 e nq-baixar-planilha conforme LEIA_DOWNLOAD_PLANILHAS.md.
 
 **Enviar os arquivos para o GitHub não executa o SQL nem publica a função.** A barra de progresso funciona com as fontes atuais; a gestão de acessos exige a instalação no servidor.
 

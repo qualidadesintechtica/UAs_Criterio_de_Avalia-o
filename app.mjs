@@ -1,28 +1,63 @@
-import {createAccessController} from './access.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-3-progresso-todas-abas-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-3-progresso-todas-abas-20261021';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-4-download-planilha-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-4-download-planilha-20261021';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-4-download-planilha-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-4-download-planilha-20261021';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-4-download-planilha-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-4-download-planilha-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-4-download-planilha-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-4-download-planilha-20261021';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-4-download-planilha-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-4-download-planilha-20261021';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-4-download-planilha-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-4-download-planilha-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-4-download-planilha-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-4-download-planilha-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
 function source(label,kind=''){ $('sourceStatus').className='source-pill '+kind;$('sourceStatus').innerHTML='<i></i>'+esc(label); }
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{$('toast').hidden=true;},4000);}
+function renderDownloadNotice(){
+  const el=$('entryDownloadNotice');el.hidden=state.section!=='PE'||state.planLinksState==='ready';
+  el.textContent=state.planLinksState==='setup'?'Para habilitar Baixar planilha, instale o SQL 11 e publique a função nq-baixar-planilha. Consulte LEIA_DOWNLOAD_PLANILHAS.md.':'Os links de planilhas não puderam ser consultados. Atualize os dados. Os demais resultados continuam disponíveis.';
+}
+function planLink(itemID){return resolvePlanLink(state.planLinks.get(String(itemID)),window.UA_CONFIG?.entryPlanColumnIds||[]);}
+function planDownloadMarkup(g){
+  if(g.kind!=='PE')return '';
+  const id=String(g.validationItemId||''),link=planLink(id),busy=state.download?.id===id;
+  const disabled=!id||state.planLinksState!=='ready'||link.status!=='ready'||busy;
+  const reason=!id?'Sem vínculo com um item de validação.':state.planLinksState==='setup'?'Download ainda não configurado.':state.planLinksState!=='ready'?'Links indisponíveis nesta consulta.':link.message||'';
+  const feedback=state.downloadFeedback.get(id)||reason;
+  return '<div class="plan-download"><button type="button" class="btn secondary plan-download-button" data-plan-download="'+esc(id)+'"'+(disabled?' disabled':'')+' aria-label="Baixar planilha de entrada de '+esc(g.uc)+'"'+(reason?' title="'+esc(reason)+'"':'')+'><span aria-hidden="true">↓</span> '+(busy?'Preparando download…':'Baixar planilha')+'</button><small data-plan-feedback="'+esc(id)+'" role="status">'+esc(feedback)+'</small></div>';
+}
+function updatePlanDownloadUI(id,message,busy){
+  if(message)state.downloadFeedback.set(id,message);
+  for(const button of document.querySelectorAll('[data-plan-download]'))if(button.dataset.planDownload===id){button.disabled=busy||state.planLinksState!=='ready'||planLink(id).status!=='ready';button.textContent=busy?'Preparando download…':'↓ Baixar planilha';}
+  for(const node of document.querySelectorAll('[data-plan-feedback]'))if(node.dataset.planFeedback===id)node.textContent=message;
+}
+async function beginPlanDownload(id){
+  if(state.download){toast('Aguarde o download em andamento.');return;}
+  const link=planLink(id);if(!state.loaded||!state.user||state.planLinksState!=='ready'||link.status!=='ready')return;
+  const user=state.user,controller=new AbortController(),job={id,controller};state.download=job;
+  const timer=setTimeout(()=>controller.abort(),45000);
+  updatePlanDownloadUI(id,'Preparando o arquivo vinculado na Monday…',true);
+  try{
+    const {data,error}=await client.auth.getUser();
+    if(error||!data?.user||data.user.id!==user.id||!await access.allow(data.user))throw new Error('Sua sessão precisa ser validada. Entre novamente.');
+    const result=await requestPlanDownload(client,window.UA_CONFIG,id,link.columnId,controller.signal);
+    if(state.download!==job||state.user!==user||controller.signal.aborted)return;
+    savePlanDownload(result);updatePlanDownloadUI(id,'Download iniciado. Confira os arquivos baixados.',false);toast('Download da planilha iniciado.');
+  }catch(error){if(state.download===job&&state.user===user)updatePlanDownloadUI(id,error.name==='AbortError'?'O download foi cancelado ou excedeu o tempo limite.':error.message||'Não foi possível baixar a planilha.',false);}
+  finally{clearTimeout(timer);if(state.download===job)state.download=null;}
+}
 function clearSensitive(resetAccess=true){
   if(resetAccess)access?.clear();
+  state.download?.controller.abort();state.download=null;state.planLinks.clear();state.downloadFeedback.clear();state.planLinksState='setup';$('entryDownloadNotice').hidden=true;
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
@@ -114,7 +149,8 @@ async function load(){
       readAll('nq_comentarios','*','id',signal,'portal'),
       readAccessPolicy(signal),
       queryWithDeadline(planSignal=>readAll(window.UA_CONFIG.entryPlansView||'vw_ua_resultados_planilhas_validacao_autenticadas','*','monday_item_validacao',planSignal,'plans'),signal,12000),
-      queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000)
+      queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000),
+      queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000)
     ]);
     if(run!==state.run)return;
     if(results[5].status==='fulfilled'&&results[5].value===false){
@@ -133,6 +169,8 @@ async function load(){
     state.baseSections.BDQ.validationSourceReady=banksReady;
     state.commentsReady=results[4].status==='fulfilled';state.portalComments=state.commentsReady?results[4].value:[];
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
+    state.planLinksState=results[8].status==='fulfilled'?'ready':['42P01','PGRST205','PGRST204'].includes(results[8].reason?.code)?'setup':'unavailable';
+    state.planLinks=new Map((results[8].status==='fulfilled'?results[8].value:[]).map(row=>[String(row.monday_item_validacao),row]));
     state.sectionErrors={};if(formError){for(const key of ['PE','BDQ','UC'])state.sectionErrors[key]='Os formulários desta seção não puderam ser consultados. Atualize os dados ou confira a configuração da conexão.';}
     state.records=state.sections[state.section].records;state.loaded=true;state.page=1;
     source('Monday · base sincronizada','connected');
@@ -215,7 +253,7 @@ function renderTable(){
   $('tableBody').innerHTML=rows.length?rows.map(({group:g,detailIndex:index,name,unit,unitId})=>{
     const badge=state.section==='BDQ'&&g.assessmentType?'<span class="tag bdq-type">'+esc(g.assessmentType)+'</span>':'';
     const extra=state.section==='PE'?'<td>'+highlightHTML(g.track||'Não informada',state.query)+'</td>':state.section==='BDQ'?'<td>'+highlightHTML((g.managers||[]).join('; ')||'Não informado',state.query)+'</td><td>'+highlightHTML((g.assignedReviewers||[]).join('; ')||'Não informado',state.query)+'</td>':'';
-    return '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+badge+highlightHTML(name,state.query)+(g.workflowEligible===false?'<small class="unlinked-label">Sem vínculo com item de validação</small>':'')+'</span><span aria-hidden="true">↗</span></button>'+materialProgressMarkup(progressRecordsForUnit(g.criteria,unitId),name,state.section)+'</td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td>'+extra+'</tr>';
+    return '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+badge+highlightHTML(name,state.query)+(g.workflowEligible===false?'<small class="unlinked-label">Sem vínculo com item de validação</small>':'')+'</span><span aria-hidden="true">↗</span></button>'+materialProgressMarkup(progressRecordsForUnit(g.criteria,unitId),name,state.section)+planDownloadMarkup(g)+'</td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td>'+extra+'</tr>';
   }).join(''):'<tr><td colspan="'+tableHeaders(state.section).length+'" class="empty-table">'+esc(state.records.length?'Nenhum material encontrado. Ajuste ou limpe os filtros.':state.sectionErrors[state.section]||'Não há registros sincronizados de '+SECTIONS[state.section].title.toLowerCase()+' nesta fonte para esta conta.')+'</td></tr>';
   renderCommentList(rows);
   $('pageInfo').textContent=entries.length?nf.format(start+1)+'–'+nf.format(start+rows.length)+' de '+nf.format(entries.length)+' linha(s)'+' · Página '+state.page+' de '+pages:'Nenhum material neste recorte';$('prev').disabled=state.page<=1;$('next').disabled=state.page>=pages;$('export').disabled=!state.filtered.length;
@@ -224,7 +262,7 @@ function renderTable(){
 }
 function renderCommentList(rows){
   const byUC=new Map(),seen=new Set();rows.forEach(({group:g,detailIndex:index})=>{if(seen.has(index))return;seen.add(index);const key=g.ucId||g.uc;if(!byUC.has(key))byUC.set(key,{uc:g.uc,id:g.ucId,rows:[]});byUC.get(key).rows.push({g,index});});
-  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span>'+materialProgressMarkup(g.criteria,g.ua,state.section)+'</span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
+  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<div class="comment-material-row"><button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span>'+materialProgressMarkup(g.criteria,g.ua,state.section)+'</span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>'+planDownloadMarkup(g)+'</div>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
 }
 function renderNameIssues(){
   state.nameIssues=entryPlanNameIssues(state.sections.PE?.records||[]);
@@ -234,7 +272,7 @@ function renderNameIssues(){
   $('entryNameSummary').textContent='Nome da UC pendente em '+counts.join(' e ')+'. Ver registros';
   $('entryNameIssues').innerHTML=state.nameIssues.map((issue,index)=>'<li><div><strong>'+esc(issue.reference)+'</strong><p>'+esc(issue.reason)+'</p><small>'+esc([issue.courseId?'ID da UC: '+issue.courseId:'',issue.materialId?'ID do material: '+issue.materialId:'',issue.validationId?'Item da validação: '+issue.validationId:'',issue.formId?'Formulário Monday: '+issue.formId:''].filter(Boolean).join(' · ')||'IDs de origem não informados na fonte.')+'</small></div><button type="button" class="btn secondary" data-name-issue="'+index+'">Ver detalhes</button></li>').join('');
 }
-function render(){const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);renderNameIssues();renderChips();renderTable();}
+function render(){renderDownloadNotice();const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);renderNameIssues();renderChips();renderTable();}
 function portalHistoryMarkup(note){
   return '<details class="previous-versions comment-history" data-history-id="'+esc(note.id)+'"><summary>Histórico de comentários · versão '+note.revision+'</summary><div class="comment-history-content" aria-live="polite"></div></details>';
 }
@@ -304,7 +342,7 @@ function openMaterialDetails(key,unit=null,preferredRecordId=null){
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  const meta='<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+(g.kind==='PE'&&g.sourceEvent?'<div><b>Formulário Monday</b>'+esc(g.sourceEvent)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>';
+  const meta=planDownloadMarkup(g)+'<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+(g.kind==='PE'&&g.sourceEvent?'<div><b>Formulário Monday</b>'+esc(g.sourceEvent)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>';
   $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):progressMarkup(specialistProgress(state.detailRecords),{compact:true,label:progressLabel(g.kind)})+meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   state.detailIndex=Math.max(0,state.detailRecords.findIndex(r=>preferredRecordId!=null&&r.id===preferredRecordId));
   if(state.reviewMode)renderReviewRecord(state.detailIndex);
@@ -412,7 +450,7 @@ $('commentsOnly').addEventListener('change',()=>{state.commentsOnly=$('commentsO
 $('filterChips').addEventListener('click',e=>{const b=e.target.closest('[data-clear-filter]');if(!b)return;const key=b.dataset.clearFilter;if(key==='status')state.status='all';else if(key==='query'){state.query='';$('search').value='';}else if(key==='comments'){state.commentsOnly=false;$('commentsOnly').checked=false;}else delete state.filters[key];state.page=1;render();});
 let searchTimer;$('search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.query=$('search').value;state.page=1;if(state.loaded)render();},150);});
 $('prev').addEventListener('click',()=>{state.page--;renderTable();});$('next').addEventListener('click',()=>{state.page++;renderTable();});
-for(const id of ['tableBody','commentList'])$(id).addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(b)showDetails(Number(b.dataset.detail),b.dataset.unitId||null);});
+for(const id of ['tableBody','commentList'])$(id).addEventListener('click',e=>{const download=e.target.closest('[data-plan-download]');if(download){e.stopPropagation();beginPlanDownload(download.dataset.planDownload);return;}const b=e.target.closest('[data-detail]');if(b)showDetails(Number(b.dataset.detail),b.dataset.unitId||null);});
 for(const id of ['closeDialog','closeDrawer'])$(id).addEventListener('click',()=>{$('detailDialog').close();});
 $('detailDialog').addEventListener('close',()=>{document.body.classList.remove('drawer-open');$('detailDialog').classList.remove('review-dialog');state.editor=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.dialogKey=null;state.dialogUnit=null;});
 $('detailDialog').addEventListener('cancel',e=>{if(state.saving)e.preventDefault();});
@@ -420,7 +458,7 @@ $('dialogContent').addEventListener('submit',e=>{if(e.target.id==='commentEditor
 $('dialogContent').addEventListener('input',e=>{if(e.target.id==='commentBody')updateCommentChars();else if(e.target.id==='reviewSearch')filterReviewNavigation(e.target.value);});
 $('dialogContent').addEventListener('change',e=>{if(e.target.id==='reviewCriterionSelect')selectReviewRecord(Number(e.target.value));});
 $('dialogContent').addEventListener('toggle',e=>{if(e.target.matches('.comment-history'))loadCommentHistory(e.target);},true);
-$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
+$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-plan-download')){beginPlanDownload(b.dataset.planDownload);return;}if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
 $('export').addEventListener('click',()=>{if(!state.loaded||!state.filtered.length)return;const url=URL.createObjectURL(new Blob([exportCSV(state.filtered)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Resultados_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exportação concluída com o recorte selecionado.');});
 document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>selectSection(b.dataset.section)));

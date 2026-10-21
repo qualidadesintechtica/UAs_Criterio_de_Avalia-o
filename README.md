@@ -1,8 +1,14 @@
-# Comentários e avaliações dos materiais — V6.6.3
+# Comentários e avaliações dos materiais — V6.6.4
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Progresso em todas as abas e nome da UC — V6.6.3
+## Baixar a planilha de entrada — V6.6.4
+
+Na aba Planilha de entrada, cada Plano de Produção recebe Baixar planilha na tabela, na lista e no detalhe. O arquivo vem da coluna sincronizada da Monday pelo ID exato do item, sem abrir seu link em outra página. Links ausentes, ambíguos ou que exigem acesso adicional são sinalizados. O clique nos comentários continua separado.
+
+**Para ativar, instale supabase/11_LINKS_PLANILHAS_ENTRADA.sql, publique nq-baixar-planilha usando o index.ts completo e substitua os arquivos da página.** Consulte **LEIA_DOWNLOAD_PLANILHAS.md** e **COMECE_AQUI.md**. A função não altera arquivos da Monday nem amplia a permissão dos links.
+
+## Progresso em todas as abas e nome da UC — V6.6.3 preservados
 
 Planilha de entrada, UA, BDQ e UC mostram a barra de cada material abaixo do nome, na tabela, na lista e no detalhe, mantendo as colunas existentes. Na UC, cada unidade usa seus próprios indicadores; a lista e a visão completa mostram o conjunto da UC. Sem critérios sincronizados, aparece uma barra cinza com traço, sem percentual inventado.
 
@@ -10,7 +16,7 @@ O aviso de nome da UC agora distingue planilhas e formulários sem vínculo, mos
 
 **Participantes** fica no menu lateral e no cabeçalho, junto de Atualizar dados. A área reúne Criar login, Editar nome e perfil e Trocar senha. Se faltar instalação ou autorização, o painel informa o motivo e bloqueia as operações. O servidor continua exigindo uma das três contas autorizadas com perfil Admin. A atualização não amplia essas permissões.
 
-Esta versão de interface não exige um SQL novo. Para a gestão que ainda não foi instalada, são necessários o SQL 09 e a função nq-gerenciar-usuarios. Siga **COMECE_AQUI.md** e **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md**.
+As barras e Participantes continuam com a instalação anterior. O download da V6.6.4 acrescenta SQL 11 e nq-baixar-planilha. Para a gestão que ainda não foi instalada, são necessários o SQL 09 e a função nq-gerenciar-usuarios. Siga **COMECE_AQUI.md** e **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md**.
 
 ## Correção de leitura dos critérios — V6.6.1 preservada
 
@@ -54,7 +60,7 @@ A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6.3 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.4 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
@@ -152,6 +158,9 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 - `pe-names.mjs`: nomes da Planilha de entrada sem alterar os vínculos das avaliações e dos comentários.
 - `auth-policy.mjs`: validação dos domínios autorizados no cliente.
 - `access.mjs`, `access-policy.mjs`, `access.css`: cadastro, perfis, gestão e troca obrigatória.
+- `planilha-download.mjs`: pedido autenticado e salvamento da planilha sem navegação externa.
+- `supabase/11_LINKS_PLANILHAS_ENTRADA.sql`: fonte protegida das colunas de link por Plano de Produção.
+- `supabase/functions/nq-baixar-planilha/index.ts`: função completa de download para publicação.
 - `specialist-progress.mjs`: progresso das respostas dos critérios sincronizados.
 - `supabase/09_USUARIOS_E_ACESSOS.sql`: autorização, perfis e registro de senha temporária.
 - `supabase/functions/nq-gerenciar-usuarios/index.ts`: criação e senha temporária no servidor.
@@ -164,7 +173,7 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 127 testes de lógica (`node --test tests/*.test.mjs`). Os testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
+Passaram 141 testes de lógica e serviço (`node --test tests/*.test.mjs`). Os testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
 Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
@@ -179,3 +188,5 @@ Na V6.6.1, passaram 195 verificações adicionais do SQL de paginação e a inte
 Na V6.6.2, passaram 131 verificações do controlador de acessos e a regressão das novas barras por UA. A inspeção visual em navegador usou dados de teste. A instalação e a autorização reais do servidor precisam ser conferidas na área Participantes após a publicação.
 
 Na V6.6.3, a regressão verificou barras em tabela, lista e detalhe das quatro abas, indicadores por unidade de UC, diagnóstico de nomes pendentes e abertura do registro afetado. Foram preservados filtros, contagens, comentários, histórico e leitura paginada completa. A inspeção visual em navegador confirmou as quatro abas e a barra cinza sem critérios, com dados de teste. SQL, função de usuários e configuração não foram alterados. Consulte LEIA_PROGRESSO_TODAS_ABAS_E_NOMES.md para os limites da correção na origem.
+
+Na V6.6.4, passaram 141 testes de lógica e serviço, 15 verificações do SQL 11 e a regressão do aplicativo, incluindo download separado dos comentários e cancelamento ao sair. A inspeção visual usou dados fictícios. A compatibilidade com um link real da equipe e a instalação em produção ainda precisam ser verificadas. Consulte LEIA_DOWNLOAD_PLANILHAS.md.

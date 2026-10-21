@@ -2,9 +2,9 @@
 
 ## Publicar esta versão
 
-Extraia o ZIP e substitua **todo o conteúdo** na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**. Não envie somente o ZIP nem crie uma pasta extra acima de `index.html`. Aguarde a publicação e pressione **Ctrl + F5**. Confira **V6.6.3 · 21/10/2026** na tela.
+Extraia o ZIP e substitua **todo o conteúdo** na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**. Não envie somente o ZIP nem crie uma pasta extra acima de `index.html`. Aguarde a publicação e pressione **Ctrl + F5**. Confira **V6.6.4 · 21/10/2026** na tela.
 
-Esta atualização de interface não cria uma nova migração SQL. Os arquivos SQL 01 a 10 e a função de gestão da versão anterior foram mantidos sem alterações. A instalação da gestão de contas, se ainda estiver faltando, é descrita abaixo.
+Os arquivos SQL 01 a 10 e a função de gestão foram preservados. As barras e Participantes não exigem nova migração; para o download acrescentado na V6.6.4, instale o SQL 11 e publique nq-baixar-planilha conforme LEIA_DOWNLOAD_PLANILHAS.md. A instalação da gestão de contas, se ainda estiver faltando, é descrita abaixo.
 
 ## Progresso individual
 

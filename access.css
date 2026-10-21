@@ -11,3 +11,12 @@
 .ua-progress{display:grid;gap:5px;max-width:285px;margin-top:8px;font-size:10px;line-height:1.4;color:var(--muted);text-align:left;white-space:normal}.ua-progress-label{display:flex;justify-content:space-between;gap:10px}.ua-progress-label b{color:var(--purple);font-size:11px}.ua-progress progress{height:6px}.ua-progress small{font-size:10px}.ua-progress-empty{font-style:italic}.comment-row-main>.ua-progress{width:min(285px,100%);margin-top:9px}.page-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.participants-access-note{margin:16px 0;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:14px;font-size:13px;line-height:1.7;color:var(--ink);overflow-wrap:anywhere}.sidebar>.access-navigation{margin-top:16px;margin-bottom:18px}.users-toolbar .btn:disabled{opacity:.5;cursor:not-allowed}@media(max-width:760px){.sidebar>.access-navigation{margin:0}.page-actions{justify-content:flex-start;gap:8px}.page-actions .participants-entry{font-size:12px}}
 
 .ua-progress-track{display:block;width:100%;height:8px;background:var(--soft);border:1px solid var(--line);border-radius:8px}.ua-progress-empty{font-style:normal}.ua-progress-empty>small{font-style:italic}.ua-progress progress{height:8px}.entry-name-warning>summary{cursor:pointer;font-weight:600}.entry-name-warning>p{margin:12px 0;font-size:12px}.entry-name-warning ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}.entry-name-warning li{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-top:12px}.entry-name-warning li>div{min-width:0;overflow-wrap:anywhere}.entry-name-warning li p{margin:5px 0;font-size:12px}.entry-name-warning li small{font-size:11px}.entry-name-warning .btn{flex-shrink:0}@media(max-width:650px){.entry-name-warning li{align-items:start;flex-direction:column;gap:8px}}
+
+/* Download da planilha: separado do clique que abre os comentários. */
+.plan-download{display:flex;flex-wrap:wrap;align-items:center;gap:7px 12px;margin-top:12px}
+.plan-download-button{font-size:.76rem;padding:8px 12px;white-space:normal;text-align:left;min-height:34px}
+.plan-download small{display:block;flex-basis:100%;font-size:.73rem;line-height:1.5;color:var(--muted)}
+.plan-download small:empty{display:none}
+.comment-material-row>.plan-download{margin:0;padding:0 22px 18px}
+.comment-material-row>.comment-row{width:100%}
+#dialogContent>.plan-download{margin:0 0 20px}
