@@ -1,18 +1,19 @@
-import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {createAccessController} from './access.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-6-contagens-filtradas-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -215,16 +216,19 @@ function updateSectionLabels(){
   defaults.ua='Todas as UAs / materiais';
 }
 function renderNavigation(){
-    document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];const incomplete=key==='PE'&&!state.sections.PE?.validationSourceReady;$('navCount'+key).textContent=state.loaded?((state.sectionErrors[key]&&!rows.length)||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';$('navCount'+key).title=state.sectionErrors[key]||(incomplete?'Atualize a fonte com o SQL 07.':'Total da aba antes dos filtros e da busca. Formulários sem vínculo ficam fora da contagem de planilhas.');});
+  document.querySelectorAll('[data-section]').forEach(b=>{
+    const key=b.dataset.section,active=key===state.section,section=state.sections[key];
+    b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+    const records=section?.records||[],rows=filteredScope(records,state);
+    const incomplete=key==='PE'&&!section?.validationSourceReady;
+    const unavailable=state.sectionErrors[key]&&!records.length;
+    const partial=key==='BDQ'&&section?.validationSourceReady===false;
+    $('navCount'+key).textContent=state.loaded?(unavailable||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';
+    $('navCount'+key).title=unavailable?state.sectionErrors[key]:incomplete?'Atualize a fonte com o SQL 07.':(partial?'Contagem parcial: fonte de BDQ indisponível. ':'')+'Materiais da aba com os filtros, a busca, os comentários e o status selecionados. Formulários sem vínculo ficam fora da contagem de planilhas.';
+  });
 }
 function selectSection(key){
   if(!SECTIONS[key])return;state.section=key;state.records=state.sections[key]?.records||[];state.page=1;$('detailDialog').close();updateSectionLabels();renderNavigation();if(state.loaded)render();
-}
-function baseScope(skip='') {
-  let rows=filterRecords(state.records,state.filters,'','all',skip);
-  if(state.query){const keys=new Set(filterRecords(rows,{},state.query).map(r=>r.uaKey));rows=rows.filter(r=>keys.has(r.uaKey));}
-  if(state.commentsOnly){const keys=new Set(groupUAs(rows).filter(g=>g.comments.length).map(g=>g.uaKey));rows=rows.filter(r=>keys.has(r.uaKey));}
-  return rows;
 }
 function renderCards(scope){
   const counts=materialCounts(scope);
@@ -275,14 +279,14 @@ function renderCommentList(rows){
   $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<div class="comment-material-row"><button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span>'+materialProgressMarkup(g.criteria,g.ua,state.section)+'</span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>'+planDownloadMarkup(g)+'</div>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
 }
 function renderNameIssues(){
-  state.nameIssues=entryPlanNameIssues(state.sections.PE?.records||[]);
+  state.nameIssues=entryPlanNameIssues(state.section==='PE'?state.filtered:[]);
   $('entryNameWarning').hidden=state.section!=='PE'||!state.nameIssues.length;
   const plans=state.nameIssues.filter(x=>!x.unlinked).length,forms=state.nameIssues.length-plans;
   const counts=[plans?nf.format(plans)+' planilha(s)':'',forms?nf.format(forms)+' formulário(s) sem vínculo':''].filter(Boolean);
   $('entryNameSummary').textContent='Nome da UC pendente em '+counts.join(' e ')+'. Ver registros';
   $('entryNameIssues').innerHTML=state.nameIssues.map((issue,index)=>'<li><div><strong>'+esc(issue.reference)+'</strong><p>'+esc(issue.reason)+'</p><small>'+esc([issue.courseId?'ID da UC: '+issue.courseId:'',issue.materialId?'ID do material: '+issue.materialId:'',issue.validationId?'Item da validação: '+issue.validationId:'',issue.formId?'Formulário Monday: '+issue.formId:''].filter(Boolean).join(' · ')||'IDs de origem não informados na fonte.')+'</small></div><button type="button" class="btn secondary" data-name-issue="'+index+'">Ver detalhes</button></li>').join('');
 }
-function render(){renderDownloadNotice();const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);renderNameIssues();renderChips();renderTable();}
+function render(){renderDownloadNotice();state.filtered=filteredScope(state.records,state);renderNavigation();renderFilters();renderCards(state.filtered);renderNameIssues();renderChips();renderTable();}
 function portalHistoryMarkup(note){
   return '<details class="previous-versions comment-history" data-history-id="'+esc(note.id)+'"><summary>Histórico de comentários · versão '+note.revision+'</summary><div class="comment-history-content" aria-live="polite"></div></details>';
 }
@@ -472,10 +476,10 @@ $('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
 $('exportMaterials').addEventListener('click',()=>{
   if(!state.loaded||!state.user||(state.section==='PE'&&!state.sections.PE?.validationSourceReady))return;
-  const scope=baseScope();if(!materialCounts(scope).all)return;
+  const scope=filteredScope(state.records,state);if(!materialCounts(scope).all)return;
   const url=URL.createObjectURL(new Blob([materialAuditCSV(scope)],{type:'text/csv;charset=utf-8'}));
   const a=document.createElement('a');a.href=url;a.download='Conferencia_materiais_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast('Conferência exportada: uma linha por material, antes da seleção do cartão de status.');
+  toast('Conferência exportada: uma linha por material com todos os filtros selecionados.');
 });
 $('export').addEventListener('click',()=>{if(!state.loaded||!state.filtered.length)return;const url=URL.createObjectURL(new Blob([exportCSV(state.filtered)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Resultados_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exportação concluída com o recorte selecionado.');});
 document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>selectSection(b.dataset.section)));

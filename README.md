@@ -1,6 +1,14 @@
-# Comentários e avaliações dos materiais — V6.6.5
+# Comentários e avaliações dos materiais — V6.6.6
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
+
+## Contagens que acompanham os filtros — V6.6.6
+
+O menu lateral, os quatro cartões de status, o total do recorte, a conferência e as exportações passam a usar a mesma seleção: esteira, lote, UC, UA/material, revisor, especialista, busca, somente comentários e status. A mudança de qualquer filtro recalcula também os números das outras abas. Seleções sem correspondência mostram zero; Limpar filtros restaura os totais disponíveis. A seleção permanece ao trocar de aba.
+
+Ao escolher um cartão de status, o total e a exportação também ficam nesse status e os outros cartões ficam zerados. Clique novamente no cartão ou use Limpar filtros para retirar a seleção. A tabela de UC pode ter várias unidades para a mesma UC, sem aumentar a contagem de materiais.
+
+Esta correção não altera as fontes ou a identidade dos materiais. Downloads, progresso e os demais recursos continuam incluídos. **Sem SQL novo**; substitua os arquivos publicados e confira V6.6.6. Consulte LEIA_CONTAGENS_COM_FILTROS.md.
 
 ## Conferência das contagens — V6.6.5
 
@@ -8,7 +16,7 @@ O total de materiais passa a aparecer acima dos filtros, junto da soma dos quatr
 
 A tabela deixa de misturar o número de registros detalhados com o de materiais. Formulários sem vínculo ficam identificados e fora dos totais de planilhas. As regras de agrupamento, fontes e status foram preservadas. A mudança não comprova que a sincronização corresponde ao quadro real da Monday; o CSV permite comparar os IDs e status da mesma data e dos mesmos filtros.
 
-**Sem SQL novo para esta atualização.** Substitua todos os arquivos publicados e confira V6.6.5. Consulte COMECE_AQUI.md e LEIA_CONFERENCIA_CONTAGENS.md.
+**Sem SQL novo para esta atualização.** Substitua todos os arquivos publicados e confira V6.6.6. Consulte COMECE_AQUI.md e LEIA_CONFERENCIA_CONTAGENS.md.
 
 ## Baixar a planilha de entrada — V6.6.4
 
@@ -68,7 +76,7 @@ A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6.5 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.6 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 

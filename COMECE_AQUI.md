@@ -1,4 +1,4 @@
-# Atualizar para V6.6.5 — conferir as contagens
+# Atualizar para V6.6.6 — contagens conforme os filtros
 
 ## 1. Atualizar os arquivos da página
 
@@ -6,7 +6,7 @@
 2. No GitHub, abra **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
 3. Em **Add file → Upload files**, envie todo o conteúdo extraído e substitua os arquivos na raiz publicada. Não envie somente o ZIP nem coloque os arquivos em uma pasta extra.
 4. Confirme em **Commit changes** e aguarde a publicação.
-5. Pressione **Ctrl + F5** e confira **V6.6.5 · 21/10/2026**.
+5. Pressione **Ctrl + F5** e confira **V6.6.6 · 21/10/2026**.
 
 ## Conferir os números depois de atualizar
 
@@ -14,11 +14,11 @@ Esta atualização **não exige SQL novo nem republicar funções** quando a pá
 
 Acima dos filtros, confira **Total no recorte**, a soma dos quatro cartões com **Outros status** e a opção **Conferir totais por status Monday**. O botão Outros status mostra os materiais que não pertencem aos quatro cartões, incluindo A liberar, N/A e Pausado. Os filtros continuam funcionando em todas as abas.
 
-Use **Exportar materiais desta conferência (CSV)** para comparar uma linha por material com a Monday. Na Planilha de entrada, a coluna de ID corresponde ao item exato de validação. A conferência considera filtros, busca e Somente com comentários, antes da seleção de um cartão. O CSV detalhado da tabela continua considerando também o cartão selecionado.
+Use **Exportar materiais desta conferência (CSV)** para comparar uma linha por material com a Monday. Na Planilha de entrada, a coluna de ID corresponde ao item exato de validação. Menu lateral, cartões, total, conferência e os dois CSVs consideram os mesmos filtros, a busca, Somente com comentários e o status selecionado. Ao selecionar um cartão, as outras categorias de status ficam zeradas nesse recorte; clique novamente no cartão ou em Limpar filtros para voltar.
 
-Formulários sem vínculo continuam acessíveis para consulta e edição; ficam fora dos totais de planilhas. O menu lateral mostra o total da aba antes dos filtros. Na UC, as linhas de unidades podem ser mais numerosas que as UCs contadas.
+Formulários sem vínculo continuam acessíveis para consulta e edição; ficam fora dos totais de planilhas. O menu lateral aplica a seleção atual a cada uma das quatro abas e recalcula seus números imediatamente. A seleção permanece ao trocar de aba. Na UC, as linhas de unidades podem ser mais numerosas que as UCs contadas.
 
-Veja **LEIA_CONFERENCIA_CONTAGENS.md**. Os passos de instalação anteriores, abaixo, só são necessários se o respectivo recurso ainda não estiver instalado.
+Veja **LEIA_CONTAGENS_COM_FILTROS.md** e **LEIA_CONFERENCIA_CONTAGENS.md**. Os passos de instalação anteriores, abaixo, só são necessários se o respectivo recurso ainda não estiver instalado.
 
 ## 2. Ativar Baixar planilha, se ainda não estiver instalado
 
@@ -54,4 +54,4 @@ Leia **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md** para os passos completos. Se a ges
 
 SQL 01 a 10, correção de leitura de critérios, função de gestão de usuários, autenticação, perfis, troca obrigatória de senha, fontes da Monday, filtros, contagens, status, leitura UA/UC, BDQ A1/A2/A3, comentários e versões, CSV e temas foram mantidos.
 
-A V6.6.5 passou **146 testes de lógica e serviço**, a regressão das quatro abas e a conferência visual em navegador com dados de teste. SQLs e funções foram preservados; as 15 verificações anteriores do SQL 11 continuam documentadas. As 131 verificações anteriores do controlador de acessos continuam documentadas; esse controlador foi preservado. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.
+A V6.6.6 passou **151 testes de lógica e serviço**, a regressão das quatro abas e 24 combinações de aba/filtro e a conferência visual em navegador com dados de teste. SQLs e funções foram preservados; as 15 verificações anteriores do SQL 11 continuam documentadas. As 131 verificações anteriores do controlador de acessos continuam documentadas; esse controlador foi preservado. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.

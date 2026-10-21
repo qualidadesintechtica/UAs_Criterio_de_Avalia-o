@@ -1,5 +1,5 @@
-import {groupUAs,csvCell} from './core.mjs?v=v6-6-5-conferencia-contagens-20261021';
-import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {groupUAs,csvCell} from './core.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-6-contagens-filtradas-20261021';
 
 // A conferência usa a mesma identidade e a mesma regra dos cartões.
 // Na PE, uaKey contém o ID exato do item do quadro de validação.

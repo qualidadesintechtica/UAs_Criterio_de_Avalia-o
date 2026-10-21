@@ -1,3 +1,3 @@
-V6.6.5
+V6.6.6
 21/10/2026
-Conferência das contagens por material e status, sem misturar critérios com planilhas.
+Menu, cartões, total, conferência e exportação acompanham os filtros ativos.
