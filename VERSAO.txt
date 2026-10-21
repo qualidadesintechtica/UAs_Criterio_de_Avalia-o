@@ -1,3 +1,3 @@
-V6.6.2
+V6.6.3
 21/10/2026
-Progresso individual por UA e área Participantes visível com diagnóstico de autorização e instalação.
+Progresso por material em todas as abas; diagnóstico dos nomes de UC pendentes e vínculos por ID exato.

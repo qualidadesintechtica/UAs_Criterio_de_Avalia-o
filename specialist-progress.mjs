@@ -22,19 +22,31 @@ export function specialistProgress(records=[]){
     materialsWithoutCriteria:[...materials].filter(key=>!withCriteria.has(key)).length};
 }
 
-export function progressMarkup(progress,{compact=false}={}){
-  const {answered,total,percent,materialsWithoutCriteria}=progress;
-  const label=total?`${answered} de ${total} critérios respondidos`:'Sem critérios sincronizados';
-  const warning=materialsWithoutCriteria?` · ${materialsWithoutCriteria} material(is) sem critérios sincronizados`:'';
-  return '<div class="specialist-progress'+(compact?' compact':'')+'"><div class="specialist-progress-label"><strong>Respostas dos especialistas</strong><b>'+(percent===null?'—':percent+'%')+'</b></div>'+
-    '<progress max="100" value="'+(percent??0)+'" aria-label="'+label+'"></progress>'+
-    '<small>'+label+warning+'. Progresso dos critérios disponíveis na base.</small></div>';
+export function progressLabel(kind){return kind==='UC'?'Progresso dos indicadores':kind==='UA'?'Respostas dos especialistas':'Progresso das respostas';}
+
+export function progressRecordsForUnit(records,unit){
+  return unit?records.filter(r=>(r.unitSourceId||r.uaId||r.ua)===unit):records;
 }
 
-export function uaProgressMarkup(records,name){
-  const {answered,total,percent}=specialistProgress(records);
-  const label='Respostas dos especialistas de '+name;
-  if(!total)return '<span class="ua-progress ua-progress-empty" role="group" aria-label="'+esc(label)+'"><span>Sem critérios sincronizados</span></span>';
-  const count=answered+' de '+total+' '+(total===1?'critério respondido':'critérios respondidos');
-  return '<span class="ua-progress" role="group" aria-label="'+esc(label)+'"><span class="ua-progress-label"><span>Respostas dos especialistas</span><b>'+percent+'%</b></span><progress max="100" value="'+percent+'" aria-label="'+esc(count+' de '+name)+'"></progress><small>'+count+'</small></span>';
+function emptyTrack(label){
+  return '<span class="ua-progress-track" role="progressbar" aria-label="'+esc(label)+'" aria-valuetext="Sem critérios sincronizados"></span>';
 }
+
+export function progressMarkup(progress,{compact=false,label='Respostas dos especialistas'}={}){
+  const {answered,total,percent,materialsWithoutCriteria}=progress;
+  const count=total?`${answered} de ${total} ${total===1?'critério respondido':'critérios respondidos'}`:'Sem critérios sincronizados';
+  const warning=materialsWithoutCriteria?` · ${materialsWithoutCriteria} material(is) sem critérios sincronizados`:'';
+  return '<div class="specialist-progress'+(compact?' compact':'')+'"><div class="specialist-progress-label"><strong>'+esc(label)+'</strong><b>'+(percent===null?'—':percent+'%')+'</b></div>'+
+    (total?'<progress max="100" value="'+percent+'" aria-label="'+esc(count)+'"></progress>':emptyTrack(label))+
+    '<small>'+count+warning+'. Progresso dos critérios disponíveis na base.</small></div>';
+}
+
+export function materialProgressMarkup(records,name,kind='UA'){
+  const {answered,total,percent}=specialistProgress(records);
+  const caption=progressLabel(kind),label=caption+' de '+name;
+  const head='<span class="ua-progress-label"><span>'+esc(caption)+'</span><b>'+(percent===null?'—':percent+'%')+'</b></span>';
+  if(!total)return '<span class="ua-progress ua-progress-empty" role="group" aria-label="'+esc(label)+'">'+head+emptyTrack(label)+'<small>Sem critérios sincronizados</small></span>';
+  const count=answered+' de '+total+' '+(total===1?'critério respondido':'critérios respondidos');
+  return '<span class="ua-progress" role="group" aria-label="'+esc(label)+'">'+head+'<progress max="100" value="'+percent+'" aria-label="'+esc(count+' de '+name)+'"></progress><small>'+count+'</small></span>';
+}
+export const uaProgressMarkup=(records,name)=>materialProgressMarkup(records,name,'UA');

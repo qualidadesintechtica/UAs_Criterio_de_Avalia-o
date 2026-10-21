@@ -1,10 +1,12 @@
-# Comentários e avaliações dos materiais — V6.6.2
+# Comentários e avaliações dos materiais — V6.6.3
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Progresso individual e Participantes — V6.6.2
+## Progresso em todas as abas e nome da UC — V6.6.3
 
-Cada UA passa a mostrar a própria barra abaixo do nome, na tabela e na lista, mantendo UC, UA e Unidade da UA como as três colunas. A barra geral acima dos filtros foi retirada. O detalhe da UA mantém o progresso do material aberto.
+Planilha de entrada, UA, BDQ e UC mostram a barra de cada material abaixo do nome, na tabela, na lista e no detalhe, mantendo as colunas existentes. Na UC, cada unidade usa seus próprios indicadores; a lista e a visão completa mostram o conjunto da UC. Sem critérios sincronizados, aparece uma barra cinza com traço, sem percentual inventado.
+
+O aviso de nome da UC agora distingue planilhas e formulários sem vínculo, mostra as referências e permite abrir o registro em Ver detalhes. A busca de nomes aceita também vínculos exatos por item de validação e chave do material. Um título ausente ou ambíguo permanece identificado para correção na origem. Consulte **LEIA_PROGRESSO_TODAS_ABAS_E_NOMES.md**.
 
 **Participantes** fica no menu lateral e no cabeçalho, junto de Atualizar dados. A área reúne Criar login, Editar nome e perfil e Trocar senha. Se faltar instalação ou autorização, o painel informa o motivo e bloqueia as operações. O servidor continua exigindo uma das três contas autorizadas com perfil Admin. A atualização não amplia essas permissões.
 
@@ -52,7 +54,7 @@ A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6.2 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.3 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
@@ -162,7 +164,7 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 120 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
+Passaram 127 testes de lógica (`node --test tests/*.test.mjs`). Os testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
 Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
@@ -175,3 +177,5 @@ Na V6.6, passaram também 108 verificações do controlador de acessos, 321 da f
 Na V6.6.1, passaram 195 verificações adicionais do SQL de paginação e a integração da nova leitura em DOM simulado. A comparação das 1.208 linhas da base de teste manteve o resultado da definição enviada, com três tamanhos de lote. Consulte LEIA_CORRECAO_57014.md para instalação e limites da verificação em produção.
 
 Na V6.6.2, passaram 131 verificações do controlador de acessos e a regressão das novas barras por UA. A inspeção visual em navegador usou dados de teste. A instalação e a autorização reais do servidor precisam ser conferidas na área Participantes após a publicação.
+
+Na V6.6.3, a regressão verificou barras em tabela, lista e detalhe das quatro abas, indicadores por unidade de UC, diagnóstico de nomes pendentes e abertura do registro afetado. Foram preservados filtros, contagens, comentários, histórico e leitura paginada completa. A inspeção visual em navegador confirmou as quatro abas e a barra cinza sem critérios, com dados de teste. SQL, função de usuários e configuração não foram alterados. Consulte LEIA_PROGRESSO_TODAS_ABAS_E_NOMES.md para os limites da correção na origem.

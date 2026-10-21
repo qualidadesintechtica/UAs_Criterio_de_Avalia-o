@@ -5,7 +5,7 @@ import {buildSections} from '../navigation.mjs';
 import {groupUAs,filterRecords,exportCSV} from '../core.mjs';
 import {materialTableRows,filterOptions,includeMaterialInventory} from '../workflow.mjs';
 import {applyPortalComments,commentSourceKey} from '../portal-comments.mjs';
-import {resolveEntryPlanNames} from '../pe-names.mjs';
+import {resolveEntryPlanNames,entryPlanNameIssues} from '../pe-names.mjs';
 
 const code='COA_CTI_CUSVOS_26';
 const title='Nome da UC de teste';
@@ -76,4 +76,27 @@ test('corrige também planilhas do inventário sem alterar filtros operacionais 
   assert.equal(row.ua,title);assert.equal(row.uc,title);
   for(const field of ['id','uaId','ucId','materialKey','batch','track','status','materialStatus','uaKey'])assert.equal(row[field],old[field],field);
   assert.equal(commentSourceKey(row),commentSourceKey(old));
+});
+test('vínculo exato do item de validação resolve nome sem código de UC',()=>{
+  const r={uaKey:'pe1',uc:'UC não localizada',ucId:'',uaId:'',sourceName:'',validationItemId:'17',parent:'17',history:[]};
+  const m={categoria_material:'Plano de Produção',monday_item_validacao:'17',titulo:'Educação e sociedade'};
+  const after=resolveEntryPlanNames({PE:{records:[r]}},[m]).PE.records[0];
+  assert.equal(after.uc,'Educação e sociedade');assert.equal(after.uaKey,r.uaKey);assert.equal(after.validationItemId,r.validationItemId);
+});
+test('chave exata resolve nome, mas ID apenas parecido não resolve',()=>{
+  const r={uaKey:'pe1',uc:'UC não localizada',ucId:'',uaId:'',sourceName:'',materialKey:'plano-1',history:[]};
+  const m={categoria_material:'Plano de Produção',chave_material:'plano-1',titulo:'Comunicação digital'};
+  assert.equal(resolveEntryPlanNames({PE:{records:[r]}},[m]).PE.records[0].uc,m.titulo);
+  assert.equal(resolveEntryPlanNames({PE:{records:[r]}},[{...m,chave_material:'plano-10'}]).PE.records[0].courseNameResolved,false);
+});
+test('nomes conflitantes no mesmo item não recebem escolha arbitrária',()=>{
+  const r={uaKey:'pe1',uc:'UC não localizada',validationItemId:'17',sourceName:'',history:[]};
+  const m={categoria_material:'Plano de Produção',monday_item_validacao:'17',titulo:'Nome A'};
+  const after=resolveEntryPlanNames({PE:{records:[r]}},[m,{...m,titulo:'Nome B'}]).PE.records[0];
+  assert.equal(after.courseNameResolved,false);assert.equal(after.courseNameIssue,'ambiguous');assert.match(entryPlanNameIssues([after])[0].reason,/nomes diferentes/);
+});
+test('diagnóstico diferencia planilha de formulário sem vínculo e preserva referências',()=>{
+  const r={uaKey:'pe1',courseNameResolved:false,courseNameIssue:'missing',workflowEligible:false,sourceName:'UC_SEM_CATALOGO_PP',sourceEvent:'991',ucId:'UC_SEM_CATALOGO',uaId:'UC_SEM_CATALOGO_PP',parent:''};
+  const issues=entryPlanNameIssues([r,{...r,id:'comentario'}, {...r,uaKey:'pe2',workflowEligible:true,validationItemId:'123'}]);
+  assert.equal(issues.length,2);assert.equal(issues[0].unlinked,true);assert.equal(issues[0].formId,'991');assert.equal(issues[0].reference,r.sourceName);assert.match(issues[0].reason,/sem vínculo/);assert.equal(issues[1].unlinked,false);assert.equal(issues[1].validationId,'123');
 });

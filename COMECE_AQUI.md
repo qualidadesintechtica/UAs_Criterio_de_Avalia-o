@@ -1,4 +1,4 @@
-# Atualizar para V6.6.2 — progresso por UA e Participantes
+# Atualizar para V6.6.3 — progresso em todas as abas
 
 ## 1. Atualizar os arquivos da página
 
@@ -6,11 +6,17 @@
 2. No GitHub, abra **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
 3. Em **Add file → Upload files**, envie todo o conteúdo extraído e substitua os arquivos na raiz publicada. Não envie somente o ZIP nem coloque os arquivos em uma pasta extra.
 4. Confirme em **Commit changes** e aguarde a publicação.
-5. Pressione **Ctrl + F5** e confira **V6.6.2 · 21/10/2026**.
+5. Pressione **Ctrl + F5** e confira **V6.6.3 · 21/10/2026**.
 
-## 2. Ver o progresso de cada UA
+## 2. Ver o progresso de cada material
 
-Abra **UA**. Cada UA tem uma barra abaixo do seu nome, com percentual e número de critérios respondidos. A tabela continua com **UC, UA e Unidade da UA**. O progresso também aparece na lista de Comentários e no detalhe da UA. A barra geral acima dos filtros foi retirada.
+As abas **Planilha de entrada, UA, BDQ e UC** mostram uma barra abaixo do nome de cada material, na tabela, na lista de Comentários e no detalhe. Na tabela da UC, cada unidade tem seu próprio percentual de indicadores respondidos. As colunas existentes foram mantidas.
+
+Sem critérios sincronizados, aparece uma barra cinza com **—**, sem inventar 0% ou 100%. O percentual mede preenchimento dos critérios disponíveis, considerando o recorte atual. Comentários complementares não contam como respostas.
+
+O aviso da imagem indica **nome da UC pendente**, com a consulta concluída. Nesta versão, expanda **Ver registros** para conferir a referência, os IDs e **Ver detalhes**. O diagnóstico distingue planilhas do quadro e formulários sem vínculo. Nomes são recuperados por vínculo exato quando disponíveis; nomes ausentes ou ambíguos ainda precisam ser corrigidos na origem sincronizada. Consulte **LEIA_PROGRESSO_TODAS_ABAS_E_NOMES.md**.
+
+**Esta atualização não exige SQL novo.** Se os scripts 09 e 10 e a função de usuários já funcionam, mantenha a instalação existente.
 
 ## 3. Abrir Participantes
 
@@ -28,4 +34,4 @@ Leia **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md** para os passos completos. Se a ges
 
 SQL 01 a 10, correção de leitura de critérios, função de gestão de usuários, autenticação, perfis, troca obrigatória de senha, fontes da Monday, filtros, contagens, status, leitura UA/UC, BDQ A1/A2/A3, comentários e versões, CSV e temas foram mantidos.
 
-Passaram **120 testes de lógica**, **131 verificações do controlador de acessos**, a regressão das abas e a conferência visual em navegador com dados de teste. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.
+Passaram **127 testes de lógica**, a regressão das quatro abas e a conferência visual em navegador com dados de teste. As 131 verificações anteriores do controlador de acessos continuam documentadas; esse controlador foi preservado. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.

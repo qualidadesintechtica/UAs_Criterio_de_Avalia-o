@@ -8,7 +8,7 @@ Para corrigir o erro 57014 de critérios em uma V6.6 já instalada, siga **LEIA_
 
 1. Execute **o arquivo completo** `supabase/09_USUARIOS_E_ACESSOS.sql` no SQL Editor, depois dos scripts já instalados do painel. Uma base na V6.5 com SQL 08 precisa somente do 09. Instalação nova sobre as fontes existentes do BI: 05 → 07 → 08 → 09.
 2. Publique a Edge Function **nq-gerenciar-usuarios**, usando **todo o arquivo** `supabase/functions/nq-gerenciar-usuarios/index.ts`.
-3. Execute também o SQL 10 para a leitura paginada de critérios. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.2 · 21/10/2026** após Ctrl + F5.
+3. Execute também o SQL 10 para a leitura paginada de critérios, se ainda não estiver instalado. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.3 · 21/10/2026** após Ctrl + F5. A atualização V6.6.3 não acrescenta SQL nem exige repetir uma instalação já disponível.
 
 **Enviar os arquivos para o GitHub não executa o SQL nem publica a função.** A barra de progresso funciona com as fontes atuais; a gestão de acessos exige a instalação no servidor.
 
@@ -79,9 +79,9 @@ Para redefinir a senha de uma das contas Admin, outro Admin autorizado deve real
 
 **A senha e o nome pertencem à conta Supabase compartilhada:** mudar esses dados também afeta o login da mesma pessoa em outras páginas que usam essa conta, como o BI. A exigência de troca antes de consultar os dados foi aplicada às fontes protegidas deste painel; não foram alteradas as permissões das consultas próprias de outras aplicações. Sessões já abertas em outros aplicativos seguem o comportamento existente do projeto Auth.
 
-## Barra de respostas dos especialistas
+## Barras de progresso dos materiais
 
-Na aba UA, cada material tem sua própria barra abaixo do nome, na tabela e na lista. O detalhe da UA mantém a barra do material aberto. Ela mostra **respondidos / critérios disponíveis** e o percentual arredondado, considerando os filtros atuais. A barra geral acima dos filtros foi retirada. Planilha de entrada, BDQ e UC não mostram essa barra geral.
+As quatro abas têm uma barra por material abaixo do nome, na tabela, na lista e no detalhe. Ela mostra **respondidos / critérios disponíveis** e o percentual arredondado, considerando os filtros atuais. Na UC, cada unidade usa seus próprios indicadores na tabela e no detalhe por unidade; a lista e a visão completa usam o conjunto da UC. O título é Respostas dos especialistas na UA, Progresso dos indicadores na UC e Progresso das respostas em Planilha de entrada e BDQ. Consulte **LEIA_PROGRESSO_TODAS_ABAS_E_NOMES.md**.
 
 - Um critério respondido conta mesmo quando a resposta é negativa ou **Não se aplica**. Progresso mede preenchimento, não aprovação.
 - Classificações pendentes ou ainda não sincronizadas não contam como resposta.
@@ -89,7 +89,7 @@ Na aba UA, cada material tem sua própria barra abaixo do nome, na tabela e na l
 - Editar o texto de um comentário não muda a resposta do especialista.
 - Materiais sem critérios sincronizados são sinalizados; não se inventa um total esperado para eles. Sem critérios disponíveis, a barra mostra um traço e o aviso correspondente.
 
-O denominador vem dos critérios sincronizados na base, não de um número fixo de perguntas esperado fora dela. **100% significa que os critérios disponíveis da UA no recorte têm resposta**. Uma UA sem critérios mostra Sem critérios sincronizados. O percentual não substitui os quatro status operacionais dos materiais. Atualizar os dados consulta a sincronização existente; a página não passa a enviar respostas para a Monday.
+O denominador vem dos critérios sincronizados na base, não de um número fixo de perguntas esperado fora dela. **100% significa que os critérios disponíveis do material no recorte têm resposta**. Sem critérios, aparece uma barra cinza com traço e Sem critérios sincronizados. O percentual não substitui os quatro status operacionais dos materiais. Atualizar os dados consulta a sincronização existente; a página não passa a enviar respostas para a Monday.
 
 ## Diagnóstico
 
@@ -108,8 +108,8 @@ Se o SQL ainda não foi instalado, contas antigas sem marca de senha temporária
 
 ## Verificação da entrega
 
-- **120 testes de lógica** passaram com `node --test tests/*.test.mjs`, incluindo os 96 testes anteriores.
-- **108 verificações do controlador de acessos** em DOM simulado cobriram perfis, cadastro isolado, edição, senha temporária, falhas e limpeza de sessão.
+- **127 testes de lógica** passaram com `node --test tests/*.test.mjs` na V6.6.3, incluindo o progresso das quatro abas e os nomes por vínculo exato.
+- **131 verificações do controlador de acessos** na V6.6.2 cobriram perfis, cadastro isolado, edição, senha temporária, instalação ausente, atualização de permissão, falhas e limpeza de sessão. Esse controlador foi preservado na V6.6.3.
 - **321 verificações da função de servidor**, com serviços simulados, cobriram autorização, alvos, validações, erros e limites de mutação.
 - **39 verificações de SQL** em PostgreSQL embarcado cobriram autorização, perfis, transações de senha, bloqueio pendente, preservação e reinstalação.
 - A regressão das abas e do leitor UA/UC passou em DOM simulado. Login, formulários, gestão e barra foram inspecionados visualmente em navegador, com dados de teste.
