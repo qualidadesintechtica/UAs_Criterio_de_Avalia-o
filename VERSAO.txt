@@ -1,3 +1,3 @@
-V6.6.1
+V6.6.2
 21/10/2026
-Leitura de critérios em lotes antes da junção; preserva acessos, perfis, progresso e comentários.
+Progresso individual por UA e área Participantes visível com diagnóstico de autorização e instalação.

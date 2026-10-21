@@ -2,13 +2,15 @@
 
 O erro mostrado na página foi **57014, fonte critérios**: o banco interrompeu a consulta antes da conclusão. A V6.6 já havia carregado, mas essa falha impedia o preenchimento dos resultados e da barra de progresso.
 
+Esta correção da V6.6.1 continua incluída na V6.6.2. Se o SQL 10 já foi instalado e a leitura funciona, não o repita para a mudança de barras e Participantes.
+
 ## Aplicar a correção
 
 1. Extraia esta pasta.
 2. No **SQL Editor do mesmo projeto Supabase do painel**, execute **todo o conteúdo** de `supabase/10_CRITERIOS_PAGINADOS.sql`. Não selecione somente um trecho.
 3. Aguarde a mensagem **V6.6.1: leitura paginada instalada**.
 4. No repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**, substitua todo o conteúdo publicado pelos arquivos desta pasta. Inclua o novo `criteria-loading.mjs`, ao lado de `app.mjs` e `index.html`. Não envie o ZIP fechado nem crie uma pasta extra acima desses arquivos.
-5. Aguarde o GitHub Pages publicar, pressione **Ctrl + F5** e confira **V6.6.1 · 21/10/2026** na tela.
+5. Aguarde o GitHub Pages publicar, pressione **Ctrl + F5** e confira **V6.6.2 · 21/10/2026** na tela.
 6. Entre e clique em **Atualizar dados**. Após a leitura terminar, confira os totais, os critérios e o progresso com o mesmo recorte dos filtros usado anteriormente.
 
 **Se a V6.6 e o SQL 09 já estão instalados, esta correção exige somente o SQL 10 e os arquivos da página.** Não reaplique 07, 08 ou 09 para corrigir esse erro. A função de usuários não precisa ser publicada novamente.
@@ -50,7 +52,7 @@ Os números acima são da base de teste, não os totais da Monday da equipe. A i
 
 A definição enviada identifica a junção, mas não traz os índices atuais, o plano de execução nem a carga do servidor. Esta entrega reduz o trabalho feito antes da paginação; não foi possível medir o tempo no seu projeto real.
 
-Se o SQL 10 instalado e a página V6.6.1 ainda mostrarem 57014, envie o aviso completo com a fonte indicada e o resultado desta consulta somente de leitura:
+Se o SQL 10 instalado e a página V6.6.2 ainda mostrarem 57014, envie o aviso completo com a fonte indicada e o resultado desta consulta somente de leitura:
 
 ```sql
 select c.relname as fonte, c.relkind as tipo,

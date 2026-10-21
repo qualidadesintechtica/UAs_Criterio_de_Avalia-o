@@ -1,4 +1,4 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-2-progresso-ua-participantes-20261021';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 

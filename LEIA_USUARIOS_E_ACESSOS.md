@@ -8,7 +8,7 @@ Para corrigir o erro 57014 de critérios em uma V6.6 já instalada, siga **LEIA_
 
 1. Execute **o arquivo completo** `supabase/09_USUARIOS_E_ACESSOS.sql` no SQL Editor, depois dos scripts já instalados do painel. Uma base na V6.5 com SQL 08 precisa somente do 09. Instalação nova sobre as fontes existentes do BI: 05 → 07 → 08 → 09.
 2. Publique a Edge Function **nq-gerenciar-usuarios**, usando **todo o arquivo** `supabase/functions/nq-gerenciar-usuarios/index.ts`.
-3. Execute também o SQL 10 para a leitura paginada de critérios. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.1 · 21/10/2026** após Ctrl + F5.
+3. Execute também o SQL 10 para a leitura paginada de critérios. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.2 · 21/10/2026** após Ctrl + F5.
 
 **Enviar os arquivos para o GitHub não executa o SQL nem publica a função.** A barra de progresso funciona com as fontes atuais; a gestão de acessos exige a instalação no servidor.
 
@@ -31,6 +31,8 @@ A origem padrão autorizada é `https://qualidadesintechtica.github.io`. Se o si
 O botão **Criar login e senha** fica na tela inicial. Aceita nome, e-mail institucional, perfil Especialista ou Revisor, senha pessoal e confirmação. Os domínios permitidos no painel continuam sendo **@animaeducacao.com.br** e **@ulife.com.br**.
 
 O cadastro usa a configuração existente de Authentication do projeto. Para permitir autocadastro, a criação de novas contas por e-mail precisa estar habilitada. Se a confirmação estiver ligada, a pessoa deve confirmar o e-mail antes de entrar; o envio depende da configuração de e-mail do projeto. Se ela já tem uma conta do BI, deve usar **Entrar**, sem criar outra.
+
+Na V6.6.2, Participantes também aparece para contas sem permissão ou sem instalação confirmada, com uma explicação do bloqueio. A lista de contas e as alterações continuam protegidas no servidor. Consulte **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md**.
 
 ## Os três perfis
 
@@ -56,7 +58,7 @@ O cadastro público não oferece Admin. Mudar metadados de usuário ou controles
 
 ## Criar login dentro do painel
 
-1. Entre com uma das três contas autorizadas e abra **Usuários e acessos**, no menu lateral.
+1. Entre com uma das três contas autorizadas e abra **Participantes**, no menu lateral.
 2. Confira o aviso **Serviço disponível**.
 3. Clique em **Criar login**, preencha nome, e-mail institucional e perfil e informe a senha temporária duas vezes.
 4. Confirme a criação e comunique a senha à pessoa pelo canal interno usado pela equipe. A função não envia a senha por e-mail.
@@ -69,7 +71,7 @@ Busque a pessoa por nome ou e-mail, ou use o filtro de perfil. Clique em **Edita
 
 ## Definir uma senha temporária
 
-Clique em **Senha temporária** na pessoa correta, digite e confirme a senha e salve. O nome, o perfil e a confirmação de e-mail da conta existente são preservados. Use de **8 a 128 caracteres**; as regras adicionais de senha configuradas no projeto também se aplicam.
+Clique em **Trocar senha** na pessoa correta, digite e confirme a senha e salve. O nome, o perfil e a confirmação de e-mail da conta existente são preservados. Use de **8 a 128 caracteres**; as regras adicionais de senha configuradas no projeto também se aplicam.
 
 No próximo acesso ao Acompanhamento da Qualidade, a pessoa verá **Crie sua senha pessoal**. Até salvar uma senha diferente, o painel bloqueia suas consultas e gravações. O servidor registra a atribuição e a troca, sem copiar senhas ou hashes para as tabelas do painel. Há um intervalo mínimo de um minuto entre atribuições temporárias à mesma conta.
 
@@ -79,7 +81,7 @@ Para redefinir a senha de uma das contas Admin, outro Admin autorizado deve real
 
 ## Barra de respostas dos especialistas
 
-A barra fica acima dos filtros e também no detalhe do material. Mostra **respondidos / critérios disponíveis** e o percentual arredondado. A barra principal considera a aba e o recorte atual: esteira, lote, UC, UA/material, revisor, especialista, status, busca e opção de comentários.
+Na aba UA, cada material tem sua própria barra abaixo do nome, na tabela e na lista. O detalhe da UA mantém a barra do material aberto. Ela mostra **respondidos / critérios disponíveis** e o percentual arredondado, considerando os filtros atuais. A barra geral acima dos filtros foi retirada. Planilha de entrada, BDQ e UC não mostram essa barra geral.
 
 - Um critério respondido conta mesmo quando a resposta é negativa ou **Não se aplica**. Progresso mede preenchimento, não aprovação.
 - Classificações pendentes ou ainda não sincronizadas não contam como resposta.
@@ -87,7 +89,7 @@ A barra fica acima dos filtros e também no detalhe do material. Mostra **respon
 - Editar o texto de um comentário não muda a resposta do especialista.
 - Materiais sem critérios sincronizados são sinalizados; não se inventa um total esperado para eles. Sem critérios disponíveis, a barra mostra um traço e o aviso correspondente.
 
-O denominador vem dos critérios sincronizados na base, não de um número fixo de perguntas esperado fora dela. **100% significa que os critérios disponíveis no recorte têm resposta**, e o aviso de materiais sem critérios continua aparecendo quando necessário. O percentual não substitui os quatro status operacionais dos materiais. Atualizar os dados consulta a sincronização existente; a página não passa a enviar respostas para a Monday.
+O denominador vem dos critérios sincronizados na base, não de um número fixo de perguntas esperado fora dela. **100% significa que os critérios disponíveis da UA no recorte têm resposta**. Uma UA sem critérios mostra Sem critérios sincronizados. O percentual não substitui os quatro status operacionais dos materiais. Atualizar os dados consulta a sincronização existente; a página não passa a enviar respostas para a Monday.
 
 ## Diagnóstico
 
@@ -106,7 +108,7 @@ Se o SQL ainda não foi instalado, contas antigas sem marca de senha temporária
 
 ## Verificação da entrega
 
-- **117 testes de lógica** passaram com `node --test tests/*.test.mjs`, incluindo os 96 testes anteriores.
+- **120 testes de lógica** passaram com `node --test tests/*.test.mjs`, incluindo os 96 testes anteriores.
 - **108 verificações do controlador de acessos** em DOM simulado cobriram perfis, cadastro isolado, edição, senha temporária, falhas e limpeza de sessão.
 - **321 verificações da função de servidor**, com serviços simulados, cobriram autorização, alvos, validações, erros e limites de mutação.
 - **39 verificações de SQL** em PostgreSQL embarcado cobriram autorização, perfis, transações de senha, bloqueio pendente, preservação e reinstalação.

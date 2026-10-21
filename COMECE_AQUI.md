@@ -1,51 +1,31 @@
-# Atualizar para V6.6.1 — corrigir o carregamento dos critérios
+# Atualizar para V6.6.2 — progresso por UA e Participantes
 
-A V6.6 já aparece na página, mas o erro **57014 — fonte critérios** impede concluir a consulta. Esta pasta contém a correção e todos os recursos anteriores.
-
-## 1. Executar o SQL novo
+## 1. Atualizar os arquivos da página
 
 1. Extraia o ZIP.
-2. Abra **Supabase → SQL Editor**, no mesmo projeto da página.
-3. Abra o arquivo **supabase/10_CRITERIOS_PAGINADOS.sql** desta pasta.
-4. Copie e execute **todo o conteúdo**, sem selecionar somente um trecho.
-5. Aguarde a mensagem **V6.6.1: leitura paginada instalada**.
+2. No GitHub, abra **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
+3. Em **Add file → Upload files**, envie todo o conteúdo extraído e substitua os arquivos na raiz publicada. Não envie somente o ZIP nem coloque os arquivos em uma pasta extra.
+4. Confirme em **Commit changes** e aguarde a publicação.
+5. Pressione **Ctrl + F5** e confira **V6.6.2 · 21/10/2026**.
 
-**Se a V6.6 e a gestão de acessos já estão instaladas, não repita SQL 07, 08 ou 09. A função nq-gerenciar-usuarios não precisa ser publicada novamente.**
+## 2. Ver o progresso de cada UA
 
-## 2. Atualizar os arquivos do GitHub
+Abra **UA**. Cada UA tem uma barra abaixo do seu nome, com percentual e número de critérios respondidos. A tabela continua com **UC, UA e Unidade da UA**. O progresso também aparece na lista de Comentários e no detalhe da UA. A barra geral acima dos filtros foi retirada.
 
-1. Abra o repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
-2. Use **Add file → Upload files** e envie todo o conteúdo extraído, substituindo os arquivos na raiz publicada.
-3. Inclua o novo **criteria-loading.mjs**, junto de `index.html`, `app.mjs`, estilos, demais módulos e pastas. Não envie somente o ZIP fechado nem coloque os arquivos dentro de uma pasta extra.
-4. Confirme em **Commit changes** e aguarde a publicação do GitHub Pages.
-5. Pressione **Ctrl + F5** e confira **V6.6.1 · 21/10/2026** na página.
+## 3. Abrir Participantes
 
-O SQL e os arquivos da página precisam estar atualizados para usar a nova forma de leitura.
+Use **Participantes**, no menu lateral ou junto de **Atualizar dados**, no cabeçalho. A área permite criar login, editar nome/perfil e trocar a senha temporária quando a conta tem autorização no servidor.
 
-## 3. Conferir os resultados
+Se aparecer **gestão ainda não instalada**, execute todo o arquivo **supabase/09_USUARIOS_E_ACESSOS.sql** no projeto Supabase da página e publique a função **nq-gerenciar-usuarios**, usando todo o arquivo **supabase/functions/nq-gerenciar-usuarios/index.ts**. Mantenha JWT ativado. Depois, volte a Participantes e clique em **Atualizar**.
 
-Entre no painel e clique em **Atualizar dados**. A página lê lotes menores de critérios até completar o conjunto. Confira os mesmos filtros usados antes para comparar os totais. A barra passa a usar os critérios concluídos, com o cálculo já existente.
+**SQL 10 não substitui o SQL 09 nem publica a função de usuários.** O GitHub publica a interface; a criação e a troca de senhas dependem do servidor configurado.
 
-A leitura foi testada com o mesmo resultado da definição de consulta enviada. Se um lote falhar, o painel informa a falha e preserva a última consulta completa, quando disponível. Não apresenta uma parte dos critérios como carga concluída.
+A gestão permanece restrita a **ligia.neta@animaeducacao.com.br**, **joao.cane@animaeducacao.com.br** e **cristina.brito@animaeducacao.com.br**, com e-mail confirmado e perfil Admin. Outras contas veem a explicação da restrição e não conseguem listar ou alterar participantes.
 
-Para detalhes e diagnóstico se o erro persistir, leia **LEIA_CORRECAO_57014.md**.
+Leia **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md** para os passos completos. Se a gestão já está instalada e disponível, não repita os scripts.
 
-## Recursos mantidos
+## O que permanece
 
-- Perfis Especialista, Revisor e Admin; cadastro institucional e gestão restrita aos três e-mails autorizados.
-- Senha temporária com troca obrigatória e edição de nome/perfil.
-- Progresso das respostas dos especialistas no recorte atual e no detalhe do material.
-- Abas, filtros compartilhados, cartões, contagens, CSV e leitura por critério de UA/UC.
-- Comentários, autoria, versões, histórico e texto original da Monday.
-- Esteira na Planilha de entrada; BDQ A1/A2/A3, Gestor e Revisor; Modelagem no design.
-- Domínios Ânima/Ulife e temas escuro/off-white.
+SQL 01 a 10, correção de leitura de critérios, função de gestão de usuários, autenticação, perfis, troca obrigatória de senha, fontes da Monday, filtros, contagens, status, leitura UA/UC, BDQ A1/A2/A3, comentários e versões, CSV e temas foram mantidos.
 
-## Se os acessos da V6.6 ainda não foram instalados
-
-O SQL 10 trata a leitura de critérios. Ele não substitui o SQL 09 nem publica a função de gestão de usuários. Para instalar esses recursos, siga **LEIA_USUARIOS_E_ACESSOS.md**. Em uma instalação nova sobre as fontes já sincronizadas do BI: **05 → 07 → 08 → 09 → 10**, além da função de usuários.
-
-## Verificação
-
-Passaram **117 testes de lógica**, **195 verificações do SQL de paginação** e a regressão do aplicativo em DOM simulado, incluindo os dois lotes de critérios e a preservação da consulta anterior em caso de falha.
-
-A correção ainda precisa ser aplicada no Supabase e publicada no GitHub da equipe. Nenhum SQL foi executado em produção nesta preparação.
+Passaram **120 testes de lógica**, **131 verificações do controlador de acessos**, a regressão das abas e a conferência visual em navegador com dados de teste. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.

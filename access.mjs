@@ -5,12 +5,27 @@ const ADMIN_EMAILS=new Set(['ligia.neta@animaeducacao.com.br','joao.cane@animaed
 
 export function createAccessController({client,config,createSignupClient,onBlocked,onReady,onNameChanged,onSignedOut}){
   const $=id=>document.getElementById(id);
-  let user=null,manager=false,epoch=0,checkRun=0,listRun=0,offset=0,searchTimer;
+  let user=null,manager=false,participantsState='none',epoch=0,checkRun=0,listRun=0,offset=0,searchTimer;
   let selected=null,editBusy=false,signupBusy=false,gateBusy=false,gateSaved=false;
   let serviceReady=false,serviceMessage='Verificando o serviço de criação e senha...';
   const message=(id,text,state='')=>{const box=$(id);box.textContent=text;box.dataset.state=state;};
   const fields=id=>$(id).querySelector('fieldset');
   const current=request=>request===epoch&&user;
+
+  function syncParticipants(){
+    $('manageUsers').hidden=$('openParticipants').hidden=!user;
+    $('usersSearch').disabled=$('usersProfileFilter').disabled=!manager;
+    $('usersCreate').disabled=!manager||!serviceReady;
+    $('usersRefresh').disabled=!user;
+    const note=$('participantsAccessNote');note.hidden=manager;
+    if(manager){note.textContent='';return;}
+    note.textContent=participantsState==='setup'
+      ? 'A gestão de participantes ainda não foi instalada neste projeto. Execute o arquivo supabase/09_USUARIOS_E_ACESSOS.sql e publique a função nq-gerenciar-usuarios. Depois clique em Atualizar.'
+      : 'Sua conta não tem autorização para gerenciar participantes. Esta área é restrita a ligia.neta@animaeducacao.com.br, joao.cane@animaeducacao.com.br e cristina.brito@animaeducacao.com.br, com e-mail confirmado e perfil Admin liberado no servidor.';
+    if($('userEditorDialog').open)$('userEditorDialog').close();
+    $('usersList').replaceChildren();$('usersPrevious').disabled=$('usersNext').disabled=true;
+    $('usersPage').textContent='';
+  }
 
   function resetForm(id){
     $(id).reset();
@@ -19,8 +34,8 @@ export function createAccessController({client,config,createSignupClient,onBlock
   }
   function clear(){
     epoch++;checkRun++;listRun++;clearTimeout(searchTimer);
-    user=null;manager=false;selected=null;editBusy=false;gateBusy=false;gateSaved=false;serviceReady=false;
-    $('manageUsers').hidden=true;$('userProfile').textContent='';$('passwordRequired').hidden=true;
+    user=null;manager=false;participantsState='none';selected=null;editBusy=false;gateBusy=false;gateSaved=false;serviceReady=false;
+    syncParticipants();$('userProfile').textContent='';$('passwordRequired').hidden=true;
     for(const id of ['signupDialog','usersDialog','userEditorDialog'])if($(id).open)$(id).close();
     for(const id of ['signupForm','userEditorForm','requiredForm'])resetForm(id);
     fields('requiredForm').disabled=true;$('usersList').replaceChildren();$('usersSearch').value='';$('usersProfileFilter').value='';offset=0;
@@ -42,14 +57,16 @@ export function createAccessController({client,config,createSignupClient,onBlock
     // Sem SQL novo, contas anteriores continuam usando as permissões existentes.
     // Uma conta marcada como temporária nunca usa esse caminho de compatibilidade.
     if(error?.code==='PGRST202'&&!candidate.app_metadata?.nq_acesso_temporario){
-      manager=false;$('manageUsers').hidden=true;$('userProfile').textContent='';return true;
+      manager=false;participantsState='setup';serviceReady=false;syncParticipants();$('userProfile').textContent='';return true;
     }
     if(error||data?.versao!==1||typeof data.gestor!=='boolean'||typeof data.senha_temporaria!=='boolean'){
       const failure=new Error('Não foi possível verificar o acesso. Tente novamente; se continuar, avise a administração.');
       failure.code='NQ_ACCESS_STATE';throw failure;
     }
     if(data.senha_temporaria){showRequired(candidate);return false;}
-    manager=data.gestor;$('manageUsers').hidden=!manager;
+    manager=data.gestor;participantsState=manager?'ready':'denied';
+    if(!manager){serviceReady=false;listRun++;if($('userEditorDialog').open)$('userEditorDialog').close();}
+    syncParticipants();
     $('userProfile').textContent=PROFILE_LABELS[data.perfil]||'Revisor';
     $('passwordRequired').hidden=true;
     return true;
@@ -61,20 +78,21 @@ export function createAccessController({client,config,createSignupClient,onBlock
     else if(!editBusy)message('userEditorStatus','');
   }
   async function service(){
+    if(!manager||!user)return;
     const request=epoch;serviceReady=false;serviceMessage='Verificando o serviço de criação e senha...';
-    message('usersServiceStatus',serviceMessage);syncEditorService();
+    message('usersServiceStatus',serviceMessage);syncEditorService();syncParticipants();
     try{
       const {data,error}=await client.functions.invoke('nq-gerenciar-usuarios',{body:{action:'status'}});
-      if(!current(request))return;
+      if(!current(request)||!manager)return;
       if(error)throw error;
       if(data?.ok!==true||data.versao!==1)throw new Error('service_unavailable');
       serviceReady=true;serviceMessage='Criação de contas e senhas temporárias disponíveis.';
       message('usersServiceStatus',serviceMessage,'success');
     }catch(error){
-      const detail=await accessError(error);if(!current(request))return;
+      const detail=await accessError(error);if(!current(request)||!manager)return;
       serviceMessage=detail;message('usersServiceStatus',detail,'error');
     }
-    if(current(request))syncEditorService();
+    if(current(request)&&manager){syncEditorService();syncParticipants();}
   }
   async function loadUsers(success=''){
     if(!manager||!user)return;
@@ -85,7 +103,7 @@ export function createAccessController({client,config,createSignupClient,onBlock
       const {data,error}=await client.rpc('nq_acesso_listar_usuarios',{
         p_busca:$('usersSearch').value.trim(),p_offset:offset,p_limite:101,p_perfil:$('usersProfileFilter').value||null
       });
-      if(!current(request)||run!==listRun)return;
+      if(!current(request)||!manager||run!==listRun)return;
       if(error)throw error;
       const people=Array.isArray(data)?data:[];
       for(const person of people.slice(0,100)){
@@ -97,7 +115,7 @@ export function createAccessController({client,config,createSignupClient,onBlock
         copy.append(name,email,role);
         if(person.senha_temporaria||!person.confirmado){const status=document.createElement('small');status.textContent=person.senha_temporaria?'Troca de senha pendente':'E-mail ainda não confirmado';copy.append(status);}
         const actions=document.createElement('div');actions.className='users-row-actions';
-        for(const [mode,label] of [['name','Editar nome e perfil'],['password','Senha temporária']]){
+        for(const [mode,label] of [['name','Editar nome e perfil'],['password','Trocar senha']]){
           const button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent=label;
           button.setAttribute('aria-label',label+' de '+(person.nome||person.email));
           button.addEventListener('click',()=>openEditor(mode,person));actions.append(button);
@@ -110,7 +128,7 @@ export function createAccessController({client,config,createSignupClient,onBlock
       message('usersStatus',success||Math.min(people.length,100)+' conta(s) nesta página.',success?'success':'');
     }catch(error){
       const detail=await accessError(error);if(!current(request)||run!==listRun)return;
-      if(error?.code==='42501'){manager=false;$('manageUsers').hidden=true;if($('userEditorDialog').open)$('userEditorDialog').close();}
+      if(error?.code==='42501'){manager=false;participantsState='denied';serviceReady=false;syncParticipants();if($('userEditorDialog').open)$('userEditorDialog').close();}
       message('usersStatus',detail,'error');
     }
   }
@@ -140,12 +158,28 @@ export function createAccessController({client,config,createSignupClient,onBlock
     (isPassword?$('userEditPassword'):$('userEditName')).focus();
   }
   $('userEditEmail').addEventListener('input',adjustAdminOption);
-  $('manageUsers').addEventListener('click',()=>{
-    if(!manager||!user)return;
-    $('usersDialog').showModal();loadUsers();service();
+  function openParticipants(){
+    if(!user)return;
+    syncParticipants();$('usersDialog').showModal();
+    if(manager){loadUsers();service();}
+    else {message('usersStatus','');message('usersServiceStatus','');}
+  }
+  $('manageUsers').addEventListener('click',openParticipants);
+  $('openParticipants').addEventListener('click',openParticipants);
+  $('usersCreate').addEventListener('click',()=>{if(serviceReady)openEditor('create');});
+  $('usersRefresh').addEventListener('click',async()=>{
+    if(!user)return;
+    const request=epoch,expected=user.id;$('usersRefresh').disabled=true;
+    message('usersStatus','Verificando acesso a participantes...');
+    try{
+      const {data,error}=await client.auth.getUser();
+      if(!current(request))return;
+      if(error||!data?.user||data.user.id!==expected){clear();await onSignedOut();return;}
+      if(!await allow(data.user))return;
+      if(manager){loadUsers();service();}else{message('usersStatus','');message('usersServiceStatus','');}
+    }catch{if(current(request))message('usersStatus','Não foi possível verificar sua autorização. Tente Atualizar novamente.','error');}
+    finally{if(current(request))$('usersRefresh').disabled=false;}
   });
-  $('usersCreate').addEventListener('click',()=>openEditor('create'));
-  $('usersRefresh').addEventListener('click',()=>{loadUsers();service();});
   $('usersSearch').addEventListener('input',()=>{clearTimeout(searchTimer);listRun++;offset=0;searchTimer=setTimeout(()=>loadUsers(),250);});
   $('usersProfileFilter').addEventListener('change',()=>{offset=0;loadUsers();});
   $('usersPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-100);loadUsers();});

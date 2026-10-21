@@ -1,4 +1,4 @@
-import {norm} from './core.mjs';
+import {norm,escapeHTML as esc} from './core.mjs';
 
 // Mede respostas dos critérios disponíveis, sem confundir comentário com avaliação.
 export function specialistProgress(records=[]){
@@ -29,4 +29,12 @@ export function progressMarkup(progress,{compact=false}={}){
   return '<div class="specialist-progress'+(compact?' compact':'')+'"><div class="specialist-progress-label"><strong>Respostas dos especialistas</strong><b>'+(percent===null?'—':percent+'%')+'</b></div>'+
     '<progress max="100" value="'+(percent??0)+'" aria-label="'+label+'"></progress>'+
     '<small>'+label+warning+'. Progresso dos critérios disponíveis na base.</small></div>';
+}
+
+export function uaProgressMarkup(records,name){
+  const {answered,total,percent}=specialistProgress(records);
+  const label='Respostas dos especialistas de '+name;
+  if(!total)return '<span class="ua-progress ua-progress-empty" role="group" aria-label="'+esc(label)+'"><span>Sem critérios sincronizados</span></span>';
+  const count=answered+' de '+total+' '+(total===1?'critério respondido':'critérios respondidos');
+  return '<span class="ua-progress" role="group" aria-label="'+esc(label)+'"><span class="ua-progress-label"><span>Respostas dos especialistas</span><b>'+percent+'%</b></span><progress max="100" value="'+percent+'" aria-label="'+esc(count+' de '+name)+'"></progress><small>'+count+'</small></span>';
 }

@@ -1,8 +1,16 @@
-# Comentários e avaliações dos materiais — V6.6.1
+# Comentários e avaliações dos materiais — V6.6.2
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Correção de leitura dos critérios — V6.6.1
+## Progresso individual e Participantes — V6.6.2
+
+Cada UA passa a mostrar a própria barra abaixo do nome, na tabela e na lista, mantendo UC, UA e Unidade da UA como as três colunas. A barra geral acima dos filtros foi retirada. O detalhe da UA mantém o progresso do material aberto.
+
+**Participantes** fica no menu lateral e no cabeçalho, junto de Atualizar dados. A área reúne Criar login, Editar nome e perfil e Trocar senha. Se faltar instalação ou autorização, o painel informa o motivo e bloqueia as operações. O servidor continua exigindo uma das três contas autorizadas com perfil Admin. A atualização não amplia essas permissões.
+
+Esta versão de interface não exige um SQL novo. Para a gestão que ainda não foi instalada, são necessários o SQL 09 e a função nq-gerenciar-usuarios. Siga **COMECE_AQUI.md** e **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md**.
+
+## Correção de leitura dos critérios — V6.6.1 preservada
 
 Para o erro **57014 na fonte critérios**, esta versão limita cada lote de subelementos antes da junção com os materiais enriquecidos. O aplicativo lê os lotes em sequência, preservando o conjunto e as permissões. **Execute todo o SQL 10, depois substitua os arquivos da página**, incluindo `criteria-loading.mjs`. Siga **COMECE_AQUI.md** e **LEIA_CORRECAO_57014.md**. Se o SQL 09 e a função de gestão de usuários já estão instalados, não é necessário repeti-los.
 
@@ -10,9 +18,9 @@ Os recursos da V6.6 descritos abaixo continuam incluídos. Em instalação nova,
 
 ## Usuários, perfis e progresso — V6.6 preservados
 
-A tela inicial recebe **Criar login e senha**. A área interna **Usuários e acessos** permite criar contas, editar nome e perfil e definir senha temporária, restrita no servidor a ligia.neta@animaeducacao.com.br, joao.cane@animaeducacao.com.br e cristina.brito@animaeducacao.com.br. Os perfis são **Especialista, Revisor e Admin**. Quem recebe senha temporária deve escolher outra antes de consultar os resultados.
+A tela inicial recebe **Criar login e senha**. A área interna **Participantes** permite criar contas, editar nome e perfil e definir senha temporária, restrita no servidor a ligia.neta@animaeducacao.com.br, joao.cane@animaeducacao.com.br e cristina.brito@animaeducacao.com.br. Os perfis são **Especialista, Revisor e Admin**. Quem recebe senha temporária deve escolher outra antes de consultar os resultados.
 
-A barra **Respostas dos especialistas** mostra critérios respondidos e percentual no recorte atual, acima dos filtros e no detalhe do material. Comentários complementares não alteram o progresso; materiais sem critérios sincronizados são sinalizados. O total considera somente critérios disponíveis na base.
+Cada UA mostra sua barra **Respostas dos especialistas**, com critérios respondidos e percentual no recorte atual, abaixo do nome e no detalhe da UA. Comentários complementares não alteram o progresso; materiais sem critérios sincronizados são sinalizados. O total considera somente critérios disponíveis na base.
 
 Para habilitar a gestão de usuários pela primeira vez, **instale o SQL 09 e publique a função nq-gerenciar-usuarios**. Para a leitura corrigida dos critérios, instale também o SQL 10. Atualize todos os arquivos do GitHub depois. Subir os arquivos ao GitHub não instala o servidor. Siga **COMECE_AQUI.md** e **LEIA_USUARIOS_E_ACESSOS.md** para instalação, perfis iniciais, confirmação de e-mail e uso das contas compartilhadas com o BI.
 
@@ -44,7 +52,7 @@ A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6.1 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.2 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
@@ -154,7 +162,7 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 117 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
+Passaram 120 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
 Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
@@ -165,3 +173,5 @@ Na V6.5, o DOM simulado também verificou UA com sete critérios; UC por unidade
 Na V6.6, passaram também 108 verificações do controlador de acessos, 321 da função de servidor e 39 do SQL em PostgreSQL embarcado. A inspeção visual em navegador real usou dados de teste. As verificações de acesso e mutação não alteraram contas reais. O login institucional real, a publicação no GitHub, a função hospedada e o SQL em produção não foram executados nesta preparação. Consulte LEIA_USUARIOS_E_ACESSOS.md para os limites e a instalação.
 
 Na V6.6.1, passaram 195 verificações adicionais do SQL de paginação e a integração da nova leitura em DOM simulado. A comparação das 1.208 linhas da base de teste manteve o resultado da definição enviada, com três tamanhos de lote. Consulte LEIA_CORRECAO_57014.md para instalação e limites da verificação em produção.
+
+Na V6.6.2, passaram 131 verificações do controlador de acessos e a regressão das novas barras por UA. A inspeção visual em navegador usou dados de teste. A instalação e a autorização reais do servidor precisam ser conferidas na área Participantes após a publicação.
