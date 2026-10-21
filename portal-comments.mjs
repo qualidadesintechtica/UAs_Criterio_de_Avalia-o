@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-6-7-download-especialistas-20261021';
+import {text} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

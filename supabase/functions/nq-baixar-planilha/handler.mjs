@@ -49,29 +49,62 @@ export function createDownloadHandler({createClient,env,fetchImpl=fetch}){
       const link=resolvePlanLink(row,columnIDs);
       if(link.status!=='ready')throw fail('NQ_LINK',link.message);
       if(link.columnId!==body.column_id)throw fail('NQ_LINK_CHANGED','O vínculo da planilha mudou. Atualize os dados.');
-      let address=link.url?downloadURL(link.url):null,name=link.name;
-      if(link.assetId){
-        const token=env('MONDAY_API_TOKEN');
-        if(!token)throw fail('NQ_MONDAY_SETUP','Este anexo exige MONDAY_API_TOKEN no ambiente do serviço.',503);
+      const token=env('MONDAY_API_TOKEN');
+      async function monday(query,variables){
         const result=await fetchImpl('https://api.monday.com/v2',{method:'POST',headers:{Authorization:token,'Content-Type':'application/json'},
-          body:JSON.stringify({query:'query($ids: [ID!]!) { assets(ids: $ids) { id name public_url } }',variables:{ids:[link.assetId]}}),signal:controller.signal});
-        const payload=await result.json(),asset=payload?.data?.assets?.find(a=>String(a.id)===link.assetId);
-        if(!result.ok||payload.errors||!asset?.public_url)throw fail('NQ_ASSET','Não foi possível obter o anexo atual da Monday.');
-        address=asset.public_url;name=asset.name;
+          body:JSON.stringify({query,variables}),signal:controller.signal});
+        let payload;try{payload=await result.json();}catch{}
+        if(!result.ok||payload?.errors||!payload?.data)throw fail('NQ_MONDAY_LOOKUP','Não foi possível conferir o arquivo atual na Monday. Confira o token de leitura no serviço.',503);
+        return payload.data;
+      }
+      async function addressFor(current){
+        if(!current.assetId)return {address:downloadURL(current.url),name:current.name};
+        if(!token)throw fail('NQ_MONDAY_SETUP','Este anexo exige MONDAY_API_TOKEN no ambiente do serviço.',503);
+        const payload=await monday('query($ids: [ID!]!) { assets(ids: $ids) { id name public_url } }',{ids:[current.assetId]});
+        const asset=payload.assets?.find(a=>String(a.id)===current.assetId);
+        if(!asset?.public_url)throw fail('NQ_ASSET','Não foi possível obter o anexo atual da Monday.');
+        return {address:asset.public_url,name:asset.name};
       }
       const extra=(env('NQ_PLANILHAS_HOSTS')||'').split(',').map(x=>x.trim().toLowerCase()).filter(x=>/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(x));
-      let response;
-      for(let hop=0;hop<=5;hop++){
-        if(!allowedURL(address,extra))throw fail('NQ_HOST','O domínio do arquivo precisa ser autorizado no serviço.',403);
-        response=await fetchImpl(address,{redirect:'manual',credentials:'omit',referrerPolicy:'no-referrer',headers:{Accept:'application/octet-stream'},signal:controller.signal});
-        if([301,302,303,307,308].includes(response.status)){
-          const location=response.headers.get('Location');await response.body?.cancel();
-          if(!location||hop===5)throw fail('NQ_REDIRECT','A origem não forneceu um download direto.');
-          address=new URL(location,address).href;continue;
+      async function retrieve(address){
+        let response;
+        for(let hop=0;hop<=5;hop++){
+          if(!allowedURL(address,extra))throw fail('NQ_HOST','O domínio do arquivo precisa ser autorizado no serviço.',403);
+          response=await fetchImpl(address,{redirect:'manual',credentials:'omit',referrerPolicy:'no-referrer',headers:{Accept:'application/octet-stream'},signal:controller.signal});
+          if([301,302,303,307,308].includes(response.status)){
+            const location=response.headers.get('Location');await response.body?.cancel();
+            if(!location||hop===5)throw fail('NQ_REDIRECT','A origem não forneceu um download direto.');
+            address=new URL(location,address).href;continue;
+          }
+          return {response,address};
         }
-        break;
+        return {response,address};
       }
-      if(!response?.ok){await response?.body?.cancel();throw fail('NQ_SOURCE','A origem não autorizou o download. Confira o link e suas permissões.');}
+      let {address,name}=await addressFor(link);
+      let downloaded=await retrieve(address),response=downloaded.response;
+      // Uma única atualização da coluna exata: nunca procura outro arquivo por nome.
+      if(!response?.ok&&token&&[401,403,404,410].includes(response.status)){
+        await response.body?.cancel();
+        const data=await monday('query($ids: [ID!]!, $columns: [String!]) { items(ids: $ids) { id board { id } column_values(ids: $columns) { id text type value column { title } } } }',
+          {ids:[body.item_id],columns:[body.column_id]});
+        const item=data.items?.find(item=>String(item.id)===body.item_id&&String(item.board?.id)==='9433297929');
+        if(!item)throw fail('NQ_LINK_CHANGED','O plano não foi localizado no quadro de validação da Monday. Confira o vínculo.');
+        const current=resolvePlanLink({colunas_planilha:(item.column_values||[]).map(column=>({...column,title:column.column?.title||''}))},[body.column_id]);
+        if(current.status!=='ready')throw fail('NQ_LINK_CHANGED','A coluna da planilha foi alterada ou está sem um arquivo único. Atualize os dados.');
+        if(current.assetId!==link.assetId||current.url!==link.url){
+          const fresh=await addressFor(current);name=fresh.name;
+          downloaded=await retrieve(fresh.address);response=downloaded.response;
+        }
+      }
+      address=downloaded.address;
+      if(!response?.ok){
+        await response?.body?.cancel();
+        const status=response?.status||0,host=new URL(address).hostname;
+        if([401,403].includes(status))throw fail('NQ_SOURCE_AUTH','A origem '+host+' recusou o download (HTTP '+status+'). O arquivo pode exigir login ou um link autorizado. Confira o acesso na origem ou envie o link exato para análise.');
+        if([404,410].includes(status))throw fail('NQ_SOURCE_MISSING','A origem '+host+' não encontrou o arquivo (HTTP '+status+'). O link pode ter expirado ou o arquivo ter sido movido. Atualize o link na Monday.');
+        if(status===429)throw fail('NQ_SOURCE_LIMIT','A origem '+host+' limitou os downloads (HTTP 429). Aguarde e tente novamente.');
+        throw fail('NQ_SOURCE','Não foi possível obter o arquivo de '+host+' (HTTP '+status+'). Confira a disponibilidade na origem.');
+      }
       if(Number(response.headers.get('Content-Length'))>MAX_FILE_BYTES){await response.body?.cancel();throw fail('NQ_SIZE','A planilha ultrapassa o limite de 20 MB.',413);}
       const chunks=[];let size=0;const reader=response.body?.getReader();
       if(!reader)throw fail('NQ_EMPTY','O arquivo retornou vazio.');

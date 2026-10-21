@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-7-download-especialistas-20261021';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 
@@ -19,6 +19,11 @@ function courseContext(rows){
 function index(rows,field){const result=new Map();for(const r of rows){const key=norm(r[field]);if(!key)continue;if(!result.has(key))result.set(key,[]);result.get(key).push(r);}return result;}
 function latest(rows){return [...rows].sort((a,b)=>stamp(b)-stamp(a)||text(b.id).localeCompare(text(a.id),undefined,{numeric:true}))[0];}
 function stamp(row){for(const key of ['data_avaliacao_hora','data_avaliacao','updated_at','synced_at']){const n=Date.parse(row[key]||'');if(Number.isFinite(n))return n;}return 0;}
+function formKind(row){
+  const kind=materialKind(row);if(kind)return kind;
+  const type=norm(row.tipo_formulario).replace(/\s+/g,' ');
+  return /\b(?:planilhas? de entrada|plano de producao)\b/.test(type)?'PE':null;
+}
 
 function entryPlanMaterial(row,code,byID,byUA,byUC,byName){
   const pick=(rows,checkOffer=false)=>{
@@ -44,7 +49,7 @@ export function adaptMondayForms(assessments,comments,materials){
   const all=[];
   for(const id of eventIDs){
     const assessment=forms.get(id);const notes=commentsByForm.get(id)||[];const r=assessment||latest(notes);
-    const kind=materialKind(r);if(!kind)continue;
+    const kind=formKind(r)||notes.map(formKind).find(Boolean);if(!kind)continue;
     const originalName=text(r.nome_item);const match=originalName.match(/^(.*)_(UA\d+|A[123]|PP)$/i);const codeUC=match?match[1]:originalName;const unit=match?match[2].toUpperCase():'';
     const requestedBankType=kind==='BDQ'?bdqAssessmentType(r):'';
     const bankMatches=rows=>(rows||[]).filter(m=>materialKind(m)==='BDQ'&&(!requestedBankType||bdqAssessmentType(m)===requestedBankType));
@@ -80,7 +85,7 @@ export function adaptMondayForms(assessments,comments,materials){
     if(!added)all.push({...common,id:'form:'+id,criterion:'Registro do formulário',criterionKey:'metadata',unit,question:'',classification:text(r.conceito_final)||'Resultado do critério não sincronizado',status:'comment',comment:'',commentOnly:true,metadataOnly:true,_stamp:stamp(r)});
   }
   const grouped=new Map();
-  for(const r of all){const key=JSON.stringify([r.uaKey,r.unit,r.criterionKey,r.commentOnly?'comment':'result']);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(r);}
+  for(const r of all){const key=JSON.stringify([r.uaKey,r.unit,r.criterionKey,r.commentOnly?'comment':'result',r.kind==='PE'&&r.commentOnly?r.id:'']);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(r);}
   const records=[];for(const list of grouped.values()){list.sort((a,b)=>b._stamp-a._stamp||b.id.localeCompare(a.id,undefined,{numeric:true}));const [current,...past]=list;records.push({...current,history:past});}
   return {records,lastSync:[...assessments,...comments].reduce((max,r)=>text(r.synced_at)>max?text(r.synced_at):max,'')};
 }
@@ -89,7 +94,7 @@ export function mergeMondayData(sections,formData){
   for(const r of formData.records){
     const bucket=sections[r.kind];if(!bucket)continue;
     // Texto recebido não substitui uma classificação formal da esteira.
-    if(r.commentOnly&&r.comment&&bucket.records.some(x=>x.uaKey===r.uaKey&&norm(x.criterion)===norm(r.criterion)&&text(x.comment)===r.comment))continue;
+    if(r.kind==='PE'?bucket.records.some(x=>x.id===r.id):r.commentOnly&&r.comment&&bucket.records.some(x=>x.uaKey===r.uaKey&&norm(x.criterion)===norm(r.criterion)&&text(x.comment)===r.comment))continue;
     bucket.records.push(r);
   }
   return sections;

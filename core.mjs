@@ -1,3 +1,4 @@
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-8-comentarios-download-20261021';
 export const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 export const text = value => value == null ? '' : String(value).trim();
 export function names(value) {
@@ -122,7 +123,7 @@ export function filterRecords(records, filters={}, query='', status='all', skip=
       if (!vals.some(v=>norm(v)===norm(filters[field]))) return false;
     }
     if (status!=='all' && r.status!==status) return false;
-    return !q || norm([r.uc,r.ucId,r.ua,r.displayUA,r.sourceName,r.uaId,r.unitSourceId,r.unitLabel,r.track,r.batch,r.matrix,...r.specialists,...r.reviewers,...(r.managers||[]),...(r.assignedReviewers||[]),r.assessmentType,r.criterion,r.comment].join(' ')).includes(q);
+    return !q || norm([r.uc,r.ucId,r.ua,r.displayUA,r.sourceName,r.uaId,r.unitSourceId,r.unitLabel,r.track,r.batch,r.matrix,...r.specialists,...r.reviewers,...(r.managers||[]),...(r.assignedReviewers||[]),r.assessmentType,r.criterion,r.comment,...(r.kind==='PE'?collectEntryPlanComments([r]).flatMap(c=>[c.text,c.author,c.criterion]):[])].join(' ')).includes(q);
   });
 }
 export function summarize(records) {
@@ -144,7 +145,7 @@ export function groupUAs(records) {
     g.managers=[...new Set([...g.managers,...(r.managers||[])])];g.assignedReviewers=[...new Set([...g.assignedReviewers,...(r.assignedReviewers||[])])];
     if (r.comment) g.comments.push({criterion:r.criterion,text:r.comment});
   }
-  return [...groups.values()].map(g=>({...g,presentationItems:[...new Map(g.criteria.map(r=>{const item={name:r.displayUA||r.ua,unit:r.unitLabel||'',id:r.unitSourceId||r.uaId||r.ua};return [JSON.stringify(item),item];})).values()],unitLabel:[...new Set(g.criteria.map(r=>r.unitLabel).filter(Boolean))].join('; '),summary:summarize(g.criteria),materialStatuses:[...new Set(g.criteria.map(r=>text(r.materialStatus)).filter(Boolean))],requiresAdjustment:g.criteria.some(r=>norm(r.materialStatus).includes('ajustes'))})).sort((a,b)=> a.uc.localeCompare(b.uc,'pt-BR',{numeric:true}) || a.ua.localeCompare(b.ua,'pt-BR',{numeric:true}));
+  return [...groups.values()].map(g=>({...g,comments:g.kind==='PE'?collectEntryPlanComments(g.criteria):g.comments,presentationItems:[...new Map(g.criteria.map(r=>{const item={name:r.displayUA||r.ua,unit:r.unitLabel||'',id:r.unitSourceId||r.uaId||r.ua};return [JSON.stringify(item),item];})).values()],unitLabel:[...new Set(g.criteria.map(r=>r.unitLabel).filter(Boolean))].join('; '),summary:summarize(g.criteria),materialStatuses:[...new Set(g.criteria.map(r=>text(r.materialStatus)).filter(Boolean))],requiresAdjustment:g.criteria.some(r=>norm(r.materialStatus).includes('ajustes'))})).sort((a,b)=> a.uc.localeCompare(b.uc,'pt-BR',{numeric:true}) || a.ua.localeCompare(b.ua,'pt-BR',{numeric:true}));
 }
 export function criteriaSummary(records) {
   const map=new Map();

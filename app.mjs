@@ -1,20 +1,21 @@
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-7-download-especialistas-20261021';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-7-download-especialistas-20261021';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-7-download-especialistas-20261021';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-7-download-especialistas-20261021';
-import {createAccessController} from './access.mjs?v=v6-6-7-download-especialistas-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-7-download-especialistas-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-7-download-especialistas-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-7-download-especialistas-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-7-download-especialistas-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-7-download-especialistas-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-7-download-especialistas-20261021';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-7-download-especialistas-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-7-download-especialistas-20261021';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-7-download-especialistas-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-7-download-especialistas-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-7-download-especialistas-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-7-download-especialistas-20261021';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-8-comentarios-download-20261021';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-8-comentarios-download-20261021';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-8-comentarios-download-20261021';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-8-comentarios-download-20261021';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-8-comentarios-download-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-8-comentarios-download-20261021';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-8-comentarios-download-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-8-comentarios-download-20261021';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-8-comentarios-download-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-8-comentarios-download-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-8-comentarios-download-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-8-comentarios-download-20261021';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-8-comentarios-download-20261021';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-8-comentarios-download-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-8-comentarios-download-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-8-comentarios-download-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-8-comentarios-download-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -370,6 +371,11 @@ function filterReviewNavigation(value){
   }
   if($('reviewNavEmpty'))$('reviewNavEmpty').hidden=found>0;
 }
+function entryPlanCommentsMarkup(records,canAdd){
+  const comments=collectEntryPlanComments(records);
+  return '<section class="entry-plan-comments" aria-label="Comentários da planilha de entrada"><div class="entry-comments-heading"><h3>Comentários da planilha de entrada</h3><span class="count-pill">'+comments.length+' comentário(s)</span><button type="button" class="btn secondary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><p>Textos disponíveis dos critérios, formulários e registros do painel, incluindo envios anteriores vinculados a este plano.</p>'+
+    (comments.length?comments.map(c=>'<article class="entry-plan-comment"><strong>'+highlightHTML(c.criterion||'Comentário',state.query)+'</strong><p class="comment">'+highlightHTML(c.text,state.query)+'</p><small>'+esc(c.author)+' · '+esc(formatDateTime(c.date))+'</small><small>'+esc(c.source)+(c.historical?' · Envio anterior':'')+'</small>'+(c.portalId?'<button type="button" class="text-button" data-entry-history="'+esc(c.portalId)+'">Consultar histórico de edições</button>':'')+'</article>').join(''):'<p class="entry-comments-empty">Nenhum comentário foi localizado nas fontes consultadas para este plano. Registros sem vínculo permanecem separados na tabela.</p>')+'</section>';
+}
 function openMaterialDetails(key,unit=null,preferredRecordId=null){
   const records=state.records.filter(r=>r.uaKey===key);
   const selected=unit?records.filter(r=>(r.unitSourceId||r.uaId||r.ua)===unit):records;
@@ -382,6 +388,11 @@ function openMaterialDetails(key,unit=null,preferredRecordId=null){
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
   const meta=planDownloadMarkup(g)+'<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+(g.kind==='PE'&&g.sourceEvent?'<div><b>Formulário Monday</b>'+esc(g.sourceEvent)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>';
   $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):progressMarkup(specialistProgress(state.detailRecords),{compact:true,label:progressLabel(g.kind)})+meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  if(g.kind==='PE'){
+    const original=$('dialogContent').innerHTML;
+    const cut=original.indexOf('<div class="drawer-summary">');
+    if(cut>=0)$('dialogContent').innerHTML=original.slice(0,cut)+entryPlanCommentsMarkup(state.detailRecords,canAdd)+'<details id="entrySourceDetails" class="entry-source-details"><summary>Critérios, fontes e edição dos comentários</summary>'+original.slice(cut)+'</details>';
+  }
   state.detailIndex=Math.max(0,state.detailRecords.findIndex(r=>preferredRecordId!=null&&r.id===preferredRecordId));
   if(state.reviewMode)renderReviewRecord(state.detailIndex);
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
@@ -395,6 +406,7 @@ function setCommentBusy(busy){
   syncReviewNavigation();
 }
 function beginCommentEditor(index,addition=false){
+  if($('entrySourceDetails'))$('entrySourceDetails').open=true;
   if(!state.commentsReady||state.saving)return;
   if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de editar outro.');return;}
   const r=state.detailRecords[index];if(!r||!commentSourceKey(r))return;
@@ -496,7 +508,7 @@ $('dialogContent').addEventListener('submit',e=>{if(e.target.id==='commentEditor
 $('dialogContent').addEventListener('input',e=>{if(e.target.id==='commentBody')updateCommentChars();else if(e.target.id==='reviewSearch')filterReviewNavigation(e.target.value);});
 $('dialogContent').addEventListener('change',e=>{if(e.target.id==='reviewCriterionSelect')selectReviewRecord(Number(e.target.value));});
 $('dialogContent').addEventListener('toggle',e=>{if(e.target.matches('.comment-history'))loadCommentHistory(e.target);},true);
-$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-plan-download')){beginPlanDownload(b.dataset.planDownload);return;}if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
+$('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-plan-download')){beginPlanDownload(b.dataset.planDownload);return;}if(b.hasAttribute('data-entry-history')){const details=$('dialogContent').querySelector('[data-history-id="'+b.dataset.entryHistory+'"]');if(details){$('entrySourceDetails').open=true;details.open=true;loadCommentHistory(details);details.scrollIntoView({block:'nearest'});}return;}if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
 $('exportMaterials').addEventListener('click',()=>{
   if(!state.loaded||!state.user||(state.section==='PE'&&!state.sections.PE?.validationSourceReady))return;

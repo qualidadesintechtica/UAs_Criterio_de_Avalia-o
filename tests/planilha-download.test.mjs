@@ -136,3 +136,32 @@ test('rede indisponível e serviço existente explicam a conexão sem alegar cau
  const error=await downloadConnectionError({supabaseUrl:'https://p.supabase.co'},controller.signal,async()=>{throw new DOMException('abort','AbortError');});
  assert.equal(error.name,'AbortError');
 });
+
+test('recusa da origem informa domínio e HTTP sem divulgar URL assinada ou credenciais',async()=>{
+ for(const [status,code] of [[401,'NQ_SOURCE_AUTH'],[403,'NQ_SOURCE_AUTH'],[404,'NQ_SOURCE_MISSING'],[410,'NQ_SOURCE_MISSING'],[429,'NQ_SOURCE_LIMIT'],[503,'NQ_SOURCE']]){
+  const f=fixture({row:row(column('https://tenant.sharepoint.com/arquivo.xlsx?token=private')),fetch:async()=>new Response(null,{status})});
+  const r=await f.handler(f.request()),data=await r.json();
+  assert.equal(data.code,code);assert.match(data.message,new RegExp('HTTP '+status));assert.match(data.message,/tenant\.sharepoint\.com/);
+  assert.doesNotMatch(data.message,/token=|private|Bearer/);assert.equal(f.calls.length,1);
+ }
+});
+test('quando link sincronizado falha, consulta somente item e coluna exatos e baixa endereço atualizado',async()=>{
+ const f=fixture({vars:{MONDAY_API_TOKEN:'private-token'},fetch:async(url,init,n)=>{
+  if(n===1)return new Response(null,{status:403});
+  if(n===2){assert.equal(url,'https://api.monday.com/v2');assert.deepEqual(JSON.parse(init.body).variables,{ids:['123'],columns:['link_pe']});
+   return Response.json({data:{items:[{id:'123',board:{id:'9433297929'},column_values:[{id:'link_pe',type:'link',value:JSON.stringify({url:'https://docs.google.com/atual.xlsx',text:'Atual.xlsx'}),column:{title:'Planilha de entrada'}}]}]}});
+  }
+  assert.equal(n,3);assert.equal(url,'https://docs.google.com/atual.xlsx');assert.equal(init.headers.Authorization,undefined);return new Response(bytes);
+ }});
+ const r=await f.handler(f.request());assert.equal(r.status,200);assert.equal(f.calls.length,3);
+});
+test('atualização da coluna não aceita item em outro quadro e não ignora domínio não autorizado',async()=>{
+ for(const wrongBoard of [true,false]){
+  const f=fixture({vars:{MONDAY_API_TOKEN:'private-token'},fetch:async(url,init,n)=>n===1?new Response(null,{status:403}):Response.json({data:{items:[{id:'123',board:{id:wrongBoard?'999':'9433297929'},column_values:[{id:'link_pe',value:JSON.stringify({url:'https://unknown.example/private.xlsx'}),column:{title:'Planilha de entrada'}}]}]}})});
+  const r=await f.handler(f.request()),data=await r.json();assert.equal(data.code,wrongBoard?'NQ_LINK_CHANGED':'NQ_HOST');assert.equal(f.calls.length,2);
+ }
+});
+test('link inalterado não provoca repetição ilimitada nem troca para outro anexo',async()=>{
+ const f=fixture({vars:{MONDAY_API_TOKEN:'private-token'},fetch:async(url,init,n)=>n===1?new Response(null,{status:403}):Response.json({data:{items:[{id:'123',board:{id:'9433297929'},column_values:[{id:'link_pe',value:JSON.stringify({url:'https://docs.google.com/arquivo.xlsx'}),column:{title:'Planilha de entrada'}}]}]}})});
+ const r=await f.handler(f.request());assert.equal((await r.json()).code,'NQ_SOURCE_AUTH');assert.equal(f.calls.length,2);
+});

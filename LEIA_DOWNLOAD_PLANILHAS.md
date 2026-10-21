@@ -1,3 +1,5 @@
+**Atualização atual: siga LEIA_DOWNLOAD_E_COMENTARIOS_V668.md. A recusa na origem é diferente do antigo erro de função ausente.**
+
 # Baixar a planilha de entrada — base V6.6.4, mantida na V6.6.7
 
 **Para a instalação atual, comece por LEIA_CORRECAO_DOWNLOAD_E_ESPECIALISTAS.md.** A função nq-baixar-planilha não foi encontrada no projeto da página em 21/10/2026. A V6.6.7 acrescenta o diagnóstico dessa falha e o SQL 12 dos especialistas cadastrados.
