@@ -1,3 +1,3 @@
-V6.6.4
+V6.6.5
 21/10/2026
-Download da planilha de entrada pelo Plano de Produção.
+Conferência das contagens por material e status, sem misturar critérios com planilhas.

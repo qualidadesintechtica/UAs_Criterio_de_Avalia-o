@@ -1,4 +1,4 @@
-# Atualizar para V6.6.4 — baixar a planilha de entrada
+# Atualizar para V6.6.5 — conferir as contagens
 
 ## 1. Atualizar os arquivos da página
 
@@ -6,9 +6,21 @@
 2. No GitHub, abra **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
 3. Em **Add file → Upload files**, envie todo o conteúdo extraído e substitua os arquivos na raiz publicada. Não envie somente o ZIP nem coloque os arquivos em uma pasta extra.
 4. Confirme em **Commit changes** e aguarde a publicação.
-5. Pressione **Ctrl + F5** e confira **V6.6.4 · 21/10/2026**.
+5. Pressione **Ctrl + F5** e confira **V6.6.5 · 21/10/2026**.
 
-## 2. Ativar Baixar planilha
+## Conferir os números depois de atualizar
+
+Esta atualização **não exige SQL novo nem republicar funções** quando a página já funciona. Ela separa a quantidade de materiais dos registros de critérios e comentários.
+
+Acima dos filtros, confira **Total no recorte**, a soma dos quatro cartões com **Outros status** e a opção **Conferir totais por status Monday**. O botão Outros status mostra os materiais que não pertencem aos quatro cartões, incluindo A liberar, N/A e Pausado. Os filtros continuam funcionando em todas as abas.
+
+Use **Exportar materiais desta conferência (CSV)** para comparar uma linha por material com a Monday. Na Planilha de entrada, a coluna de ID corresponde ao item exato de validação. A conferência considera filtros, busca e Somente com comentários, antes da seleção de um cartão. O CSV detalhado da tabela continua considerando também o cartão selecionado.
+
+Formulários sem vínculo continuam acessíveis para consulta e edição; ficam fora dos totais de planilhas. O menu lateral mostra o total da aba antes dos filtros. Na UC, as linhas de unidades podem ser mais numerosas que as UCs contadas.
+
+Veja **LEIA_CONFERENCIA_CONTAGENS.md**. Os passos de instalação anteriores, abaixo, só são necessários se o respectivo recurso ainda não estiver instalado.
+
+## 2. Ativar Baixar planilha, se ainda não estiver instalado
 
 1. No SQL Editor do mesmo projeto Supabase da página, execute **todo** `supabase/11_LINKS_PLANILHAS_ENTRADA.sql`.
 2. Em Edge Functions, crie/publique **nq-baixar-planilha**, colando o conteúdo completo de `supabase/functions/nq-baixar-planilha/index.ts`. Esse arquivo funciona sozinho no editor. Mantenha JWT ativado.
@@ -42,4 +54,4 @@ Leia **LEIA_PARTICIPANTES_E_PROGRESSO_UA.md** para os passos completos. Se a ges
 
 SQL 01 a 10, correção de leitura de critérios, função de gestão de usuários, autenticação, perfis, troca obrigatória de senha, fontes da Monday, filtros, contagens, status, leitura UA/UC, BDQ A1/A2/A3, comentários e versões, CSV e temas foram mantidos.
 
-Passaram **141 testes de lógica e serviço**, **15 verificações do SQL 11**, a regressão das quatro abas e a conferência visual em navegador com dados de teste. As 131 verificações anteriores do controlador de acessos continuam documentadas; esse controlador foi preservado. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.
+A V6.6.5 passou **146 testes de lógica e serviço**, a regressão das quatro abas e a conferência visual em navegador com dados de teste. SQLs e funções foram preservados; as 15 verificações anteriores do SQL 11 continuam documentadas. As 131 verificações anteriores do controlador de acessos continuam documentadas; esse controlador foi preservado. O código está pronto para atualização; não foi publicado automaticamente no GitHub ou no banco real.

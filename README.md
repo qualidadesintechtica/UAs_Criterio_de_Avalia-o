@@ -1,6 +1,14 @@
-# Comentários e avaliações dos materiais — V6.6.4
+# Comentários e avaliações dos materiais — V6.6.5
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
+
+## Conferência das contagens — V6.6.5
+
+O total de materiais passa a aparecer acima dos filtros, junto da soma dos quatro cartões e dos demais status. Outros status tem filtro próprio, e a conferência expansível mostra o status original Monday, o grupo do painel e a quantidade. O CSV dessa conferência tem uma linha por material; na Planilha de entrada, usa o ID exato do item de validação.
+
+A tabela deixa de misturar o número de registros detalhados com o de materiais. Formulários sem vínculo ficam identificados e fora dos totais de planilhas. As regras de agrupamento, fontes e status foram preservadas. A mudança não comprova que a sincronização corresponde ao quadro real da Monday; o CSV permite comparar os IDs e status da mesma data e dos mesmos filtros.
+
+**Sem SQL novo para esta atualização.** Substitua todos os arquivos publicados e confira V6.6.5. Consulte COMECE_AQUI.md e LEIA_CONFERENCIA_CONTAGENS.md.
 
 ## Baixar a planilha de entrada — V6.6.4
 
@@ -60,7 +68,7 @@ A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6.4 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.5 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 

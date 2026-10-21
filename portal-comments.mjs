@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-6-4-download-planilha-20261021';
+import {text} from './core.mjs?v=v6-6-5-conferencia-contagens-20261021';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

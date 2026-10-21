@@ -1,17 +1,18 @@
-import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-4-download-planilha-20261021';
-import {createAccessController} from './access.mjs?v=v6-6-4-download-planilha-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-4-download-planilha-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-4-download-planilha-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-4-download-planilha-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-4-download-planilha-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-4-download-planilha-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-4-download-planilha-20261021';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-4-download-planilha-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-4-download-planilha-20261021';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-4-download-planilha-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-4-download-planilha-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-4-download-planilha-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-4-download-planilha-20261021';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-5-conferencia-contagens-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-5-conferencia-contagens-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -74,6 +75,9 @@ function clearSensitive(resetAccess=true){
   $('userName').textContent='Usuário';$('userEmail').textContent='';$('loadError').hidden=true;$('loadError').textContent='';
   $('dataWarning').hidden=true;$('dataWarning').textContent='';
   $('workflowNote').hidden=true;$('workflowNote').textContent='';
+  $('countReconciliation').hidden=true;$('countAudit').open=false;$('countAuditBody').replaceChildren();
+  for(const id of ['countTotal','countEquation','countOther','countAuditTotal'])$(id).textContent='';
+  $('exportMaterials').disabled=true;
   state.nameIssues=[];$('entryNameWarning').hidden=true;$('entryNameWarning').open=false;$('entryNameIssues').replaceChildren();
   for(const select of document.querySelectorAll('[data-filter]'))select.innerHTML='<option value="">'+esc(defaults[select.dataset.filter])+'</option>';
   $('dashboard').hidden=true;$('login').hidden=false;$('boot').hidden=true;
@@ -211,7 +215,7 @@ function updateSectionLabels(){
   defaults.ua='Todas as UAs / materiais';
 }
 function renderNavigation(){
-    document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];const incomplete=key==='PE'&&!state.sections.PE?.validationSourceReady;$('navCount'+key).textContent=state.loaded?((state.sectionErrors[key]&&!rows.length)||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';$('navCount'+key).title=state.sectionErrors[key]||(incomplete?'Atualize a fonte com o SQL 07.':'Materiais do quadro sincronizado; formulários sem vínculo não aumentam a contagem de planilhas.');});
+    document.querySelectorAll('[data-section]').forEach(b=>{const key=b.dataset.section;const active=key===state.section;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');const rows=state.sections[key]?.records||[];const incomplete=key==='PE'&&!state.sections.PE?.validationSourceReady;$('navCount'+key).textContent=state.loaded?((state.sectionErrors[key]&&!rows.length)||incomplete?'!':nf.format(countWorkflow(rows).all)):'—';$('navCount'+key).title=state.sectionErrors[key]||(incomplete?'Atualize a fonte com o SQL 07.':'Total da aba antes dos filtros e da busca. Formulários sem vínculo ficam fora da contagem de planilhas.');});
 }
 function selectSection(key){
   if(!SECTIONS[key])return;state.section=key;state.records=state.sections[key]?.records||[];state.page=1;$('detailDialog').close();updateSectionLabels();renderNavigation();if(state.loaded)render();
@@ -223,15 +227,21 @@ function baseScope(skip='') {
   return rows;
 }
 function renderCards(scope){
-  const counts=countWorkflow(scope);
+  const counts=materialCounts(scope);
   const incomplete=state.section==='PE'&&!state.sections.PE?.validationSourceReady;
+  const partial=state.section==='BDQ'&&state.sections.BDQ?.validationSourceReady===false;
   for(const [key,id] of [['released','countReleased'],['validating','countValidating'],['design','countDesign'],['validated','countValidated']])$(id).textContent=incomplete?'—':nf.format(counts[key]);
   document.querySelectorAll('[data-ua-status]').forEach(b=>{const selected=b.dataset.uaStatus===state.status;b.disabled=!state.loaded||incomplete;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
-  const others=otherWorkflowCounts(scope).map(([label,n])=>label+': '+nf.format(n));
-  const unlinked=groupUAs(scope).filter(g=>g.workflowEligible===false).length;
-  const bankWarning=state.section==='BDQ'&&state.sections.BDQ?.validationSourceReady===false?'Consulta dos BDQs da validação indisponível: as contagens mostram somente os dados disponíveis. ':'';
-  $('workflowNote').textContent=incomplete?'Totais da Planilha de entrada indisponíveis nesta consulta. Aplique o SQL 07, se ainda não foi instalado, e atualize os dados.':bankWarning+(state.section==='PE'?nf.format(counts.all)+' planilha(s) no quadro de validação. ':'')+(others.length?'Outros status na visão completa — '+others.join(' · ')+'. ':'')+(unlinked?nf.format(unlinked)+' registro(s) sem vínculo com um item de validação; disponíveis na tabela, fora dos totais de status.':'');
+  const bankWarning=partial?'Consulta dos BDQs da validação indisponível: as contagens mostram somente os dados disponíveis. ':'';
+  $('workflowNote').textContent=incomplete?'Totais da Planilha de entrada indisponíveis nesta consulta. Aplique o SQL 07, se ainda não foi instalado, e atualize os dados.':bankWarning+(counts.unlinked?nf.format(counts.unlinked)+' registro(s) sem vínculo com um item de validação; disponíveis na tabela, fora dos totais de status.':'');
   $('workflowNote').hidden=!$('workflowNote').textContent;
+  $('countReconciliation').hidden=incomplete;
+  $('countTotal').textContent=incomplete?'':(partial?'Total disponível no recorte: ':'Total no recorte: ')+nf.format(counts.all)+' '+SECTIONS[state.section].plural;
+  $('countEquation').textContent=incomplete?'':nf.format(counts.cards)+' nos quatro cartões + '+nf.format(counts.other)+' em outros status = '+nf.format(counts.all);
+  $('countOther').textContent=incomplete?'—':nf.format(counts.other);
+  $('countAuditBody').innerHTML=incomplete?'':counts.rows.map(r=>'<tr><td>'+esc(r.status)+'</td><td>'+esc(r.label)+'</td><td>'+nf.format(r.count)+'</td></tr>').join('');
+  $('countAuditTotal').textContent=incomplete?'':nf.format(counts.all);
+  $('exportMaterials').disabled=incomplete||!state.loaded||!counts.all;
   $('selectionLabel').textContent=uaLabels[state.status];
 }
 function renderChips(){
@@ -249,7 +259,7 @@ function renderTable(){
   const pages=Math.max(1,Math.ceil(entries.length/state.size));state.page=Math.min(state.page,pages);
   const start=(state.page-1)*state.size;const rows=entries.slice(start,start+state.size);
   const unlinked=groups.filter(g=>g.workflowEligible===false).length;
-  $('tableCount').textContent=(state.section==='PE'&&!state.sections.PE?.validationSourceReady?'Totais de validação indisponíveis':nf.format(countWorkflow(state.filtered).all)+' '+SECTIONS[state.section].plural+(unlinked?' + '+nf.format(unlinked)+' registro(s) sem vínculo de validação':''))+' · '+nf.format(state.filtered.length)+' registro(s) no recorte · Clique no material para abrir os comentários.';
+  $('tableCount').textContent=(state.section==='PE'&&!state.sections.PE?.validationSourceReady?'Totais de validação indisponíveis':nf.format(countWorkflow(state.filtered).all)+' '+SECTIONS[state.section].plural+' no recorte'+(unlinked?' · '+nf.format(unlinked)+' registro(s) sem vínculo, fora do total':''))+' · Clique no material para abrir os comentários.';
   $('tableBody').innerHTML=rows.length?rows.map(({group:g,detailIndex:index,name,unit,unitId})=>{
     const badge=state.section==='BDQ'&&g.assessmentType?'<span class="tag bdq-type">'+esc(g.assessmentType)+'</span>':'';
     const extra=state.section==='PE'?'<td>'+highlightHTML(g.track||'Não informada',state.query)+'</td>':state.section==='BDQ'?'<td>'+highlightHTML((g.managers||[]).join('; ')||'Não informado',state.query)+'</td><td>'+highlightHTML((g.assignedReviewers||[]).join('; ')||'Não informado',state.query)+'</td>':'';
@@ -460,6 +470,13 @@ $('dialogContent').addEventListener('change',e=>{if(e.target.id==='reviewCriteri
 $('dialogContent').addEventListener('toggle',e=>{if(e.target.matches('.comment-history'))loadCommentHistory(e.target);},true);
 $('dialogContent').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||state.saving)return;if(b.hasAttribute('data-plan-download')){beginPlanDownload(b.dataset.planDownload);return;}if(b.hasAttribute('data-review-index'))selectReviewRecord(Number(b.dataset.reviewIndex));else if(b.hasAttribute('data-review-step'))selectReviewRecord(state.detailIndex+Number(b.dataset.reviewStep));else if(b.hasAttribute('data-show-full-uc')){if(state.editor){$('commentBody')?.focus();toast('Salve ou cancele o comentário aberto antes de ver todos os registros.');}else openMaterialDetails(state.dialogKey);}else if(b.hasAttribute('data-add-comment'))beginCommentEditor(state.reviewMode&&commentSourceKey(state.detailRecords[state.detailIndex])?state.detailIndex:state.detailRecords.findIndex(commentSourceKey),true);else if(b.hasAttribute('data-edit-comment'))beginCommentEditor(Number(b.dataset.editComment));else if(b.hasAttribute('data-cancel-comment'))cancelCommentEditor();});
 $('detailDialog').addEventListener('click',e=>{if(e.target===$('detailDialog')){const r=e.target.getBoundingClientRect();if(!state.saving&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))e.target.close();}});
+$('exportMaterials').addEventListener('click',()=>{
+  if(!state.loaded||!state.user||(state.section==='PE'&&!state.sections.PE?.validationSourceReady))return;
+  const scope=baseScope();if(!materialCounts(scope).all)return;
+  const url=URL.createObjectURL(new Blob([materialAuditCSV(scope)],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download='Conferencia_materiais_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Conferência exportada: uma linha por material, antes da seleção do cartão de status.');
+});
 $('export').addEventListener('click',()=>{if(!state.loaded||!state.filtered.length)return;const url=URL.createObjectURL(new Blob([exportCSV(state.filtered)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Resultados_'+state.section+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exportação concluída com o recorte selecionado.');});
 document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>selectSection(b.dataset.section)));
 function setTheme(theme){document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-label',theme==='dark'?'Ativar tema claro':'Ativar tema escuro');$('themeToggle').title=theme==='dark'?'Tema claro':'Tema escuro';}

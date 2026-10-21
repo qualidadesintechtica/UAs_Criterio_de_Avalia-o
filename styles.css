@@ -45,3 +45,9 @@
 #tableView[data-section=BDQ] th:nth-child(3){width:12%}
 #tableView[data-section=BDQ] th:nth-child(4),#tableView[data-section=BDQ] th:nth-child(5){width:18%}
 .bdq-type{margin:0 7px 3px 0;background:var(--soft);color:var(--purple)}
+
+/* Conferência compacta: materiais e registros detalhados têm unidades distintas. */
+.count-reconciliation{margin:-4px 0 20px;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:12px;color:var(--muted)}
+.count-summary{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}.count-summary strong{color:var(--ink);font-size:13px}.count-other{margin-left:auto;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--purple);padding:7px 10px;font:inherit;cursor:pointer}.count-other.selected{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}.count-other:disabled{cursor:default}
+#countAudit{margin-top:8px}#countAudit summary{cursor:pointer;color:var(--purple);width:fit-content;line-height:1.7}#countAudit p{max-width:860px;line-height:1.7;margin:10px 0}.count-audit-scroll{overflow-x:auto;margin:10px 0 14px}#countAudit table{width:100%;border-collapse:collapse;text-align:left;min-width:430px}#countAudit th,#countAudit td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink)}#countAudit th:last-child,#countAudit td:last-child{text-align:right}#countAudit .btn{font-size:12px;white-space:normal}.count-other:focus-visible,#countAudit summary:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+@media(max-width:760px){.count-summary{gap:8px 12px}.count-summary>span{order:3;flex-basis:100%;font-size:11px}.count-reconciliation{padding:12px}.table-heading>.btn{white-space:normal;max-width:220px}}

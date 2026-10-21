@@ -4,12 +4,12 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="description" content="Resultados das avaliações de Unidades de Aprendizagem. Consulte critérios, especialistas, revisores e pareceres.">
   <meta name="theme-color" content="#2d1553">
-  <title>Resultados das UAs · Sintechtica · V6.6.4</title>
-  <link rel="stylesheet" href="styles.css?v=v6-6-4-download-planilha-20261021">
-  <link rel="stylesheet" href="access.css?v=v6-6-4-download-planilha-20261021">
-  <link rel="stylesheet" href="review-panel.css?v=v6-6-4-download-planilha-20261021">
-  <script defer src="vendor/supabase.js?v=v6-6-4-download-planilha-20261021"></script><script defer src="config.js?v=v6-6-4-download-planilha-20261021"></script>
-  <script type="module" src="app.mjs?v=v6-6-4-download-planilha-20261021"></script>
+  <title>Resultados das UAs · Sintechtica · V6.6.5</title>
+  <link rel="stylesheet" href="styles.css?v=v6-6-5-conferencia-contagens-20261021">
+  <link rel="stylesheet" href="access.css?v=v6-6-5-conferencia-contagens-20261021">
+  <link rel="stylesheet" href="review-panel.css?v=v6-6-5-conferencia-contagens-20261021">
+  <script defer src="vendor/supabase.js?v=v6-6-5-conferencia-contagens-20261021"></script><script defer src="config.js?v=v6-6-5-conferencia-contagens-20261021"></script>
+  <script type="module" src="app.mjs?v=v6-6-5-conferencia-contagens-20261021"></script>
 </head>
 <body>
 <svg aria-hidden="true" class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -38,7 +38,7 @@
   </div>
   <div class="login-form-wrap"><form id="loginForm" class="login-form">
     <div class="login-icon"><svg class="icon"><use href="#i-lock"/></svg></div>
-    <span class="eyebrow">PAINEL DE AVALIAÇÕES</span><span class="release-badge" data-release>V6.6.4 · 21/10/2026</span><h2>Acesse os resultados</h2><p>Use seu e-mail institucional e sua senha. As contas já cadastradas no BI continuam válidas.</p>
+    <span class="eyebrow">PAINEL DE AVALIAÇÕES</span><span class="release-badge" data-release>V6.6.5 · 21/10/2026</span><h2>Acesse os resultados</h2><p>Use seu e-mail institucional e sua senha. As contas já cadastradas no BI continuam válidas.</p>
     <label for="email">E-mail institucional</label><input id="email" type="email" autocomplete="username" placeholder="seu.nome@ulife.com.br" required>
     <label for="password">Senha</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="Sua senha" required><button id="showPassword" type="button" aria-label="Mostrar senha">Mostrar</button></div>
     <p id="loginError" class="form-error" role="alert" hidden></p>
@@ -62,7 +62,7 @@
     <div class="user-area"><span class="avatar" id="avatar">U</span><div><strong id="userName">Usuário</strong><small id="userEmail"></small><small id="userProfile"></small></div><button id="logout" class="logout" title="Sair do painel">Sair</button></div>
   </aside>
   <main id="overview">
-    <header class="topbar"><span>Qualidade acadêmica <b>/</b> <span id="breadcrumbSection">UA</span></span><span class="release-badge topbar-release" data-release>V6.6.4 · 21/10/2026</span><span class="access-label"><svg class="icon"><use href="#i-lock"/></svg>Acesso autenticado</span><button id="themeToggle" class="theme-toggle" aria-label="Ativar tema escuro" title="Alterar tema"><svg class="icon"><use href="#i-sun"/></svg></button></header>
+    <header class="topbar"><span>Qualidade acadêmica <b>/</b> <span id="breadcrumbSection">UA</span></span><span class="release-badge topbar-release" data-release>V6.6.5 · 21/10/2026</span><span class="access-label"><svg class="icon"><use href="#i-lock"/></svg>Acesso autenticado</span><button id="themeToggle" class="theme-toggle" aria-label="Ativar tema escuro" title="Alterar tema"><svg class="icon"><use href="#i-sun"/></svg></button></header>
     <div class="page-content">
       <div class="page-heading"><div><span class="eyebrow">ACOMPANHAMENTO DA QUALIDADE</span><h1 id="pageTitle">Unidades de aprendizagem<span class="title-dot">.</span></h1><p id="pageSubtitle">Confira os critérios e leia os pareceres das unidades de aprendizagem.</p></div><div class="page-actions"><button id="openParticipants" type="button" class="btn secondary participants-entry" hidden><svg class="icon"><use href="#i-user-plus"/></svg>Participantes</button><button id="refresh" class="btn secondary"><svg class="icon"><use href="#i-refresh"/></svg>Atualizar dados</button></div></div>
       <div class="source-line"><span id="sourceStatus" class="source-pill"><i></i>Conectando à base</span><span id="updatedAt">Aguardando dados</span></div>
@@ -76,6 +76,10 @@
         <button class="status-card validated" data-ua-status="validated" aria-pressed="false" disabled><span class="status-label"><i></i>Validadas</span><strong id="countValidated">—</strong><small>Validação concluída</small><span class="card-arrow">↗</span></button>
       </section>
       <p id="workflowNote" class="workflow-note" role="status" hidden></p>
+      <section id="countReconciliation" class="count-reconciliation" aria-label="Conferência das contagens" hidden>
+        <div class="count-summary"><strong id="countTotal"></strong><span id="countEquation"></span><button type="button" id="otherStatus" class="count-other" data-ua-status="other" aria-pressed="false" disabled>Outros status: <b id="countOther">—</b></button></div>
+        <details id="countAudit"><summary>Conferir totais por status Monday</summary><p>Este recorte considera os filtros, a busca e a opção de comentários, antes de selecionar um cartão de status. O menu lateral mostra o total da aba, sem esses filtros. Cada material conta uma vez; as linhas de unidades e os registros detalhados podem ser mais numerosos.</p><div class="count-audit-scroll"><table><thead><tr><th scope="col">Status original Monday</th><th scope="col">Grupo no painel</th><th scope="col">Materiais</th></tr></thead><tbody id="countAuditBody"></tbody><tfoot><tr><th scope="row" colspan="2">Total no recorte</th><td id="countAuditTotal"></td></tr></tfoot></table></div><button type="button" id="exportMaterials" class="btn secondary" disabled>Exportar materiais desta conferência (CSV)</button></details>
+      </section>
       <section class="filter-card" id="filterSection" aria-label="Filtros de resultados"><div class="filter-heading"><span><svg class="icon"><use href="#i-filter"/></svg>Filtrar avaliações</span><button id="clearFilters" class="text-button">Limpar filtros</button></div><div class="filter-grid">
         <label>Esteira<select id="filterTrack" data-filter="track"><option value="">Todas as esteiras</option></select></label>
         <label>Lote<select id="filterBatch" data-filter="batch"><option value="">Todos os lotes</option></select></label>
@@ -84,8 +88,8 @@
         <label>Revisor<select id="filterReviewer" data-filter="reviewers"><option value="">Todos os revisores</option></select></label>
         <label>Especialistas<select id="filterSpecialist" data-filter="specialists"><option value="">Todos os especialistas</option></select></label>
       </div><div id="filterChips" class="filter-chips" aria-live="polite" hidden></div></section>
-      <section id="tableSection" class="panel table-panel"><div class="table-heading"><div><span class="eyebrow">PARECERES DO NÚCLEO DE QUALIDADE</span><h2 id="tableTitle">Avaliações das UAs</h2><p id="tableCount">Aguardando dados</p></div><button id="export" class="btn secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Exportar CSV</button></div><div class="table-tools"><div class="view-switch" role="group" aria-label="Forma de visualizar os resultados"><button data-view="table" class="selected" aria-pressed="true"><svg class="icon"><use href="#i-grid"/></svg>Tabela</button><button data-view="list" aria-pressed="false"><svg class="icon"><use href="#i-list"/></svg>Comentários</button></div><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Buscar UA, critério ou comentário…" aria-label="Buscar nos resultados"></label></div><div class="comment-tools"><span id="selectionLabel">Todas as UAs</span><label><input id="commentsOnly" type="checkbox">Somente com comentários</label></div><div class="table-scroll" id="tableView"><table><thead><tr id="tableHeadRow"><th scope="col">UC</th><th scope="col" id="materialColumn">UA</th><th scope="col">Unidade da UA</th></tr></thead><tbody id="tableBody"><tr><td colspan="3" class="empty-table">Carregando avaliações…</td></tr></tbody></table></div><div id="commentList" class="comment-list" hidden></div><div class="table-footer"><span id="pageInfo">—</span><div><button id="prev" class="btn pagination" disabled>Anterior</button><button id="next" class="btn pagination" disabled>Próxima</button></div></div></section>
-      <footer class="page-footer"><span>Sintechtica · Núcleo de Qualidade</span><span class="release-badge" data-release>V6.6.4 · 21/10/2026</span></footer>
+      <section id="tableSection" class="panel table-panel"><div class="table-heading"><div><span class="eyebrow">PARECERES DO NÚCLEO DE QUALIDADE</span><h2 id="tableTitle">Avaliações das UAs</h2><p id="tableCount">Aguardando dados</p></div><button id="export" class="btn secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Exportar registros detalhados (CSV)</button></div><div class="table-tools"><div class="view-switch" role="group" aria-label="Forma de visualizar os resultados"><button data-view="table" class="selected" aria-pressed="true"><svg class="icon"><use href="#i-grid"/></svg>Tabela</button><button data-view="list" aria-pressed="false"><svg class="icon"><use href="#i-list"/></svg>Comentários</button></div><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Buscar UA, critério ou comentário…" aria-label="Buscar nos resultados"></label></div><div class="comment-tools"><span id="selectionLabel">Todas as UAs</span><label><input id="commentsOnly" type="checkbox">Somente com comentários</label></div><div class="table-scroll" id="tableView"><table><thead><tr id="tableHeadRow"><th scope="col">UC</th><th scope="col" id="materialColumn">UA</th><th scope="col">Unidade da UA</th></tr></thead><tbody id="tableBody"><tr><td colspan="3" class="empty-table">Carregando avaliações…</td></tr></tbody></table></div><div id="commentList" class="comment-list" hidden></div><div class="table-footer"><span id="pageInfo">—</span><div><button id="prev" class="btn pagination" disabled>Anterior</button><button id="next" class="btn pagination" disabled>Próxima</button></div></div></section>
+      <footer class="page-footer"><span>Sintechtica · Núcleo de Qualidade</span><span class="release-badge" data-release>V6.6.5 · 21/10/2026</span></footer>
     </div>
   </main>
 </div>
