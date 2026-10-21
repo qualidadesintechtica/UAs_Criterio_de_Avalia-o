@@ -1,4 +1,5 @@
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
+import {peopleOptions,personKey} from './people-filters.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 
@@ -65,6 +66,14 @@ export function filterOptions(sections,field,filters={}){
   const all=Object.values(sections).flatMap(s=>s.records);
   // Esteiras são sempre o catálogo conjunto das quatro abas.
   const rows=field==='track'?all:filterRecords(all,filters,'','all',field);
+  if(['specialists','reviewers'].includes(field)){
+    const result=peopleOptions(rows,field),current=filters[field];
+    if(current&&current!=='__missing__'){
+      result.values=result.values.filter(value=>personKey(value)!==personKey(current));result.values.push(current);
+    }
+    result.values.sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+    result.missing=result.missing||current==='__missing__';return result;
+  }
   const byNormalized=new Map();let missing=false;
   for(const row of rows){
     const values=(field==='ua'?[row.displayUA||row.ua]:Array.isArray(row[field])?row[field]:[row[field]]).filter(v=>text(v)&&!['nao informada','nao informado'].includes(norm(v)));
@@ -91,7 +100,7 @@ export function includeMaterialInventory(sections,materials){
     if(seen.get(kind).keys.has(uaKey)||(materialKey&&seen.get(kind).sources.has(materialKey)))continue;
     const record={kind,id:'material:'+materialKey,materialKey,uaKey,validationItemId,uc:text(m.titulo)||ucId||'UC não localizada',ucId,
       ua:text(m.titulo_ua)||uaId||text(m.item_name)||'Material sem título',uaId,parent,track,matrix,semester,batch,unitLabel:unitLabel(m),
-      specialists:[],reviewers:names(m.revisor_validador),assignedReviewers:names(m.revisor_validador),managers:names(m.gestor_validacao_nq),assessmentType:kind==='BDQ'?bdqAssessmentType(m):'',criterion:'Registro do material',question:'',classification:'Avaliação individual não disponível',
+      specialists:names([m.especialista_modelagem,m.especialista]),reviewers:names(m.revisor_validador),assignedReviewers:names(m.revisor_validador),managers:names(m.gestor_validacao_nq),assessmentType:kind==='BDQ'?bdqAssessmentType(m):'',criterion:'Registro do material',question:'',classification:'Avaliação individual não disponível',
       comment:'',commentOnly:true,metadataOnly:true,inventoryOnly:true,status:'comment',date:'',materialStatus:text(m.status_validacao),
       sourceLabel:'Esteira de materiais — Monday',history:[]};
     sections[kind].records.push(record);seen.get(kind).keys.add(uaKey);if(materialKey)seen.get(kind).sources.add(materialKey);

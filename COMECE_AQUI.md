@@ -1,11 +1,10 @@
-# Atualizar para V6.6.8
+# Atualizar para V6.6.9 — filtros de pessoas
 
-1. **Edge Functions:** atualize **nq-baixar-planilha**, colando todo o arquivo **INSTALAR_PELO_PAINEL/nq-baixar-planilha.ts**. Mantenha Verify JWT ativado.
-2. **GitHub:** substitua todo o conteúdo na raiz publicada do repositório. Inclua **entry-plan-comments.mjs** e os arquivos atualizados. Aguarde a publicação, pressione Ctrl + F5 e confira **V6.6.8**.
-3. Clique em **Atualizar dados** e abra um Plano de Produção na aba **Planilha de entrada**. Confira **Comentários da planilha de entrada**.
+1. Extraia o ZIP e substitua todo o conteúdo na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
+2. Inclua o novo **people-filters.mjs** e os demais arquivos atualizados.
+3. Confirme o commit, aguarde a publicação e pressione **Ctrl + F5**.
+4. Confira **V6.6.9**, clique em **Atualizar dados** e teste Especialistas e Revisores, separados e juntos.
 
-**Não há SQL novo.** O SQL 12 do filtro de especialistas e o SQL 11 dos links continuam iguais, caso já estejam instalados.
+**Não exige SQL novo nem republicar funções para esta correção.** O SQL 12 dos especialistas continua sendo utilizado. A nova versão preserva os comentários e o serviço de download anteriores.
 
-O erro atual da imagem vem do servidor onde está o arquivo. A nova função informa domínio e HTTP, e consulta uma vez a coluna exata da Monday quando o endereço falhar e houver MONDAY_API_TOKEN configurado. Isso não substitui a autenticação exigida pela origem. O link real precisa ser conferido para concluir a correção deste arquivo.
-
-Leia **LEIA_DOWNLOAD_E_COMENTARIOS_V668.md** para o funcionamento, instalação e limites desta atualização.
+Leia **LEIA_FILTROS_PESSOAS_V669.md**. A pendência de download do SharePoint (HTTP 401) continua separada desta correção.

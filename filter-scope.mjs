@@ -1,5 +1,5 @@
-import {filterRecords,groupUAs} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
-import {selectWorkflow} from './workflow.mjs?v=v6-6-8-comentarios-download-20261021';
+import {filterRecords,groupUAs} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {selectWorkflow} from './workflow.mjs?v=v6-6-9-filtros-pessoas-20261021';
 
 // Mesma sequência para tabela, contagens das quatro abas e exportação.
 // A busca preserva os demais registros do material encontrado.

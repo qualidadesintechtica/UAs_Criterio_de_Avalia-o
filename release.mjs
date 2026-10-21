@@ -1,1 +1,1 @@
-export const RELEASE={version:'V6.6.8',date:'21/10/2026',build:'v6-6-8-comentarios-download-20261021'};
+export const RELEASE={version:'V6.6.9',date:'21/10/2026',build:'v6-6-9-filtros-pessoas-20261021'};

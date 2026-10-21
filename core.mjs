@@ -1,11 +1,8 @@
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-8-comentarios-download-20261021';
+import {personNames,filterPeopleByMaterial} from './people-filters.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-9-filtros-pessoas-20261021';
 export const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 export const text = value => value == null ? '' : String(value).trim();
-export function names(value) {
-  if (Array.isArray(value)) return [...new Set(value.flatMap(names))];
-  if (value && typeof value === 'object') return names(value.name || value.nome || value.text || '');
-  return [...new Set(text(value).split(/[;,|\n]+/).map(text).filter(Boolean))];
-}
+export const names=personNames;
 export function isTrue(v) { return v === true || ['true','1','sim','s','yes'].includes(norm(v)); }
 export function outcome(row) {
   if (!isTrue(row.entra_no_calculo)) return 'pending';
@@ -87,7 +84,7 @@ export function buildRecords(criteria, materials,kind='UA') {
     const uaId=text(row.id_ua || material?.id_ua);
     const parent=text(row.parent_item_id);
     const criterion=text(row.criterio || row.pergunta || 'Critério não informado');
-    const specialists=names(row.classificacao_feita_por || row.especialista);
+    const specialists=names([row.classificacao_feita_por,row.especialista,material?.especialista_modelagem,material?.especialista]);
     const reviewers=names(row.revisor_validador || material?.revisor_validador);
     const managers=names(material?.gestor_validacao_nq||row.gestor_validacao_nq);
     const assignedReviewers=names(material?.revisor_validador||row.revisor_validador);
@@ -115,8 +112,8 @@ export function buildRecords(criteria, materials,kind='UA') {
 }
 export function filterRecords(records, filters={}, query='', status='all', skip='') {
   const q=norm(query);
-  return records.filter(r=> {
-    for (const field of ['track','batch','uc','ua','reviewers','specialists']) {
+  const rows=records.filter(r=> {
+    for (const field of ['track','batch','uc','ua']) {
       if (field===skip || !filters[field]) continue;
       const vals=(field==='ua'?[r.displayUA||r.ua]:Array.isArray(r[field]) ? r[field] : [r[field]]).filter(v=>text(v)&&!['nao informada','nao informado'].includes(norm(v)));
       if (!vals.length && filters[field]==='__missing__') continue;
@@ -125,6 +122,7 @@ export function filterRecords(records, filters={}, query='', status='all', skip=
     if (status!=='all' && r.status!==status) return false;
     return !q || norm([r.uc,r.ucId,r.ua,r.displayUA,r.sourceName,r.uaId,r.unitSourceId,r.unitLabel,r.track,r.batch,r.matrix,...r.specialists,...r.reviewers,...(r.managers||[]),...(r.assignedReviewers||[]),r.assessmentType,r.criterion,r.comment,...(r.kind==='PE'?collectEntryPlanComments([r]).flatMap(c=>[c.text,c.author,c.criterion]):[])].join(' ')).includes(q);
   });
+  return filterPeopleByMaterial(rows,filters,skip);
 }
 export function summarize(records) {
   const evaluations=records.filter(r=>!r.commentOnly);

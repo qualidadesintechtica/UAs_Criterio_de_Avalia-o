@@ -1,4 +1,4 @@
-import {materialKind,buildRecords} from './core.mjs?v=v6-6-8-comentarios-download-20261021';
+import {materialKind,buildRecords} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
 
 export const SECTIONS={
   PE:{label:'Planilha de entrada',title:'Planilhas de entrada',plural:'planilhas',itemLabel:'Planilha',allLabel:'Todas as planilhas',tableTitle:'Avaliações das planilhas de entrada'},

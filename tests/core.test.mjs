@@ -26,14 +26,16 @@ test('preserva UAs de ofertas distintas e exclui materiais que não são UA',()=
   const other={...material,monday_item_validacao:'101',semestre_oferta:'2026.1'};
   const {records}=buildRecords([criterion,make({parent_item_id:'101',subitem_id:'1002'}),make({categoria_material:'Plano de Produção',subitem_id:'1003'})],[material,other]);assert.equal(records.length,2);assert.equal(groupUAs(records).length,2);
 });
-test('aplica os cinco filtros ao mesmo conjunto, incluindo múltiplos revisores',()=>{
+test('aplica os cinco filtros e conserva todos os critérios do material encontrado',()=>{
   const {records}=buildRecords([criterion,make({subitem_id:'1002',criterio:'Recursos interativos',classificacao_feita_por:'Especialista B',apontamos_inconformidade:'Não'})],[material]);
-  assert.equal(filterRecords(records,{track:'Graduação',uc:material.titulo,ua:'Arquitetura',reviewers:'Revisor B',specialists:'Especialista A'}).length,1);
+  assert.equal(filterRecords(records,{track:'Graduação',uc:material.titulo,ua:'Arquitetura',reviewers:'Revisor B',specialists:'Especialista A'}).length,2);
   assert.equal(filterRecords(records,{specialists:'Inexistente'}).length,0);
 });
-test('filtro Não informado encontra somente os registros sem pessoa',()=>{
+test('filtro Não informado encontra somente materiais inteiramente sem pessoa',()=>{
   const {records}=buildRecords([criterion,make({subitem_id:'1002',criterio:'Recursos interativos',classificacao_feita_por:null})],[material]);
-  assert.equal(filterRecords(records,{specialists:'__missing__'}).length,1);
+  assert.equal(filterRecords(records,{specialists:'__missing__'}).length,0);
+  const unassigned={...records[1],uaKey:'outro-material'};
+  assert.deepEqual(filterRecords([...records,unassigned],{specialists:'__missing__'}),[unassigned]);
 });
 test('busca usa comentários e ignora variações de acentos',()=>{
   const {records}=buildRecords([criterion],[material]);assert.equal(filterRecords(records,{},'REFERENCIA').length,1);assert.equal(filterRecords(records,{},'não existe').length,0);

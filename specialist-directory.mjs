@@ -1,4 +1,4 @@
-import {norm} from './core.mjs';
+import {personKey as norm} from './people-filters.mjs?v=v6-6-9-filtros-pessoas-20261021';
 
 // A lista vem do perfil privado cadastrado, nunca dos autores da Monday.
 export function specialistNames(people=[]){
