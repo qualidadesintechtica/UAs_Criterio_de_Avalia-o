@@ -7,7 +7,7 @@ const bundled=await readFile(new URL('index.ts',folder),'utf8');
 const executable=bundled.replace("import {createClient} from 'npm:@supabase/supabase-js@2';",'').replace(/Deno\.serve\(createDownloadHandler[\s\S]*$/,'export {createDownloadHandler};');
 const {createDownloadHandler}=await import('data:text/javascript;base64,'+Buffer.from(executable).toString('base64'));
 
-import {requestPlanDownload,savePlanDownload} from '../planilha-download.mjs';
+import {requestPlanDownload,savePlanDownload,downloadConnectionError} from '../planilha-download.mjs';
 const column=(url='https://docs.google.com/arquivo.xlsx',extra={})=>({id:'link_pe',title:'Planilha de entrada',type:'link',value:{url,text:'Minha planilha'},...extra});
 const row=(...cols)=>({monday_item_validacao:'123',colunas_planilha:cols});
 const bytes=new Uint8Array([0x50,0x4b,3,4,0,0,0,0,0,0]);
@@ -114,4 +114,25 @@ test('função completa publicada coincide com os módulos exercitados pelo nave
  const links=(await readFile(new URL('links.mjs',folder),'utf8')).replaceAll('export ','');
  const handler=(await readFile(new URL('handler.mjs',folder),'utf8')).split('\n').slice(1).join('\n').replaceAll('export ','');
  assert.ok(bundled.includes(links));assert.ok(bundled.includes(handler));
+});
+
+test('falha de preflight identifica função ausente por GET sem sessão',async()=>{
+ const calls=[],client={auth:{getSession:async()=>({data:{session:{access_token:'private-session'}}})}};
+ const fetchImpl=async(url,options)=>{
+   calls.push(options);
+   if(options.method==='POST')throw new TypeError('Failed to fetch');
+   assert.equal(options.headers,undefined);assert.equal(options.credentials,'omit');
+   return Response.json({code:'NOT_FOUND',message:'Requested function was not found'},{status:404});
+ };
+ await assert.rejects(requestPlanDownload(client,{supabaseUrl:'https://p.supabase.co',publishableKey:'public'},'123','link_pe',null,fetchImpl),e=>e.code==='NQ_FUNCTION_MISSING'&&/Publique a função nq-baixar-planilha/.test(e.message));
+ assert.deepEqual(calls.map(c=>c.method),['POST','GET']);
+});
+test('rede indisponível e serviço existente explicam a conexão sem alegar causa falsa',async()=>{
+ for(const fetchImpl of [async()=>{throw new TypeError('Failed to fetch');},async()=>Response.json({code:401},{status:401}),async()=>Response.json({code:'NQ_METHOD'},{status:405})]){
+   const error=await downloadConnectionError({supabaseUrl:'https://p.supabase.co'},null,fetchImpl);
+   assert.equal(error.code,'NQ_DOWNLOAD_CONNECTION');assert.doesNotMatch(error.message,/Failed to fetch|não foi encontrado/);
+ }
+ const controller=new AbortController();controller.abort();
+ const error=await downloadConnectionError({supabaseUrl:'https://p.supabase.co'},controller.signal,async()=>{throw new DOMException('abort','AbortError');});
+ assert.equal(error.name,'AbortError');
 });

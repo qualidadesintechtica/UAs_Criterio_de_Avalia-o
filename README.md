@@ -1,3 +1,7 @@
+# V6.6.7 — download e especialistas cadastrados
+
+Comece por **COMECE_AQUI.md** e **LEIA_CORRECAO_DOWNLOAD_E_ESPECIALISTAS.md**.
+
 # Comentários e avaliações dos materiais — V6.6.6
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.

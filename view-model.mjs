@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-7-download-especialistas-20261021';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';

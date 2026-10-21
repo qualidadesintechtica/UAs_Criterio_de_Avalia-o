@@ -1,14 +1,35 @@
 import {resolvePlanLink,fileName,dispositionName,validateFile,MAX_FILE_BYTES} from './supabase/functions/nq-baixar-planilha/links.mjs';
 export {resolvePlanLink};
+const missingService=()=>Object.assign(new Error('O serviço nq-baixar-planilha não foi encontrado. Publique a função nq-baixar-planilha (Edge Function) no Supabase deste painel; atualizar somente o GitHub não ativa o download.'),{code:'NQ_FUNCTION_MISSING'});
+export async function downloadConnectionError(config,signal,fetchImpl=fetch){
+  // GET sem sessão e sem cabeçalhos extras não exige preflight. Permite ler
+  // o 404 que o navegador oculta quando o OPTIONS da função ausente falha.
+  try{
+    const response=await fetchImpl(config.supabaseUrl.replace(/\/$/,'')+'/functions/v1/nq-baixar-planilha',{
+      method:'GET',mode:'cors',signal,credentials:'omit',referrerPolicy:'no-referrer'});
+    if(response.status===404){
+      let data;try{data=await response.json();}catch{}
+      if(data?.code==='NOT_FOUND')return missingService();
+    }
+  }catch{}
+  if(signal?.aborted)return new DOMException('Download cancelado','AbortError');
+  return Object.assign(new Error('Não foi possível conectar ao serviço de download. Confira sua conexão, a publicação de nq-baixar-planilha e a origem autorizada do site no Supabase. Consulte LEIA_CORRECAO_DOWNLOAD_E_ESPECIALISTAS.md.'),{code:'NQ_DOWNLOAD_CONNECTION'});
+}
 export async function requestPlanDownload(client,config,itemID,columnID,signal,fetchImpl=fetch){
   const {data,error}=await client.auth.getSession();
   if(error||!data?.session?.access_token)throw new Error('Sua sessão expirou. Entre novamente.');
-  const response=await fetchImpl(config.supabaseUrl.replace(/\/$/,'')+'/functions/v1/nq-baixar-planilha',{
+  let response;
+  try{response=await fetchImpl(config.supabaseUrl.replace(/\/$/,'')+'/functions/v1/nq-baixar-planilha',{
     method:'POST',headers:{Authorization:'Bearer '+data.session.access_token,apikey:config.publishableKey,'Content-Type':'application/json'},
-    body:JSON.stringify({item_id:String(itemID),column_id:columnID}),signal,credentials:'omit',referrerPolicy:'no-referrer'});
+    body:JSON.stringify({item_id:String(itemID),column_id:columnID}),signal,credentials:'omit',referrerPolicy:'no-referrer'});}
+  catch(error){
+    if(signal?.aborted||error?.name==='AbortError')throw error;
+    if(error instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(error?.message||''))throw await downloadConnectionError(config,signal,fetchImpl);
+    throw error;
+  }
   if(!response.ok){
     let error;try{error=await response.json();}catch{}
-    if(response.status===404&&error?.code!=='NQ_ITEM')throw new Error('Publique a função nq-baixar-planilha para habilitar o download.');
+    if(response.status===404&&error?.code!=='NQ_ITEM')throw missingService();
     throw new Error(error?.message||'Não foi possível baixar a planilha. Confira a configuração do serviço.');
   }
   if(Number(response.headers.get('Content-Length'))>MAX_FILE_BYTES)throw new Error('A planilha ultrapassa o limite de 20 MB.');

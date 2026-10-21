@@ -1,16 +1,16 @@
-# Atualizar para V6.6.6 — contagens conforme os filtros
+# Atualizar para V6.6.7 — download e especialistas cadastrados
 
-## 1. Atualizar os arquivos da página
+1. **Edge Functions:** publique **nq-baixar-planilha** no projeto Supabase **nkjmgzyjjbepebzurowy**, colando todo o conteúdo de **INSTALAR_PELO_PAINEL/nq-baixar-planilha.ts**. Mantenha Verify JWT ativado. A função não foi encontrada nesse projeto na conferência de 21/10/2026.
+2. **SQL Editor:** execute todo **supabase/12_FILTRO_ESPECIALISTAS_CADASTRADOS.sql**. Esse é o novo SQL para o filtro. O SQL 11 só precisa ser instalado se ainda faltar a fonte dos links.
+3. **GitHub:** envie todo o conteúdo extraído à raiz do repositório publicado, confirme o commit e aguarde. Pressione **Ctrl + F5**, confira **V6.6.7** e clique em **Atualizar dados**.
 
-1. Extraia o ZIP.
-2. No GitHub, abra **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
-3. Em **Add file → Upload files**, envie todo o conteúdo extraído e substitua os arquivos na raiz publicada. Não envie somente o ZIP nem coloque os arquivos em uma pasta extra.
-4. Confirme em **Commit changes** e aguarde a publicação.
-5. Pressione **Ctrl + F5** e confira **V6.6.6 · 21/10/2026**.
+Passo a passo: **LEIA_CORRECAO_DOWNLOAD_E_ESPECIALISTAS.md**.
+
+Especialistas agora vêm dos participantes cadastrados com esse perfil, sem recorrer aos nomes de autores da Monday. Revisor e Admin ficam fora da lista. Menu, cartões, totais e exportações mantêm os mesmos filtros da tabela.
 
 ## Conferir os números depois de atualizar
 
-Esta atualização **não exige SQL novo nem republicar funções** quando a página já funciona. Ela separa a quantidade de materiais dos registros de critérios e comentários.
+Os ajustes anteriores de contagens foram preservados. Para a V6.6.7, execute o SQL 12 e publique a função de download conforme o guia novo. Ela separa a quantidade de materiais dos registros de critérios e comentários.
 
 Acima dos filtros, confira **Total no recorte**, a soma dos quatro cartões com **Outros status** e a opção **Conferir totais por status Monday**. O botão Outros status mostra os materiais que não pertencem aos quatro cartões, incluindo A liberar, N/A e Pausado. Os filtros continuam funcionando em todas as abas.
 

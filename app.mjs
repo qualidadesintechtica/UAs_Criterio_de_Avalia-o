@@ -1,24 +1,25 @@
-import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {createAccessController} from './access.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-6-contagens-filtradas-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-6-contagens-filtradas-20261021';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-7-download-especialistas-20261021';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-7-download-especialistas-20261021';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-7-download-especialistas-20261021';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-7-download-especialistas-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-7-download-especialistas-20261021';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-7-download-especialistas-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-7-download-especialistas-20261021';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-7-download-especialistas-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-7-download-especialistas-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-7-download-especialistas-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-7-download-especialistas-20261021';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-7-download-especialistas-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-7-download-especialistas-20261021';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-7-download-especialistas-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-7-download-especialistas-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-7-download-especialistas-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-7-download-especialistas-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
@@ -60,6 +61,7 @@ async function beginPlanDownload(id){
 function clearSensitive(resetAccess=true){
   if(resetAccess)access?.clear();
   state.download?.controller.abort();state.download=null;state.planLinks.clear();state.downloadFeedback.clear();state.planLinksState='setup';$('entryDownloadNotice').hidden=true;
+  state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
@@ -134,6 +136,7 @@ async function readAccessPolicy(signal){
 }
 async function load(){
   if(state.loading)return;
+  const specialistsRun=++state.specialistsRun;
   state.loading=true;const run=++state.run;const controller=new AbortController();state.controller=controller;const signal=controller.signal;
   const timeout=setTimeout(()=>controller.abort(),60000);
   $('refresh').disabled=true;$('loadError').hidden=true;$('dataWarning').hidden=true;source('Atualizando resultados');
@@ -155,7 +158,8 @@ async function load(){
       readAccessPolicy(signal),
       queryWithDeadline(planSignal=>readAll(window.UA_CONFIG.entryPlansView||'vw_ua_resultados_planilhas_validacao_autenticadas','*','monday_item_validacao',planSignal,'plans'),signal,12000),
       queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000),
-      queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000)
+      queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000),
+      queryWithDeadline(peopleSignal=>readSpecialists(client,peopleSignal),signal,8000)
     ]);
     if(run!==state.run)return;
     if(results[5].status==='fulfilled'&&results[5].value===false){
@@ -176,6 +180,7 @@ async function load(){
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
     state.planLinksState=results[8].status==='fulfilled'?'ready':['42P01','PGRST205','PGRST204'].includes(results[8].reason?.code)?'setup':'unavailable';
     state.planLinks=new Map((results[8].status==='fulfilled'?results[8].value:[]).map(row=>[String(row.monday_item_validacao),row]));
+    if(specialistsRun===state.specialistsRun)applySpecialistDirectory(results[9]);
     state.sectionErrors={};if(formError){for(const key of ['PE','BDQ','UC'])state.sectionErrors[key]='Os formulários desta seção não puderam ser consultados. Atualize os dados ou confira a configuração da conexão.';}
     state.records=state.sections[state.section].records;state.loaded=true;state.page=1;
     source('Monday · base sincronizada','connected');
@@ -196,9 +201,28 @@ async function load(){
     if(!state.loaded){$('updatedAt').textContent='Consulta não concluída';$('tableBody').innerHTML='<tr><td colspan="'+tableHeaders(state.section).length+'" class="empty-table">Não foi possível consultar as avaliações. Clique em Atualizar dados para tentar novamente.</td></tr>';}
   }finally{clearTimeout(timeout);if(run===state.run){state.loading=false;$('refresh').disabled=false;}}
 }
+function applySpecialistDirectory(result){
+  state.specialists=result.status==='fulfilled'?result.value:[];
+  state.specialistsState=result.status==='fulfilled'?'ready':['PGRST202','42883'].includes(result.reason?.code)?'setup':'unavailable';
+  const previous=state.filters.specialists;
+  state.filters.specialists=registeredSpecialistSelection(state.specialists,previous);
+  if(previous&&!state.filters.specialists)toast('O especialista selecionado não está disponível no cadastro. O filtro foi removido.');
+}
+async function refreshSpecialists(){
+  if(!state.user)return;
+  const user=state.user,run=++state.specialistsRun;
+  const results=await Promise.allSettled([queryWithDeadline(signal=>readSpecialists(client,signal),null,8000)]);
+  if(state.user!==user||run!==state.specialistsRun)return;
+  applySpecialistDirectory(results[0]);state.page=1;render();
+}
 function renderFilters(){
+  const note=$('specialistFilterNotice');
+  note.hidden=state.specialistsState==='ready'&&state.specialists.length>0;
+  note.textContent=state.specialistsState==='setup'?'Para habilitar o filtro de Especialistas, execute o SQL 12 de especialistas cadastrados.':state.specialistsState==='ready'?'Nenhum participante com nome cadastrado no perfil Especialista. A administração pode ajustar o perfil em Participantes.':'Não foi possível consultar os especialistas cadastrados. Clique em Atualizar dados.';
+
   for(const select of document.querySelectorAll('[data-filter]')){
-    const field=select.dataset.filter,{values,missing}=filterOptions(state.sections,field,state.filters);
+    const field=select.dataset.filter,{values,missing}=field==='specialists'?{values:state.specialists,missing:false}:filterOptions(state.sections,field,state.filters);
+    if(field==='specialists')select.disabled=state.specialistsState!=='ready'||!values.length;
     const current=state.filters[field]||'';
     select.innerHTML='<option value="">'+esc(defaults[field])+'</option>'+values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+(missing?'<option value="__missing__">Não informado</option>':'');
     select.value=current;
@@ -427,7 +451,7 @@ async function start(){
       createSignupClient:()=>window.supabase.createClient(window.UA_CONFIG.supabaseUrl,window.UA_CONFIG.publishableKey,
         {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}),
       onBlocked:()=>clearSensitive(false),onReady:activate,onSignedOut:showLogin,
-      onNameChanged:name=>{$('userName').textContent=name;$('avatar').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+      onUsersChanged:refreshSpecialists,onNameChanged:name=>{$('userName').textContent=name;$('avatar').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();}
     });
     client.auth.onAuthStateChange((event,session)=>{
       if(event==='SIGNED_OUT')showLogin();

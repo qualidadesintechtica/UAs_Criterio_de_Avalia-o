@@ -3,7 +3,7 @@ import {validateAccessName,validateAccessPassword,validateAccessEmail,accessErro
 export const PROFILE_LABELS={especialista:'Especialista',revisor:'Revisor',admin:'Admin'};
 const ADMIN_EMAILS=new Set(['ligia.neta@animaeducacao.com.br','joao.cane@animaeducacao.com.br','cristina.brito@animaeducacao.com.br']);
 
-export function createAccessController({client,config,createSignupClient,onBlocked,onReady,onNameChanged,onSignedOut}){
+export function createAccessController({client,config,createSignupClient,onBlocked,onReady,onNameChanged,onSignedOut,onUsersChanged}){
   const $=id=>document.getElementById(id);
   let user=null,manager=false,participantsState='none',epoch=0,checkRun=0,listRun=0,offset=0,searchTimer;
   let selected=null,editBusy=false,signupBusy=false,gateBusy=false,gateSaved=false;
@@ -218,7 +218,7 @@ export function createAccessController({client,config,createSignupClient,onBlock
         success=item.mode==='create'?'Conta criada. Informe a senha temporária à pessoa; a troca será obrigatória no primeiro acesso.':'Senha temporária definida. A troca será obrigatória no próximo acesso.';
       }
       if(!current(request))return;
-      $('userEditorDialog').close();await loadUsers(success);
+      $('userEditorDialog').close();onUsersChanged?.();await loadUsers(success);
     }catch(error){
       const detail=await accessError(error);if(current(request))message('userEditorStatus',detail,'error');
     }finally{if(current(request)){editBusy=false;fields('userEditorForm').disabled=false;}}
