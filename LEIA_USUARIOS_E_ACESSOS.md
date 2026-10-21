@@ -4,9 +4,11 @@
 
 Use **o mesmo projeto Supabase da página atual**, identificado em `config.js`. A autenticação é compartilhada com as contas já existentes do BI.
 
+Para corrigir o erro 57014 de critérios em uma V6.6 já instalada, siga **LEIA_CORRECAO_57014.md**: SQL 10 e arquivos novos. O procedimento abaixo continua descrevendo a instalação dos acessos.
+
 1. Execute **o arquivo completo** `supabase/09_USUARIOS_E_ACESSOS.sql` no SQL Editor, depois dos scripts já instalados do painel. Uma base na V6.5 com SQL 08 precisa somente do 09. Instalação nova sobre as fontes existentes do BI: 05 → 07 → 08 → 09.
 2. Publique a Edge Function **nq-gerenciar-usuarios**, usando **todo o arquivo** `supabase/functions/nq-gerenciar-usuarios/index.ts`.
-3. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6 · 21/10/2026** após Ctrl + F5.
+3. Execute também o SQL 10 para a leitura paginada de critérios. Substitua todos os arquivos publicados da página pelos desta pasta e confira **V6.6.1 · 21/10/2026** após Ctrl + F5.
 
 **Enviar os arquivos para o GitHub não executa o SQL nem publica a função.** A barra de progresso funciona com as fontes atuais; a gestão de acessos exige a instalação no servidor.
 
@@ -104,7 +106,7 @@ Se o SQL ainda não foi instalado, contas antigas sem marca de senha temporária
 
 ## Verificação da entrega
 
-- **110 testes de lógica** passaram com `node --test tests/*.test.mjs`, incluindo os 96 testes anteriores.
+- **117 testes de lógica** passaram com `node --test tests/*.test.mjs`, incluindo os 96 testes anteriores.
 - **108 verificações do controlador de acessos** em DOM simulado cobriram perfis, cadastro isolado, edição, senha temporária, falhas e limpeza de sessão.
 - **321 verificações da função de servidor**, com serviços simulados, cobriram autorização, alvos, validações, erros e limites de mutação.
 - **39 verificações de SQL** em PostgreSQL embarcado cobriram autorização, perfis, transações de senha, bloqueio pendente, preservação e reinstalação.

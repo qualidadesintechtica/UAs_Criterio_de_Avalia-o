@@ -1,14 +1,20 @@
-# Comentários e avaliações dos materiais — V6.6
+# Comentários e avaliações dos materiais — V6.6.1
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Usuários, perfis e progresso — V6.6
+## Correção de leitura dos critérios — V6.6.1
+
+Para o erro **57014 na fonte critérios**, esta versão limita cada lote de subelementos antes da junção com os materiais enriquecidos. O aplicativo lê os lotes em sequência, preservando o conjunto e as permissões. **Execute todo o SQL 10, depois substitua os arquivos da página**, incluindo `criteria-loading.mjs`. Siga **COMECE_AQUI.md** e **LEIA_CORRECAO_57014.md**. Se o SQL 09 e a função de gestão de usuários já estão instalados, não é necessário repeti-los.
+
+Os recursos da V6.6 descritos abaixo continuam incluídos. Em instalação nova, siga 05 → 07 → 08 → 09 → 10 e publique a função de usuários conforme o guia de acessos.
+
+## Usuários, perfis e progresso — V6.6 preservados
 
 A tela inicial recebe **Criar login e senha**. A área interna **Usuários e acessos** permite criar contas, editar nome e perfil e definir senha temporária, restrita no servidor a ligia.neta@animaeducacao.com.br, joao.cane@animaeducacao.com.br e cristina.brito@animaeducacao.com.br. Os perfis são **Especialista, Revisor e Admin**. Quem recebe senha temporária deve escolher outra antes de consultar os resultados.
 
 A barra **Respostas dos especialistas** mostra critérios respondidos e percentual no recorte atual, acima dos filtros e no detalhe do material. Comentários complementares não alteram o progresso; materiais sem critérios sincronizados são sinalizados. O total considera somente critérios disponíveis na base.
 
-**Instale o SQL 09, publique a função nq-gerenciar-usuarios e atualize todos os arquivos do GitHub**, nessa ordem. Subir os arquivos ao GitHub não instala o servidor. Siga **COMECE_AQUI.md** e **LEIA_USUARIOS_E_ACESSOS.md** para instalação, perfis iniciais, confirmação de e-mail e uso das contas compartilhadas com o BI.
+Para habilitar a gestão de usuários pela primeira vez, **instale o SQL 09 e publique a função nq-gerenciar-usuarios**. Para a leitura corrigida dos critérios, instale também o SQL 10. Atualize todos os arquivos do GitHub depois. Subir os arquivos ao GitHub não instala o servidor. Siga **COMECE_AQUI.md** e **LEIA_USUARIOS_E_ACESSOS.md** para instalação, perfis iniciais, confirmação de e-mail e uso das contas compartilhadas com o BI.
 
 ## Leitura de UA e UC — V6.5 preservada
 
@@ -34,11 +40,11 @@ Gestor corresponde ao campo `gestor_validacao_nq`. Revisor corresponde ao `revis
 
 ## Base necessária para as correções da V6.4
 
-A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado, avance para o SQL 09 da V6.6. Se somente o SQL 07 está instalado, execute 08 e depois 09. Para instalação nova sobre as fontes existentes do BI, siga COMECE_AQUI.md: 05 → 07 → 08 → 09. Não execute scripts antigos depois do 09.
+A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado, avance para o SQL 09 da V6.6. Se somente o SQL 07 está instalado, execute 08 e depois 09. Para instalação nova sobre as fontes existentes do BI, siga COMECE_AQUI.md: 05 → 07 → 08 → 09 → 10. Não execute scripts antigos depois do 09.
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.6 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6.1 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
@@ -126,6 +132,8 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 - `review-panel.css`: largura, menu de critérios e área de leitura de UA/UC; adaptações para telas menores.
 - `app.mjs`: autenticação, consultas e interações.
 - `source-loading.mjs`: limite independente da consulta dos planos e mensagens que distinguem falha de comunicação de tempo excedido.
+- `criteria-loading.mjs`: leitura integral dos critérios por lotes, antes da junção.
+- `supabase/10_CRITERIOS_PAGINADOS.sql`: função protegida e índices de apoio para a leitura.
 - `core.mjs`: vínculos, critérios vigentes, histórico, filtros e exportação.
 - `navigation.mjs`: seções por categoria.
 - `monday-data.mjs`: formulários e pareceres sincronizados.
@@ -146,7 +154,7 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 110 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
+Passaram 117 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
 Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
@@ -155,3 +163,5 @@ Em DOM simulado, foram verificados Esteira na Planilha, Gestor e Revisor no BDQ,
 Na V6.5, o DOM simulado também verificou UA com sete critérios; UC por unidade e completa com quatorze indicadores; menu, busca, seletor, Anterior/Próximo, limites da navegação e um cartão aberto por vez. Foram verificadas edição durante troca de critério, gravação mantendo o registro selecionado, complemento no critério atual, conflito sem perda de texto, leitura do original e das versões anteriores, HTML seguro e limpeza da sessão. As verificações de Planilha e BDQ passaram junto das novas interações. Os arquivos SQL e as regras de dados não foram alterados.
 
 Na V6.6, passaram também 108 verificações do controlador de acessos, 321 da função de servidor e 39 do SQL em PostgreSQL embarcado. A inspeção visual em navegador real usou dados de teste. As verificações de acesso e mutação não alteraram contas reais. O login institucional real, a publicação no GitHub, a função hospedada e o SQL em produção não foram executados nesta preparação. Consulte LEIA_USUARIOS_E_ACESSOS.md para os limites e a instalação.
+
+Na V6.6.1, passaram 195 verificações adicionais do SQL de paginação e a integração da nova leitura em DOM simulado. A comparação das 1.208 linhas da base de teste manteve o resultado da definição enviada, com três tamanhos de lote. Consulte LEIA_CORRECAO_57014.md para instalação e limites da verificação em produção.

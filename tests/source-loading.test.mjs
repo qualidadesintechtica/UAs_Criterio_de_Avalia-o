@@ -34,6 +34,8 @@ test('distingue statement timeout, limite de carregamento e falha de comunicaç�
   assert.match(connectionMessage({message:'Failed to fetch'}),/comunicação/);
   assert.equal(connectionMessage({code:'42501',message:'permission denied'}),'');
   assert.ok(!connectionMessage({code:'57014'}).includes('internet'));
+  assert.match(connectionMessage({code:'57014'}),/10_CRITERIOS_PAGINADOS/);
+  assert.ok(!connectionMessage({code:'57014'}).includes('SQL 07'));
 });
 test('combina planos da fonte própria sem repetir o material legado do mesmo item',()=>{
   const ua={categoria_material:'Unidade de Aprendizagem',monday_item_validacao:'1'};

@@ -1,15 +1,16 @@
-import {createAccessController} from './access.mjs?v=v6-6-usuarios-acessos-20261021';
-import {specialistProgress,progressMarkup} from './specialist-progress.mjs?v=v6-6-usuarios-acessos-20261021';
-import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-6-usuarios-acessos-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-usuarios-acessos-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-usuarios-acessos-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-usuarios-acessos-20261021';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-usuarios-acessos-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-usuarios-acessos-20261021';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-usuarios-acessos-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-usuarios-acessos-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-usuarios-acessos-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-usuarios-acessos-20261021';
+import {createAccessController} from './access.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {specialistProgress,progressMarkup} from './specialist-progress.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-1-criterios-paginados-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-1-criterios-paginados-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -71,14 +72,21 @@ async function readAll(table,columns,order,signal,kind){
   };
   const first=await read(0);rows.push(...first);
   if(first.length<size)return rows;
-  for(let offset=size;;offset+=size*4){
-    const chunks=await Promise.all(Array.from({length:4},(_,i)=>read(offset+i*size)));
-    let end=false;
-    for(const part of chunks){rows.push(...part);if(part.length<size){end=true;break;}}
+  for(let offset=size;;offset+=size){
+    const part=await read(offset);rows.push(...part);
     if(kind==='criteria'&&!signal.aborted)$('updatedAt').textContent='Lendo critérios… '+nf.format(rows.length)+' registros';
-    if(end)break;
+    if(part.length<size)break;
   }
   return rows;
+}
+async function readCriteria(signal){
+  try{return await readCriteriaPages(client,signal,n=>{if(!signal.aborted)$('updatedAt').textContent='Lendo critérios… '+nf.format(n)+' registros';});}
+  catch(error){
+    // Compatibilidade apenas quando a função ainda não existe. Uma falha real
+    // não provoca outra consulta pesada nem transforma dados parciais em sucesso.
+    if(!criteriaPagingMissing(error))throw error;
+    return readAll(window.UA_CONFIG.criteriaView,'*','subitem_id',signal,'criteria');
+  }
 }
 async function readAccessPolicy(signal){
   const {data,error}=await client.rpc('nq_painel_acesso_institucional',{}).abortSignal(signal);
@@ -95,12 +103,11 @@ async function load(){
     if(authError||!auth.user){showLogin('Sua sessão expirou. Entre novamente.');return;}
     if(!isInstitutionalEmail(auth.user.email,window.UA_CONFIG.allowedDomains)){await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui acesso institucional.');return;}
     if(!await access.allow(auth.user))return;
-    const criteriaColumns='*';
     const materialColumns='*';
     const formsColumns='id,monday_item_id,nome_item,data_avaliacao,data_avaliacao_hora,avaliador,categoria_material,matriz_oferta,conceito_final,validacao_material_item_id,indicador_1,indicador_2,indicador_3,indicador_4,indicador_5,indicador_6,indicador_7,indicador_1_score,indicador_2_score,indicador_3_score,indicador_4_score,indicador_5_score,indicador_6_score,indicador_7_score,synced_at,updated_at';
     const commentsColumns='id,monday_item_id,nome_item,avaliador,categoria_material,matriz_oferta,numero_criterio,criterio_id,criterio_titulo,parecer_id,parecer_titulo,parecer,tipo_formulario,data_avaliacao,data_avaliacao_hora,updated_at,synced_at';
     const results=await Promise.allSettled([
-      readAll(window.UA_CONFIG.criteriaView,criteriaColumns,'subitem_id',signal,'criteria'),
+      readCriteria(signal),
       readAll(window.UA_CONFIG.materialsView,materialColumns,'chave_material',signal,'materials'),
       readAll(window.UA_CONFIG.assessmentsView,formsColumns,'id',signal,'forms'),
       readAll(window.UA_CONFIG.commentsView,commentsColumns,'id',signal,'comments'),
