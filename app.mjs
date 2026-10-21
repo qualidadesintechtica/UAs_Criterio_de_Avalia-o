@@ -1,24 +1,28 @@
-import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {RELEASE} from './release.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {highlightHTML} from './view-model.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-5-leitura-ua-uc-20261019';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {createAccessController} from './access.mjs?v=v6-6-usuarios-acessos-20261021';
+import {specialistProgress,progressMarkup} from './specialist-progress.mjs?v=v6-6-usuarios-acessos-20261021';
+import {resolveEntryPlanNames} from './pe-names.mjs?v=v6-6-usuarios-acessos-20261021';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-usuarios-acessos-20261021';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-usuarios-acessos-20261021';
+import {RELEASE} from './release.mjs?v=v6-6-usuarios-acessos-20261021';
+import {norm,filterRecords,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-usuarios-acessos-20261021';
+import {highlightHTML} from './view-model.mjs?v=v6-6-usuarios-acessos-20261021';
+import {WORKFLOW_LABELS,countWorkflow,selectWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,otherWorkflowCounts,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-usuarios-acessos-20261021';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-usuarios-acessos-20261021';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-usuarios-acessos-20261021';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-usuarios-acessos-20261021';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
 const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
-let client;
+let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
 function source(label,kind=''){ $('sourceStatus').className='source-pill '+kind;$('sourceStatus').innerHTML='<i></i>'+esc(label); }
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{$('toast').hidden=true;},4000);}
-function clearSensitive(){
+function clearSensitive(resetAccess=true){
+  if(resetAccess)access?.clear();
+  $('specialistProgress').innerHTML='<p>Aguardando critérios para calcular o progresso.</p>';
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
@@ -41,12 +45,14 @@ function clearSensitive(){
 function showLogin(message=''){clearSensitive();$('loginError').textContent=message;$('loginError').hidden=!message;$('password').value='';}
 async function activate(user){
   if (!isInstitutionalEmail(user.email,window.UA_CONFIG.allowedDomains)) { await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui um domínio institucional autorizado.');return; }
+  if(!await access.allow(user))return;
   state.user=user;const name=user.user_metadata?.nome || user.user_metadata?.full_name || user.email.split('@')[0];
   $('userName').textContent=name;$('userEmail').textContent=user.email;$('avatar').textContent=name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   $('boot').hidden=true;$('login').hidden=true;$('dashboard').hidden=false;
   await load();
 }
 function friendly(error){
+  if(error?.code==='NQ_ACCESS_STATE')return error.message;
   const m=String(error?.message||'');
   if (/invalid login|invalid_credentials/i.test(m)) return 'E-mail ou senha incorretos. Confira os dados da sua conta do BI.';
   if (/email not confirmed/i.test(m)) return 'O e-mail desta conta ainda precisa ser confirmado.';
@@ -88,6 +94,7 @@ async function load(){
     const {data:auth,error:authError}=await client.auth.getUser();
     if(authError||!auth.user){showLogin('Sua sessão expirou. Entre novamente.');return;}
     if(!isInstitutionalEmail(auth.user.email,window.UA_CONFIG.allowedDomains)){await client.auth.signOut({scope:'local'});showLogin('Esta conta não possui acesso institucional.');return;}
+    if(!await access.allow(auth.user))return;
     const criteriaColumns='*';
     const materialColumns='*';
     const formsColumns='id,monday_item_id,nome_item,data_avaliacao,data_avaliacao_hora,avaliador,categoria_material,matriz_oferta,conceito_final,validacao_material_item_id,indicador_1,indicador_2,indicador_3,indicador_4,indicador_5,indicador_6,indicador_7,indicador_1_score,indicador_2_score,indicador_3_score,indicador_4_score,indicador_5_score,indicador_6_score,indicador_7_score,synced_at,updated_at';
@@ -103,6 +110,10 @@ async function load(){
       queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000)
     ]);
     if(run!==state.run)return;
+    if(results[5].status==='fulfilled'&&results[5].value===false){
+      if(!await access.allow(auth.user))return;
+      throw Object.assign(new Error('Acesso indisponível'),{status:403});
+    }
     for(let i=0;i<2;i++)if(results[i].status==='rejected'){
       const reason=results[i].reason;const error=Object.assign(new Error(reason?.message||''),{code:reason?.code,name:reason?.name||'Error',status:reason?.status,sourceName:i===0?'critérios':'materiais'});throw error;
     }
@@ -209,7 +220,7 @@ function renderCommentList(rows){
   const byUC=new Map(),seen=new Set();rows.forEach(({group:g,detailIndex:index})=>{if(seen.has(index))return;seen.add(index);const key=g.ucId||g.uc;if(!byUC.has(key))byUC.set(key,{uc:g.uc,id:g.ucId,rows:[]});byUC.get(key).rows.push({g,index});});
   $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(g.reviewers.join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span></span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
 }
-function render(){const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);renderChips();renderTable();}
+function render(){const scope=baseScope();state.filtered=selectWorkflow(scope,state.status);renderFilters();renderCards(scope);$('specialistProgress').innerHTML=progressMarkup(specialistProgress(state.filtered));renderChips();renderTable();}
 function portalHistoryMarkup(note){
   return '<details class="previous-versions comment-history" data-history-id="'+esc(note.id)+'"><summary>Histórico de comentários · versão '+note.revision+'</summary><div class="comment-history-content" aria-live="polite"></div></details>';
 }
@@ -229,7 +240,7 @@ function showDetails(index,unit=null){
 function reviewRecordLabel(r){return r.portalAddition?'Comentário do professor':r.status==='rated'?r.classification:statusLabel[r.status]||'Registro';}
 function reviewPanelMarkup(g,meta,canAdd){
   const s=g.summary,records=state.detailRecords;
-  return '<div class="review-overview"><div class="review-counts" aria-label="Resumo da avaliação"><strong>'+s.assessed+' de '+s.total+' avaliados</strong><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div>'+
+  return progressMarkup(specialistProgress(records),{compact:true})+'<div class="review-overview"><div class="review-counts" aria-label="Resumo da avaliação"><strong>'+s.assessed+' de '+s.total+' avaliados</strong><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div>'+
     '<details class="review-material-info"><summary>Dados do material <span>Esteira, lote e responsáveis</span></summary><div class="review-material-body">'+meta+(g.materialStatuses.length?'<p class="review-source-status"><b>Status Monday:</b> '+esc(g.materialStatuses.join('; '))+'</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas. O original da Monday e as versões anteriores ficam no histórico.</p></div></details>'+
     (state.dialogUnit&&g.kind==='UC'?'<button type="button" class="text-button review-full-uc" data-show-full-uc>Ver todos os registros da UC</button>':'')+
     (!state.commentsReady?'<p class="comment-setup-note review-setup-note">Comentários do painel indisponíveis. Atualize os dados para editar.</p>':'')+
@@ -280,7 +291,7 @@ function openMaterialDetails(key,unit=null,preferredRecordId=null){
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
   const meta='<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(g.reviewers.join('; ')||'Não informado')+'</div></div>';
-  $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
+  $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):progressMarkup(specialistProgress(state.detailRecords),{compact:true})+meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   state.detailIndex=Math.max(0,state.detailRecords.findIndex(r=>preferredRecordId!=null&&r.id===preferredRecordId));
   if(state.reviewMode)renderReviewRecord(state.detailIndex);
   if(!$('detailDialog').open)$('detailDialog').showModal();document.body.classList.add('drawer-open');
@@ -346,7 +357,16 @@ async function start(){
     if(!window.supabase||!window.UA_CONFIG)throw new Error('SDK indisponível');
     const storage={getItem:k=>{try{return sessionStorage.getItem(k);}catch{return null;}},setItem:(k,v)=>{try{sessionStorage.setItem(k,v);}catch{}},removeItem:k=>{try{sessionStorage.removeItem(k);}catch{}}};
     client=window.supabase.createClient(window.UA_CONFIG.supabaseUrl,window.UA_CONFIG.publishableKey,{auth:{storage,storageKey:'ua-results-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
-    client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT')showLogin();});
+    access=createAccessController({client,config:window.UA_CONFIG,
+      createSignupClient:()=>window.supabase.createClient(window.UA_CONFIG.supabaseUrl,window.UA_CONFIG.publishableKey,
+        {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}),
+      onBlocked:()=>clearSensitive(false),onReady:activate,onSignedOut:showLogin,
+      onNameChanged:name=>{$('userName').textContent=name;$('avatar').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+    });
+    client.auth.onAuthStateChange((event,session)=>{
+      if(event==='SIGNED_OUT')showLogin();
+      else if(event==='SIGNED_IN'&&state.user&&session?.user?.id!==state.user.id)showLogin('A conta foi alterada. Entre novamente para continuar.');
+    });
     const {data,error}=await client.auth.getSession();
     if(error||!data.session){showLogin();return;}
     const {data:verified,error:verifyError}=await client.auth.getUser();
@@ -364,6 +384,11 @@ $('loginForm').addEventListener('submit',async e=>{
 $('showPassword').addEventListener('click',()=>{const show=$('password').type==='password';$('password').type=show?'text':'password';$('showPassword').textContent=show?'Ocultar':'Mostrar';$('showPassword').setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');});
 $('logout').addEventListener('click',async()=>{clearSensitive();state.user=null;await client.auth.signOut({scope:'local'});showLogin();});
 $('refresh').addEventListener('click',load);
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible'||!state.user)return;
+  try{const {data,error}=await client.auth.getUser();if(error||!data?.user){showLogin('Sua sessão expirou. Entre novamente.');return;}await access.allow(data.user);}
+  catch{showLogin('Não foi possível verificar seu acesso. Entre novamente para continuar.');}
+});
 document.querySelectorAll('[data-filter]').forEach(select=>select.addEventListener('change',()=>{state.filters[select.dataset.filter]=select.value;state.page=1;render();}));
 $('clearFilters').addEventListener('click',()=>{state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;$('search').value='';$('commentsOnly').checked=false;if(state.loaded)render();});
 document.querySelectorAll('[data-ua-status]').forEach(b=>b.addEventListener('click',()=>{if(!state.loaded)return;state.status=state.status===b.dataset.uaStatus?'all':b.dataset.uaStatus;state.page=1;render();}));

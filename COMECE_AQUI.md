@@ -1,51 +1,56 @@
-# Publicar a V6.5 — leitura de UA e UC
+# Publicar a V6.6 — acessos, perfis e progresso
 
-## 1. Substituir os arquivos da página
+Esta pasta contém a página completa, preservando as consultas, os filtros e os comentários com histórico. Leia também **LEIA_USUARIOS_E_ACESSOS.md**.
 
-Se a V6.4 já está instalada com o SQL 08, **não é necessário executar SQL nesta atualização**.
+**A V6.6 tem três etapas: SQL, função de servidor e arquivos do GitHub. Enviar os arquivos ao GitHub não instala as duas primeiras etapas.**
+
+## 1. Atualizar o banco
+
+Se a V6.5 já funciona com o SQL 08, execute **todo o arquivo** `supabase/09_USUARIOS_E_ACESSOS.sql` no SQL Editor do mesmo projeto Supabase usado em `config.js`.
+
+Não execute somente um trecho. Não repita scripts antigos depois do 09. Para uma instalação nova sobre as fontes já sincronizadas do BI, a sequência é **05 → 07 → 08 → 09**. Se somente o 07 está instalado, execute 08 e depois 09.
+
+O SQL 09 inclui os perfis, a autorização das três contas e a troca obrigatória de senha temporária. Não cria automaticamente as contas das pessoas.
+
+## 2. Publicar a função de servidor
+
+1. No mesmo projeto Supabase, abra **Edge Functions** e a opção de criar/publicar uma função pelo editor.
+2. Use exatamente o nome **nq-gerenciar-usuarios**.
+3. Substitua o exemplo por **todo o conteúdo** de `supabase/functions/nq-gerenciar-usuarios/index.ts` e publique.
+4. Mantenha a verificação de JWT ativada; `supabase/config.toml` já registra essa configuração para publicação por CLI.
+5. O endereço padrão autorizado é `https://qualidadesintechtica.github.io`. Para outro domínio, configure o segredo de servidor `NQ_ORIGINS` com a origem do site, sem caminho ou barra final. Consulte o guia para múltiplas origens e configuração do servidor.
+
+Não coloque uma chave administrativa no GitHub ou em `config.js`.
+
+## 3. Atualizar a página no GitHub
 
 1. Extraia o ZIP.
-2. Envie **todo o conteúdo extraído** para a raiz publicada da página no GitHub, substituindo os arquivos anteriores.
-3. Inclua o novo arquivo **review-panel.css** junto de index.html, styles.css, módulos e demais pastas. Não envie apenas o ZIP fechado.
-4. Aguarde a publicação e pressione Ctrl + F5.
-5. Confira **V6.5 · 19/10/2026** na página.
+2. Envie **todo o conteúdo extraído** para a raiz publicada do projeto, substituindo os arquivos correspondentes. Não envie apenas o ZIP fechado.
+3. Inclua os novos módulos `access.mjs`, `access-policy.mjs`, `specialist-progress.mjs` e `access.css`, além de todos os arquivos anteriores.
+4. Aguarde a publicação e pressione **Ctrl + F5**.
+5. Confira **V6.6 · 21/10/2026** na página.
 
-## 2. Usar o novo painel
+## 4. Conferir os novos recursos
 
-1. Na aba UA ou UC, clique no material como antes.
-2. O painel mostra um critério por vez. Clique em outro critério no menu lateral ou use **Anterior** e **Próximo**.
-3. Use **Buscar neste material** para localizar um critério ou um texto de comentário no menu.
-4. Abra **Dados do material** quando precisar consultar esteira, lote, matriz, especialistas, revisores ou status original.
-5. Use **Editar comentário / Adicionar informação** no critério aberto. **Adicionar comentário** cria um complemento vinculado ao registro selecionado.
-6. Salve ou cancele a edição antes de trocar de critério. Após salvar, o painel permanece no registro salvo.
-7. Abra **Histórico de comentários** para consultar versões anteriores. O texto original da Monday é preservado.
+- Na tela de entrada, **Criar login e senha** cadastra uma conta institucional como Especialista ou Revisor. A confirmação de e-mail segue a configuração do projeto.
+- Dentro do sistema, **Usuários e acessos** aparece para as três contas Admin autorizadas, confirmadas e sem troca de senha pendente.
+- A área permite criar login, editar nome e perfil e definir senha temporária. Quem recebe senha temporária deve escolher outra antes de consultar os resultados.
+- Os perfis são **Especialista, Revisor e Admin**. Os demais usuários existentes recebem Revisor inicialmente, salvo perfil de Especialista já solicitado; um Admin pode corrigir a atribuição.
+- A barra **Respostas dos especialistas**, acima dos filtros e no detalhe do material, mostra critérios respondidos e percentual. Materiais sem critérios sincronizados são sinalizados.
 
-Em telas menores, use **Ir para critério**. O seletor substitui o menu lateral. Textos longos e históricos podem exigir rolagem na área de leitura, mas os controles de navegação permanecem visíveis.
+## 5. O que foi preservado
 
-Na UC, o clique em uma unidade continua mostrando seus indicadores. **Ver todos os registros da UC** abre o conjunto completo.
-
-## 3. O que permanece funcionando
-
-- Filtros compartilhados, busca geral, cartões, paginação e CSV.
-- Edição de comentários, autoria, datas, versões e histórico.
+- Abas Planilha de entrada, UA, BDQ e UC; filtros compartilhados, busca, cartões, paginação e CSV.
+- Leitura de UA/UC por critério, navegação e seletor para telas menores.
+- Edição de comentários, autoria, datas, versões e histórico; texto original da Monday preservado.
 - Ajustes - MODELAGEM / Modelagens em Requer análise do design.
-- Coluna Esteira na Planilha de entrada.
-- BDQ com A1, A2 e A3, Gestor e Revisor.
-- Login @animaeducacao.com.br / @ulife.com.br e temas escuro/off-white.
+- Esteira na Planilha de entrada; BDQ com A1, A2, A3, Gestor e Revisor.
+- Domínios @animaeducacao.com.br e @ulife.com.br; temas escuro e off-white.
 
-Planilha de entrada e BDQ mantêm sua apresentação anterior. Esta atualização não altera as consultas, a sincronização da Monday ou as tabelas do banco.
+## Se aparecer uma mensagem de instalação
 
-## Se a base ainda não recebeu a V6.4
+- **SQL 09 não instalado:** execute o arquivo completo no projeto correto.
+- **Serviço não publicado / NOT_FOUND / erro de conexão:** publique a função com o nome exato e confira `NQ_ORIGINS`. Atualizar o GitHub não publica uma Edge Function.
+- **Sem autorização:** confira se a conta usa exatamente um dos três e-mails, foi confirmada e está com perfil Admin. Saia e entre novamente.
 
-Os scripts anteriores estão incluídos para quem ainda precisa instalá-los:
-
-- SQL 08 já instalado: não execute scripts para a V6.5.
-- Somente SQL 07 instalado: execute **todo o conteúdo** de `supabase/08_GESTOR_DOS_MATERIAIS.sql` no SQL Editor do Supabase. A mensagem de sucesso continua dizendo V6.4, que é a versão dessa migração.
-- SQL 07 ainda não instalado: instale o 07 antes do 08.
-- Instalação nova sobre as fontes do BI: 05 → 07 → 08.
-
-Não execute scripts antigos depois do 08. Não selecione apenas um trecho do SQL; copie e execute o arquivo completo.
-
-## Verificação
-
-Os 96 testes de lógica passaram. A navegação de UA/UC, busca, gravação/edição, conflitos, histórico e regressões das outras abas foram verificados em DOM simulado. A inspeção visual em navegador real e a publicação no GitHub não foram realizadas nesta entrega.
+A entrega foi verificada localmente, incluindo inspeção visual em navegador com dados de teste. Nenhuma conta real foi criada ou alterada, nenhum SQL foi executado em produção e nenhuma publicação foi feita automaticamente.

@@ -1,0 +1,2 @@
+[functions.nq-gerenciar-usuarios]
+verify_jwt = true

@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {text} from './core.mjs?v=v6-6-usuarios-acessos-20261021';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

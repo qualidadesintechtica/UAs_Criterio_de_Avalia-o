@@ -1,8 +1,16 @@
-# Comentários e avaliações dos materiais — V6.5
+# Comentários e avaliações dos materiais — V6.6
 
 Página para GitHub Pages com autenticação institucional, quatro abas, filtros compartilhados e comentários com histórico.
 
-## Leitura de UA e UC — V6.5
+## Usuários, perfis e progresso — V6.6
+
+A tela inicial recebe **Criar login e senha**. A área interna **Usuários e acessos** permite criar contas, editar nome e perfil e definir senha temporária, restrita no servidor a ligia.neta@animaeducacao.com.br, joao.cane@animaeducacao.com.br e cristina.brito@animaeducacao.com.br. Os perfis são **Especialista, Revisor e Admin**. Quem recebe senha temporária deve escolher outra antes de consultar os resultados.
+
+A barra **Respostas dos especialistas** mostra critérios respondidos e percentual no recorte atual, acima dos filtros e no detalhe do material. Comentários complementares não alteram o progresso; materiais sem critérios sincronizados são sinalizados. O total considera somente critérios disponíveis na base.
+
+**Instale o SQL 09, publique a função nq-gerenciar-usuarios e atualize todos os arquivos do GitHub**, nessa ordem. Subir os arquivos ao GitHub não instala o servidor. Siga **COMECE_AQUI.md** e **LEIA_USUARIOS_E_ACESSOS.md** para instalação, perfis iniciais, confirmação de e-mail e uso das contas compartilhadas com o BI.
+
+## Leitura de UA e UC — V6.5 preservada
 
 O painel de UA e UC aproveita mais a largura da tela e apresenta um registro por vez. O menu lateral reúne os critérios, o status de cada um e a indicação de comentário. Os botões Anterior e Próximo permitem percorrer os registros sem rolar uma sequência de cartões. Uma busca localiza critérios ou textos dos comentários no menu.
 
@@ -12,7 +20,7 @@ Em telas menores, **Ir para critério** substitui o menu lateral. Na UC, a abert
 
 Editar e adicionar comentários usa as mesmas origens e a mesma função de gravação. Trocar de critério com uma edição aberta mantém o texto e solicita salvar ou cancelar. Após salvar, o painel mostra o registro editado ou o novo complemento. Histórico, autoria, versões, classificação e texto original da Monday continuam disponíveis.
 
-Esta mudança de visualização **não exige SQL novo**. Se a V6.4 já está instalada com o SQL 08, basta substituir todos os arquivos da página, incluindo `review-panel.css`. Planilha de entrada e BDQ mantêm sua apresentação anterior.
+A mudança de leitura da V6.5 não exigiu SQL novo. A V6.6 acrescenta o SQL 09 e a função de gestão de acessos. O arquivo `review-panel.css` e a apresentação anterior de Planilha de entrada e BDQ continuam incluídos.
 
 ## Correções da V6.4 preservadas
 
@@ -26,17 +34,17 @@ Gestor corresponde ao campo `gestor_validacao_nq`. Revisor corresponde ao `revis
 
 ## Base necessária para as correções da V6.4
 
-**Se o SQL 08 já está instalado, não repita scripts nesta atualização visual. Se somente o SQL 07 está instalado, execute `supabase/08_GESTOR_DOS_MATERIAIS.sql`**, depois substitua todos os arquivos da página. Se ainda não está instalado, siga COMECE_AQUI.md: em instalação nova, execute 05, 07 e 08, nessa ordem. Não execute SQL antigo depois do 08.
+A base de dados dos materiais continua exigindo o SQL 08. Se já está instalado, avance para o SQL 09 da V6.6. Se somente o SQL 07 está instalado, execute 08 e depois 09. Para instalação nova sobre as fontes existentes do BI, siga COMECE_AQUI.md: 05 → 07 → 08 → 09. Não execute scripts antigos depois do 09.
 
 O SQL 08 acrescenta o campo Gestor ao final das consultas protegidas e cria a consulta específica de BDQ. A função de gravação mantém seu contrato e ganha uma busca adicional de origem para permitir comentários nos bancos dessa consulta. Não altera os dados sincronizados, a base consolidada, as tabelas de comentários ou as versões anteriores.
 
-Após publicar, confira **V6.5 · 19/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
+Após publicar, confira **V6.6 · 21/10/2026**, clique em Atualizar dados e, para conferir o total completo, em Limpar filtros. Os arquivos usam um novo identificador de versão para reduzir a reutilização de recursos antigos.
 
 Autenticação Ânima/Ulife, consultas independentes, contagem dos planos por ID, busca, filtros entre abas, paginação, lista, exportação e temas continuam disponíveis.
 
 ## Domínios autorizados
 
-São permitidos `@animaeducacao.com.br` e `@ulife.com.br`, com conta cadastrada no BI. A mesma regra protege as consultas de avaliações/materiais, as políticas de leitura de comentários/histórico e a função de gravação. O SQL 05 centraliza a verificação em `nq_painel_acesso_institucional`, sem elevar privilégios. Domínios externos, subdomínios não autorizados e usuários anônimos continuam bloqueados no painel. A inclusão de domínio não cria contas nem muda senhas. O carregamento verifica a regra no servidor e avisa quando a página V6 encontra uma base ainda não atualizada.
+São permitidos `@animaeducacao.com.br` e `@ulife.com.br`, com conta institucional existente ou criada pelo cadastro desta página. A mesma regra protege as consultas de avaliações/materiais, as políticas de leitura de comentários/histórico e a função de gravação. O SQL 05 centraliza a verificação em `nq_painel_acesso_institucional`, sem elevar privilégios. Domínios externos, subdomínios não autorizados e usuários anônimos continuam bloqueados no painel. A inclusão de domínio não cria contas nem muda senhas. O carregamento verifica a regra no servidor e avisa quando a página V6 encontra uma base ainda não atualizada.
 
 ## Dados da Monday
 
@@ -125,6 +133,10 @@ A busca, a lista e o CSV usam os comentários atuais. O CSV mantém as colunas a
 - `portal-comments.mjs`: comentários, versões e mensagens de conflito.
 - `pe-names.mjs`: nomes da Planilha de entrada sem alterar os vínculos das avaliações e dos comentários.
 - `auth-policy.mjs`: validação dos domínios autorizados no cliente.
+- `access.mjs`, `access-policy.mjs`, `access.css`: cadastro, perfis, gestão e troca obrigatória.
+- `specialist-progress.mjs`: progresso das respostas dos critérios sincronizados.
+- `supabase/09_USUARIOS_E_ACESSOS.sql`: autorização, perfis e registro de senha temporária.
+- `supabase/functions/nq-gerenciar-usuarios/index.ts`: criação e senha temporária no servidor.
 - `release.mjs`: versão visível da entrega.
 - `view-model.mjs`: destaque seguro da pesquisa e funções de resultado dos critérios.
 - `supabase/`: instalação incremental das fontes e da gravação protegida.
@@ -134,7 +146,7 @@ Nunca use uma chave administrativa em `config.js`. As consultas e gravações co
 
 ## Verificação
 
-Passaram 96 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
+Passaram 110 testes de lógica (`node --test tests/*.test.mjs`). Os novos testes cobrem Modelagem/Modelagens no design, A1/A2/A3, vínculo exato do A2, responsáveis da fonte, ausência de vínculos inventados, busca e CSV, comentários e integração dos bancos ausentes sem trocar a chave dos existentes. As verificações anteriores de autenticação, filtros, prazos de consulta, nomes e histórico continuam passando.
 
 Na verificação da V6.4 em PostgreSQL embarcado, o SQL 08 foi aplicado sobre a instalação do SQL 07, também com as migrações anteriores. Foram conferidos o campo Gestor nas views de materiais e critérios, a nova fonte de A1/A2/A3, o banco A2 ausente da consolidada, a chave antiga do A1, a gravação/edição de comentários do A2, o histórico anterior, a execução repetida e o acesso dos dois domínios, com externos e anônimos bloqueados nas consultas protegidas. Os 455 planos da distribuição de teste foram mantidos; com a regra solicitada, 2 entram no design e 79 ficam nos demais status.
 
@@ -142,4 +154,4 @@ Em DOM simulado, foram verificados Esteira na Planilha, Gestor e Revisor no BDQ,
 
 Na V6.5, o DOM simulado também verificou UA com sete critérios; UC por unidade e completa com quatorze indicadores; menu, busca, seletor, Anterior/Próximo, limites da navegação e um cartão aberto por vez. Foram verificadas edição durante troca de critério, gravação mantendo o registro selecionado, complemento no critério atual, conflito sem perda de texto, leitura do original e das versões anteriores, HTML seguro e limpeza da sessão. As verificações de Planilha e BDQ passaram junto das novas interações. Os arquivos SQL e as regras de dados não foram alterados.
 
-A inspeção visual em navegador real, o login institucional e a publicação no GitHub não foram realizados nesta entrega. Não foi executado SQL em produção.
+Na V6.6, passaram também 108 verificações do controlador de acessos, 321 da função de servidor e 39 do SQL em PostgreSQL embarcado. A inspeção visual em navegador real usou dados de teste. As verificações de acesso e mutação não alteraram contas reais. O login institucional real, a publicação no GitHub, a função hospedada e o SQL em produção não foram executados nesta preparação. Consulte LEIA_USUARIOS_E_ACESSOS.md para os limites e a instalação.

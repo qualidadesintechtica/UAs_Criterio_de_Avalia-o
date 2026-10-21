@@ -1,15 +1,3 @@
-V6.5 · LEITURA DE UA E UC · 19/10/2026
-Marca na tela: V6.5 · 19/10/2026.
-Atualização visual: não exige novo SQL se o 08 já está instalado.
-Substitua todos os arquivos no GitHub e inclua review-panel.css.
-
-UA e UC: painel mais largo, menu de critérios e um registro aberto por vez.
-Anterior/Próximo, busca no material e seletor para telas menores.
-Dados do material recolhidos; resumo e Adicionar comentário acessíveis.
-Edição aberta preservada ao tentar trocar de critério; registro salvo permanece selecionado.
-Comentários, origem, autoria, versões, histórico e critérios preservados.
-Planilha, BDQ A1/A2/A3, Gestor/Revisor, Modelagem no design, filtros, contagens, login e temas mantidos.
-
-96 testes de lógica passaram; interações e regressões verificadas em DOM simulado.
-SQLs anteriores, consultas e sincronização sem alterações nesta versão.
-Navegador real, login institucional e publicação no GitHub não verificados nesta entrega.
+V6.6
+21/10/2026
+Usuários e acessos: cadastro, nome, perfis e senhas temporárias; progresso das respostas dos especialistas.

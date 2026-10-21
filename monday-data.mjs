@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-usuarios-acessos-20261021';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 

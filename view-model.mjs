@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-5-leitura-ua-uc-20261019';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-usuarios-acessos-20261021';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';
