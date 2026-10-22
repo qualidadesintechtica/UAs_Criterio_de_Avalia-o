@@ -1,10 +1,13 @@
-# Atualizar para V6.6.9 — filtros de pessoas
+# V6.6.10 — ativar responsáveis da Monday
 
-1. Extraia o ZIP e substitua todo o conteúdo na raiz publicada do repositório **qualidadesintechtica/UAs_Criterio_de_Avalia-o**.
-2. Inclua o novo **people-filters.mjs** e os demais arquivos atualizados.
-3. Confirme o commit, aguarde a publicação e pressione **Ctrl + F5**.
-4. Confira **V6.6.9**, clique em **Atualizar dados** e teste Especialistas e Revisores, separados e juntos.
+1. **SQL Editor do Supabase:** execute todo **supabase/13_RESPONSAVEIS_MONDAY.sql** no projeto **nkjmgzyjjbepebzurowy**. Esse SQL cria a fonte dos responsáveis usada pela tabela e pelos filtros.
+2. **GitHub:** substitua todo o conteúdo extraído na raiz publicada do repositório. Inclua **monday-people.mjs** e os demais arquivos atualizados.
+3. Aguarde a publicação, pressione **Ctrl + F5**, confira **V6.6.10** e clique em **Atualizar dados**.
 
-**Não exige SQL novo nem republicar funções para esta correção.** O SQL 12 dos especialistas continua sendo utilizado. A nova versão preserva os comentários e o serviço de download anteriores.
+Não precisa republicar Edge Functions nesta atualização. Não reaplique SQLs anteriores.
 
-Leia **LEIA_FILTROS_PESSOAS_V669.md**. A pendência de download do SharePoint (HTTP 401) continua separada desta correção.
+A tabela mostra **Revisor na Monday** e **Especialista na Monday** nas quatro abas. Os filtros consultam os mesmos nomes. Especialistas continua limitado aos participantes cadastrados com esse perfil.
+
+Para SharePoint e OneDrive, o botão solicita o download à Microsoft pelo navegador. Pode ser necessário entrar na conta institucional que possui acesso à planilha. O salvamento real precisa ser conferido na pasta de downloads.
+
+Passo a passo e limites: **LEIA_RESPONSAVEIS_E_DOWNLOAD_V6610.md**.

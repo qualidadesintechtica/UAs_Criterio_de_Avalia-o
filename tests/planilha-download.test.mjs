@@ -7,7 +7,7 @@ const bundled=await readFile(new URL('index.ts',folder),'utf8');
 const executable=bundled.replace("import {createClient} from 'npm:@supabase/supabase-js@2';",'').replace(/Deno\.serve\(createDownloadHandler[\s\S]*$/,'export {createDownloadHandler};');
 const {createDownloadHandler}=await import('data:text/javascript;base64,'+Buffer.from(executable).toString('base64'));
 
-import {requestPlanDownload,savePlanDownload,downloadConnectionError} from '../planilha-download.mjs';
+import {requestPlanDownload,savePlanDownload,downloadConnectionError,microsoftDownloadURL,requestMicrosoftDownload} from '../planilha-download.mjs';
 const column=(url='https://docs.google.com/arquivo.xlsx',extra={})=>({id:'link_pe',title:'Planilha de entrada',type:'link',value:{url,text:'Minha planilha'},...extra});
 const row=(...cols)=>({monday_item_validacao:'123',colunas_planilha:cols});
 const bytes=new Uint8Array([0x50,0x4b,3,4,0,0,0,0,0,0]);
@@ -164,4 +164,17 @@ test('atualização da coluna não aceita item em outro quadro e não ignora dom
 test('link inalterado não provoca repetição ilimitada nem troca para outro anexo',async()=>{
  const f=fixture({vars:{MONDAY_API_TOKEN:'private-token'},fetch:async(url,init,n)=>n===1?new Response(null,{status:403}):Response.json({data:{items:[{id:'123',board:{id:'9433297929'},column_values:[{id:'link_pe',value:JSON.stringify({url:'https://docs.google.com/arquivo.xlsx'}),column:{title:'Planilha de entrada'}}]}]}})});
  const r=await f.handler(f.request());assert.equal((await r.json()).code,'NQ_SOURCE_AUTH');assert.equal(f.calls.length,2);
+});
+
+test('SharePoint solicita download no navegador preservando o link de compartilhamento',()=>{
+ const link={status:'ready',url:'https://animaeducacao.sharepoint.com/:x:/s/Qualidade/arquivo?e=chave',name:'Entrada.xlsx'};
+ const address=new URL(microsoftDownloadURL(link));assert.equal(address.searchParams.get('download'),'1');assert.equal(address.searchParams.get('e'),'chave');
+ let anchor,clicked=false,removed=false;
+ const doc={body:{appendChild(a){anchor=a}},createElement(){return{click(){clicked=true},remove(){removed=true}}}};
+ requestMicrosoftDownload(link,doc);assert.ok(clicked&&removed);assert.equal(anchor.target,'_blank');assert.equal(anchor.rel,'noopener noreferrer');assert.equal(anchor.download,'Entrada.xlsx');
+ assert.equal(anchor.href,address.href);assert.equal(anchor.Authorization,undefined);
+});
+test('caminho Microsoft não aceita origem falsa, HTTP, credenciais na URL ou anexo Monday',()=>{
+ for(const url of ['http://animaeducacao.sharepoint.com/a.xlsx','https://animaeducacao.sharepoint.com.evil.example/a.xlsx','https://user:secret@animaeducacao.sharepoint.com/a.xlsx','https://docs.google.com/a.xlsx'])assert.equal(microsoftDownloadURL({status:'ready',url}),null);
+ assert.equal(microsoftDownloadURL({status:'ready',assetId:'1',url:'https://animaeducacao.sharepoint.com/a.xlsx'}),null);
 });

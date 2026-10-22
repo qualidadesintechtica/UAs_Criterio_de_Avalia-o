@@ -1,4 +1,4 @@
-import {validateAccessName,validateAccessPassword,validateAccessEmail,accessError} from './access-policy.mjs';
+import {validateAccessName,validateAccessPassword,validateAccessEmail,accessError} from './access-policy.mjs?v=v6-6-10-responsaveis-monday-20261022';
 
 export const PROFILE_LABELS={especialista:'Especialista',revisor:'Revisor',admin:'Admin'};
 const ADMIN_EMAILS=new Set(['ligia.neta@animaeducacao.com.br','joao.cane@animaeducacao.com.br','cristina.brito@animaeducacao.com.br']);

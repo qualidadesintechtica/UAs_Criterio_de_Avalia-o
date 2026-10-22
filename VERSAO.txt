@@ -1,3 +1,3 @@
-V6.6.9
-21/10/2026
-Filtros de especialistas e revisores por material, com normalização de nomes.
+V6.6.10
+22/10/2026
+Responsáveis atribuídos na Monday na tabela e nos filtros. Download Microsoft pelo navegador autenticado.

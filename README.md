@@ -1,7 +1,7 @@
-# Acompanhamento da Qualidade — V6.6.9
+# Acompanhamento da Qualidade — V6.6.10
 
-Comece por **COMECE_AQUI.md** e **LEIA_FILTROS_PESSOAS_V669.md**.
+Use **COMECE_AQUI.md** e **LEIA_RESPONSAVEIS_E_DOWNLOAD_V6610.md**.
 
-Filtros de especialistas e revisores por material, preservando critérios, comentários, progresso e totais. Leitura de nomes em texto, JSON e objetos. Especialistas continuam limitados ao cadastro com esse perfil.
+Esta versão consulta responsáveis atribuídos na Monday para as colunas da tabela e os filtros, separando-os da autoria de avaliações. Exige o SQL 13. O download de arquivos Microsoft passa a usar o navegador com a sessão da pessoa que clicou.
 
-A atualização dos filtros exige somente os arquivos da página. Os SQLs e as Edge Functions são os mesmos da V6.6.8. Guias anteriores documentam as instalações anteriores.
+Os guias anteriores documentam etapas anteriores; siga o guia V6.6.10 para instalar esta atualização.

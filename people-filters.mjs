@@ -22,6 +22,8 @@ export function personNames(value){
   visit(value);return [...found.values()];
 }
 export function personValues(record,field){
+  if(record.mondayPeopleReady===false)return [];
+  if(record.mondayPeopleReady===true)return personNames(field==='reviewers'?record.mondayReviewers:record.mondaySpecialists);
   if(field==='reviewers'){
     return personNames([record.assignedReviewers,record.reviewers]);
   }

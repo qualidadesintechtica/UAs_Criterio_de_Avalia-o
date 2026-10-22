@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 

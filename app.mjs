@@ -1,27 +1,28 @@
-import {personValues} from './people-filters.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload} from './planilha-download.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {createAccessController} from './access.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {RELEASE} from './release.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {highlightHTML} from './view-model.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {applyMondayPeople} from './monday-people.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {personValues,personNames} from './people-filters.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {createAccessController} from './access.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {RELEASE} from './release.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {highlightHTML} from './view-model.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-10-responsaveis-monday-20261022';
 const $=id=>document.getElementById(id);
-function tableHeaders(section){return ['UC',section==='BDQ'?'BDQ':'UA','Unidade da UA',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor','Revisor']:[])];}
+function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
@@ -37,7 +38,7 @@ function planDownloadMarkup(g){
   const id=String(g.validationItemId||''),link=planLink(id),busy=state.download?.id===id;
   const disabled=!id||state.planLinksState!=='ready'||link.status!=='ready'||busy;
   const reason=!id?'Sem vínculo com um item de validação.':state.planLinksState==='setup'?'Download ainda não configurado.':state.planLinksState!=='ready'?'Links indisponíveis nesta consulta.':link.message||'';
-  const feedback=state.downloadFeedback.get(id)||reason;
+  const feedback=state.downloadFeedback.get(id)||reason||(microsoftDownloadURL(link)?'Use a conta Microsoft que tem acesso à planilha.':'');
   return '<div class="plan-download"><button type="button" class="btn secondary plan-download-button" data-plan-download="'+esc(id)+'"'+(disabled?' disabled':'')+' aria-label="Baixar planilha de entrada de '+esc(g.uc)+'"'+(reason?' title="'+esc(reason)+'"':'')+'><span aria-hidden="true">↓</span> '+(busy?'Preparando download…':'Baixar planilha')+'</button><small data-plan-feedback="'+esc(id)+'" role="status">'+esc(feedback)+'</small></div>';
 }
 function updatePlanDownloadUI(id,message,busy){
@@ -48,6 +49,11 @@ function updatePlanDownloadUI(id,message,busy){
 async function beginPlanDownload(id){
   if(state.download){toast('Aguarde o download em andamento.');return;}
   const link=planLink(id);if(!state.loaded||!state.user||state.planLinksState!=='ready'||link.status!=='ready')return;
+  if(microsoftDownloadURL(link)){
+    requestMicrosoftDownload(link);
+    updatePlanDownloadUI(id,'Download solicitado à Microsoft. Se aparecer uma tela de acesso, entre com a conta institucional autorizada e conclua o download.',false);
+    return;
+  }
   const user=state.user,controller=new AbortController(),job={id,controller};state.download=job;
   const timer=setTimeout(()=>controller.abort(),45000);
   updatePlanDownloadUI(id,'Preparando o arquivo vinculado na Monday…',true);
@@ -63,7 +69,7 @@ async function beginPlanDownload(id){
 function clearSensitive(resetAccess=true){
   if(resetAccess)access?.clear();
   state.download?.controller.abort();state.download=null;state.planLinks.clear();state.downloadFeedback.clear();state.planLinksState='setup';$('entryDownloadNotice').hidden=true;
-  state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
+  state.peopleReady=false;state.peopleState='loading';state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
@@ -108,7 +114,7 @@ function friendly(error){
   return 'Não foi possível carregar os resultados da base. Tente atualizar os dados.';
 }
 async function readAll(table,columns,order,signal,kind){
-  const size=kind==='banks'?1000:500,rows=[];
+  const size=kind==='banks'||kind==='people'?1000:500,rows=[];
   const read=async from=>{
     const {data,error}=await client.from(table).select(columns).order(order,{ascending:true}).range(from,from+size-1).abortSignal(signal);
     if(error)throw error;
@@ -161,7 +167,8 @@ async function load(){
       queryWithDeadline(planSignal=>readAll(window.UA_CONFIG.entryPlansView||'vw_ua_resultados_planilhas_validacao_autenticadas','*','monday_item_validacao',planSignal,'plans'),signal,12000),
       queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000),
       queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000),
-      queryWithDeadline(peopleSignal=>readSpecialists(client,peopleSignal),signal,8000)
+      queryWithDeadline(peopleSignal=>readSpecialists(client,peopleSignal),signal,8000),
+      queryWithDeadline(peopleSignal=>readAll('vw_ua_responsaveis_monday_autenticados','*','fonte_chave',peopleSignal,'people'),signal,15000)
     ]);
     if(run!==state.run)return;
     if(results[5].status==='fulfilled'&&results[5].value===false){
@@ -177,6 +184,13 @@ async function load(){
     const formError=results.slice(2,4).some(r=>r.status==='rejected');
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
     state.baseSections=entryPlanUniverse(resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials),materials,plansReady);
+    state.peopleReady=results[10].status==='fulfilled';
+    state.peopleState=state.peopleReady?'ready':['42P01','PGRST205'].includes(results[10].reason?.code)?'setup':'unavailable';
+    state.baseSections=applyMondayPeople(state.baseSections,state.peopleReady?results[10].value:[],state.peopleReady);
+    if(!state.peopleReady){
+      if(state.filters.specialists||state.filters.reviewers)toast('Os filtros de pessoas foram desativados porque os responsáveis da Monday estão indisponíveis.');
+      delete state.filters.specialists;delete state.filters.reviewers;
+    }
     state.baseSections.BDQ.validationSourceReady=banksReady;
     state.commentsReady=results[4].status==='fulfilled';state.portalComments=state.commentsReady?results[4].value:[];
     state.sections=applyPortalComments(state.baseSections,state.portalComments);
@@ -188,7 +202,7 @@ async function load(){
     source('Monday · base sincronizada','connected');
     const syncDates=[formData.lastSync,...materials.map(m=>m.sincronizado_validacao||m.sincronizado_esteira)].map(v=>Date.parse(v||'')).filter(Number.isFinite);
     $('updatedAt').textContent=(syncDates.length?'Sincronização Monday: '+new Date(Math.max(...syncDates)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · ':'')+'Consulta: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const warnings=[];if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
+    const warnings=[];if(!state.peopleReady)warnings.push(state.peopleState==='setup'?'Instale supabase/13_RESPONSAVEIS_MONDAY.sql para habilitar os responsáveis da Monday e os filtros de pessoas.':'Os responsáveis atribuídos na Monday não puderam ser consultados. Atualize os dados.');if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
     if(results[1].value.length&&!Object.hasOwn(results[1].value[0],'gestor_validacao_nq'))warnings.push('Para exibir o gestor dos BDQs, execute supabase/08_GESTOR_DOS_MATERIAIS.sql e atualize os dados.');
     if(!banksReady)warnings.push('A consulta completa de A1, A2 e A3 não está disponível. '+friendly(results[7].reason)+' Aplique o SQL 08 para incluir também os bancos ausentes da consolidada. Os dados disponíveis continuam acessíveis.');
@@ -219,12 +233,13 @@ async function refreshSpecialists(){
 }
 function renderFilters(){
   const note=$('specialistFilterNotice');
-  note.hidden=state.specialistsState==='ready'&&state.specialists.length>0;
-  note.textContent=state.specialistsState==='setup'?'Para habilitar o filtro de Especialistas, execute o SQL 12 de especialistas cadastrados.':state.specialistsState==='ready'?'Nenhum participante com nome cadastrado no perfil Especialista. A administração pode ajustar o perfil em Participantes.':'Não foi possível consultar os especialistas cadastrados. Clique em Atualizar dados.';
+  note.hidden=state.peopleReady&&state.specialistsState==='ready'&&state.specialists.length>0;
+  note.textContent=!state.peopleReady?'Os responsáveis da Monday estão indisponíveis. Atualize os dados ou avise a administração.':state.specialistsState==='setup'?'Para habilitar o filtro de Especialistas, execute o SQL 13 de responsáveis da Monday.':state.specialistsState==='ready'?'Nenhum participante com nome cadastrado no perfil Especialista. A administração pode ajustar o perfil em Participantes.':'Não foi possível consultar os especialistas cadastrados. Clique em Atualizar dados.';
 
   for(const select of document.querySelectorAll('[data-filter]')){
     const field=select.dataset.filter,{values,missing}=field==='specialists'?{values:state.specialists,missing:false}:filterOptions(state.sections,field,state.filters);
-    if(field==='specialists')select.disabled=state.specialistsState!=='ready'||!values.length;
+    if(field==='specialists')select.disabled=!state.peopleReady||state.specialistsState!=='ready'||!values.length;
+    if(field==='reviewers')select.disabled=!state.peopleReady;
     const current=state.filters[field]||'';
     select.innerHTML='<option value="">'+esc(defaults[field])+'</option>'+values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+(missing?'<option value="__missing__">Não informado</option>':'');
     select.value=current;
@@ -283,6 +298,14 @@ function renderChips(){
   $('filterChips').innerHTML=html;$('filterChips').hidden=!html;
 }
 function previewComment(group){return group.comments.find(c=>state.query&&norm(c.text).includes(norm(state.query)))||group.comments[0];}
+function mondayPeopleCells(group,unit){
+  const rows=progressRecordsForUnit(group.criteria,unit);
+  return ['reviewers','specialists'].map(field=>{
+    const names=personNames(rows.flatMap(row=>personValues(row,field)));
+    const empty=!state.peopleReady?'Indisponível':rows.some(row=>row.mondayPeopleAmbiguous)?'Vínculo ambíguo':'Não informado na Monday';
+    return '<td class="monday-person-cell">'+highlightHTML(names.join('; ')||empty,state.query)+'</td>';
+  }).join('');
+}
 function renderTable(){
   state.groups=groupUAs(state.filtered);const groups=state.groups;
   const entries=state.view==='table'?materialTableRows(groups):groups.map((group,detailIndex)=>({group,detailIndex,name:group.ua,unit:group.unitLabel}));
@@ -292,8 +315,8 @@ function renderTable(){
   $('tableCount').textContent=(state.section==='PE'&&!state.sections.PE?.validationSourceReady?'Totais de validação indisponíveis':nf.format(countWorkflow(state.filtered).all)+' '+SECTIONS[state.section].plural+' no recorte'+(unlinked?' · '+nf.format(unlinked)+' registro(s) sem vínculo, fora do total':''))+' · Clique no material para abrir os comentários.';
   $('tableBody').innerHTML=rows.length?rows.map(({group:g,detailIndex:index,name,unit,unitId})=>{
     const badge=state.section==='BDQ'&&g.assessmentType?'<span class="tag bdq-type">'+esc(g.assessmentType)+'</span>':'';
-    const extra=state.section==='PE'?'<td>'+highlightHTML(g.track||'Não informada',state.query)+'</td>':state.section==='BDQ'?'<td>'+highlightHTML((g.managers||[]).join('; ')||'Não informado',state.query)+'</td><td>'+highlightHTML((g.assignedReviewers||[]).join('; ')||'Não informado',state.query)+'</td>':'';
-    return '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+badge+highlightHTML(name,state.query)+(g.workflowEligible===false?'<small class="unlinked-label">Sem vínculo com item de validação</small>':'')+'</span><span aria-hidden="true">↗</span></button>'+materialProgressMarkup(progressRecordsForUnit(g.criteria,unitId),name,state.section)+planDownloadMarkup(g)+'</td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td>'+extra+'</tr>';
+    const extra=state.section==='PE'?'<td>'+highlightHTML(g.track||'Não informada',state.query)+'</td>':state.section==='BDQ'?'<td>'+highlightHTML((g.managers||[]).join('; ')||'Não informado',state.query)+'</td>':'';
+    return '<tr class="material-row" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'"><td><span class="material-uc">'+highlightHTML(g.uc,state.query)+'</span></td><td><button type="button" class="material-link" data-unit-id="'+esc(unitId||'')+'" data-detail="'+index+'" aria-label="Abrir comentários de '+esc(name)+'"><span>'+badge+highlightHTML(name,state.query)+(g.workflowEligible===false?'<small class="unlinked-label">Sem vínculo com item de validação</small>':'')+'</span><span aria-hidden="true">↗</span></button>'+materialProgressMarkup(progressRecordsForUnit(g.criteria,unitId),name,state.section)+planDownloadMarkup(g)+'</td><td>'+highlightHTML(unit||'Não informada',state.query)+'</td>'+mondayPeopleCells(g,unitId)+extra+'</tr>';
   }).join(''):'<tr><td colspan="'+tableHeaders(state.section).length+'" class="empty-table">'+esc(state.records.length?'Nenhum material encontrado. Ajuste ou limpe os filtros.':state.sectionErrors[state.section]||'Não há registros sincronizados de '+SECTIONS[state.section].title.toLowerCase()+' nesta fonte para esta conta.')+'</td></tr>';
   renderCommentList(rows);
   $('pageInfo').textContent=entries.length?nf.format(start+1)+'–'+nf.format(start+rows.length)+' de '+nf.format(entries.length)+' linha(s)'+' · Página '+state.page+' de '+pages:'Nenhum material neste recorte';$('prev').disabled=state.page<=1;$('next').disabled=state.page>=pages;$('export').disabled=!state.filtered.length;
@@ -302,7 +325,7 @@ function renderTable(){
 }
 function renderCommentList(rows){
   const byUC=new Map(),seen=new Set();rows.forEach(({group:g,detailIndex:index})=>{if(seen.has(index))return;seen.add(index);const key=g.ucId||g.uc;if(!byUC.has(key))byUC.set(key,{uc:g.uc,id:g.ucId,rows:[]});byUC.get(key).rows.push({g,index});});
-  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<div class="comment-material-row"><button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(personValues(g,'reviewers').join('; ')||'Não informado')+' · Especialista: '+esc(g.specialists.join('; ')||'Não informado')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span>'+materialProgressMarkup(g.criteria,g.ua,state.section)+'</span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>'+planDownloadMarkup(g)+'</div>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
+  $('commentList').innerHTML=rows.length?[...byUC.values()].map(uc=>'<details class="uc-group" open><summary><span><strong>'+highlightHTML(uc.uc,state.query)+'</strong><small>'+(uc.id?'ID '+esc(uc.id):'Unidade Curricular')+'</small></span><span class="count-pill">'+uc.rows.length+' UA(s) nesta página</span></summary><div>'+uc.rows.map(({g,index})=>{const comment=previewComment(g);const type=materialWorkflow(g);return '<div class="comment-material-row"><button class="comment-row" data-detail="'+index+'" aria-label="Ler os pareceres de '+esc(g.ua)+'"><span class="comment-row-main"><span class="comment-row-title">'+highlightHTML(g.ua,state.query)+'<span class="tag '+type+'">'+esc(uaLabels[type])+'</span></span><span class="comment-row-people">Revisor: '+esc(personValues(g,'reviewers').join('; ')||'Não informado')+' · Especialista: '+esc(personValues(g,'specialists').join('; ')||'Não informado na Monday')+'</span><span class="comment-row-preview">'+(comment?highlightHTML(comment.text,state.query):'Sem comentário registrado')+'</span>'+materialProgressMarkup(g.criteria,g.ua,state.section)+'</span><span class="comment-row-count"><b>'+g.comments.length+'</b> parecer(es)<span aria-hidden="true">→</span></span></button>'+planDownloadMarkup(g)+'</div>';}).join('')+'</div></details>').join(''):'<div class="empty-table">'+esc(state.sectionErrors[state.section]||'Nenhum material encontrado neste recorte.')+'</div>';
 }
 function renderNameIssues(){
   state.nameIssues=entryPlanNameIssues(state.section==='PE'?state.filtered:[]);
@@ -387,7 +410,7 @@ function openMaterialDetails(key,unit=null,preferredRecordId=null){
   const missing=g.criteria.filter(r=>r.status==='bad'&&!r.comment);const s=g.summary;
   state.detailRecords=[...g.criteria].sort((a,b)=>({bad:0,good:1,rated:2,pending:3,comment:4}[a.status]-{bad:0,good:1,rated:2,pending:3,comment:4}[b.status])||a.criterion.localeCompare(b.criterion,'pt-BR',{numeric:true}));
   const canAdd=state.commentsReady&&state.detailRecords.some(commentSourceKey);
-  const meta=planDownloadMarkup(g)+'<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+(g.kind==='PE'&&g.sourceEvent?'<div><b>Formulário Monday</b>'+esc(g.sourceEvent)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s)</b>'+esc(g.specialists.join('; ')||'Não informado')+'</div><div><b>Revisor(es)</b>'+esc(personValues(g,'reviewers').join('; ')||'Não informado')+'</div></div>';
+  const meta=planDownloadMarkup(g)+'<div class="detail-meta">'+(g.validationItemId?'<div><b>Item na validação Monday</b>'+esc(g.validationItemId)+'</div>':'')+(g.kind==='PE'&&g.sourceName?'<div><b>Referência da planilha</b>'+esc(g.sourceName)+'</div>':'')+(g.kind==='PE'&&g.sourceEvent?'<div><b>Formulário Monday</b>'+esc(g.sourceEvent)+'</div>':'')+'<div><b>Esteira / Lote / Matriz</b>'+esc([g.track,g.batch,g.matrix,g.semester].filter(Boolean).join(' · '))+'</div><div><b>Unidade da UA</b>'+esc(g.unitLabel||'Não informada')+'</div>'+(g.kind==='BDQ'?'<div><b>Gestor do material</b>'+esc((g.managers||[]).join('; ')||'Não informado')+'</div><div><b>Revisor atribuído na validação</b>'+esc((g.assignedReviewers||[]).join('; ')||'Não informado')+'</div>':'')+'<div><b>Especialista(s) na Monday</b>'+esc(personValues(g,'specialists').join('; ')||'Não informado na Monday')+'</div><div><b>Revisor(es) na Monday</b>'+esc(personValues(g,'reviewers').join('; ')||'Não informado')+'</div></div>';
   $('dialogContent').innerHTML=state.reviewMode?reviewPanelMarkup(g,meta,canAdd):progressMarkup(specialistProgress(state.detailRecords),{compact:true,label:progressLabel(g.kind)})+meta+(unit&&g.kind==='UC'?'<button type="button" class="text-button" data-show-full-uc>Ver todos os registros da UC</button>':'')+'<div class="drawer-summary"><strong>Registros e critérios deste material</strong><span>'+s.assessed+' de '+s.total+' avaliados</span><div><span class="tag good">'+s.good+' conforme(s)</span><span class="tag bad">'+s.bad+' inconformidade(s)</span>'+(s.pending?'<span class="tag pending">'+s.pending+' não avaliado(s)</span>':'')+(s.rated?'<span class="tag rated">'+s.rated+' por conceito</span>':'')+'</div>'+(g.materialStatuses.length?'<span>Status Monday: '+esc(g.materialStatuses.join('; '))+'</span>':'')+'</div><div class="add-comment-area"><div><strong>Comentários dos professores</strong><p>Acrescente informações ou edite os comentários. Cada versão fica registrada com autor e data.</p></div><button type="button" class="btn primary" data-add-comment'+(!canAdd?' disabled':'')+'>Adicionar comentário</button></div><div id="newCommentSlot"></div>'+(!state.commentsReady?'<p class="comment-setup-note">Não foi possível consultar os comentários do painel. Atualize os dados; se a edição ainda não foi instalada, solicite a atualização V6 da base.</p>':'')+'<p class="comment-scope-note">As edições são compartilhadas entre as contas institucionais autorizadas e salvas no painel. O original da Monday fica preservado no histórico.</p>'+(missing.length?'<p class="missing-comment-note"><strong>Inconformidade sem parecer</strong>'+esc(missing.map(r=>r.criterion).join('; '))+'</p>':'')+state.detailRecords.map((r,i)=>criterionCard(r,i)).join('');
   if(g.kind==='PE'){
     const original=$('dialogContent').innerHTML;

@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';

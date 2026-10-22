@@ -1,5 +1,6 @@
-import {groupUAs,csvCell} from './core.mjs?v=v6-6-9-filtros-pessoas-20261021';
-import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-9-filtros-pessoas-20261021';
+import {personValues} from './people-filters.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {groupUAs,csvCell} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-10-responsaveis-monday-20261022';
 
 // A conferência usa a mesma identidade e a mesma regra dos cartões.
 // Na PE, uaKey contém o ID exato do item do quadro de validação.
@@ -20,10 +21,10 @@ export function materialCounts(records=[]){
 
 export function materialAuditCSV(records=[]){
   const {materials}=materialCounts(records);
-  const headings=['ID(s) do item Monday','Categoria','UC','Código da UC','UA / material','Código do material','Esteira','Lote','Status original Monday','Grupo no painel'];
+  const headings=['ID(s) do item Monday','Categoria','UC','Código da UC','UA / material','Código do material','Esteira','Lote','Status original Monday','Grupo no painel','Revisor na Monday','Especialista na Monday'];
   const rows=materials.map(g=>{
     const ids=g.validationItemId?[g.validationItemId]:[...new Set(g.criteria.map(r=>r.parent).filter(Boolean))];
-    return[ids.join('; '),g.kind,g.uc,g.ucId,g.ua,g.uaId,g.track,g.batch,g.materialStatuses.join(' / ')||'Sem status',WORKFLOW_LABELS[materialWorkflow(g)]];
+    return[ids.join('; '),g.kind,g.uc,g.ucId,g.ua,g.uaId,g.track,g.batch,g.materialStatuses.join(' / ')||'Sem status',WORKFLOW_LABELS[materialWorkflow(g)],personValues(g,'reviewers').join('; '),personValues(g,'specialists').join('; ')];
   });
   return '\ufeff'+[headings,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n');
 }

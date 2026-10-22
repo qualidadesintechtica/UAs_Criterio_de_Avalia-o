@@ -1,5 +1,19 @@
-import {resolvePlanLink,fileName,dispositionName,validateFile,MAX_FILE_BYTES} from './supabase/functions/nq-baixar-planilha/links.mjs';
+import {resolvePlanLink,downloadURL,fileName,dispositionName,validateFile,MAX_FILE_BYTES} from './supabase/functions/nq-baixar-planilha/links.mjs?v=v6-6-10-responsaveis-monday-20261022';
 export {resolvePlanLink};
+export function microsoftDownloadURL(link){
+  if(link?.status!=='ready'||link.assetId||!link.url)return null;
+  const address=downloadURL(link.url);if(!address)return null;
+  const url=new URL(address),host=url.hostname;
+  if(!(/^[a-z0-9-]+(?:-my)?\.sharepoint\.com$/.test(host)||host==='onedrive.live.com'||host==='1drv.ms'))return null;
+  url.searchParams.set('download','1');return url.href;
+}
+export function requestMicrosoftDownload(link,doc=document){
+  const address=microsoftDownloadURL(link);if(!address)throw new Error('O vínculo não é um arquivo Microsoft válido.');
+  const a=doc.createElement('a');a.href=address;a.target='_blank';a.rel='noopener noreferrer';a.referrerPolicy='no-referrer';
+  a.download=fileName(link.name,'Planilha_de_entrada.xlsx');doc.body.appendChild(a);
+  try{a.click();}finally{a.remove();}
+  return address;
+}
 const missingService=()=>Object.assign(new Error('O serviço nq-baixar-planilha não foi encontrado. Publique a função nq-baixar-planilha (Edge Function) no Supabase deste painel; atualizar somente o GitHub não ativa o download.'),{code:'NQ_FUNCTION_MISSING'});
 export async function downloadConnectionError(config,signal,fetchImpl=fetch){
   // GET sem sessão e sem cabeçalhos extras não exige preflight. Permite ler

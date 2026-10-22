@@ -59,3 +59,10 @@
 .entry-plan-comment .comment{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
 .entry-plan-comment small{display:block;font-size:11px;line-height:1.8;opacity:.75}
 .entry-source-details{margin-top:24px}.entry-source-details>summary{cursor:pointer;font-size:13px;font-weight:700;padding:16px 0}
+
+#tableView table{min-width:980px;table-layout:auto}
+#tableView th:nth-child(1){width:24%}#tableView th:nth-child(2){width:28%}#tableView th:nth-child(3){width:12%}
+#tableView th:nth-child(4),#tableView th:nth-child(5){width:18%}
+#tableView[data-section=PE] table,#tableView[data-section=BDQ] table{min-width:1120px}
+#tableView[data-section=PE] th,#tableView[data-section=BDQ] th{width:auto}
+.monday-person-cell{font-size:12px;line-height:1.65;overflow-wrap:anywhere}
