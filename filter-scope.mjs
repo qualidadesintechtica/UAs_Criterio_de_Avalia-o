@@ -1,5 +1,5 @@
-import {filterRecords,groupUAs} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {selectWorkflow} from './workflow.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {filterRecords,groupUAs} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
+import {selectWorkflow} from './workflow.mjs?v=v6-6-12-carga-criterios-20261022';
 
 // Mesma sequência para tabela, contagens das quatro abas e exportação.
 // A busca preserva os demais registros do material encontrado.

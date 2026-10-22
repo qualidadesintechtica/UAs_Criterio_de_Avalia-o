@@ -1,5 +1,5 @@
-import {materialKind} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {personNames,personKey} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {materialKind} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
+import {personNames,personKey} from './people-filters.mjs?v=v6-6-12-carga-criterios-20261022';
 const text=value=>value==null?'':String(value).trim();
 const norm=value=>personKey(value);
 function decoded(value){if(typeof value!=='string')return value;try{return JSON.parse(value);}catch{return null;}}

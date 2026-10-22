@@ -1,5 +1,5 @@
-import {peopleOptions,personKey} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {peopleOptions,personKey} from './people-filters.mjs?v=v6-6-12-carga-criterios-20261022';
+import {norm,text,groupUAs,filterRecords,materialKind,materialGroupKey,unitLabel,names,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
 
 export const WORKFLOW_LABELS={all:'Todos os materiais',released:'Liberada',validating:'Em validação',design:'Requer análise do design',validated:'Validadas',other:'Outros status / sem status'};
 

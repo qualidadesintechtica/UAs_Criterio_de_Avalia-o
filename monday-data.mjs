@@ -1,4 +1,4 @@
-import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {norm,text,names,materialKind,materialGroupKey,unitLabel,entryValidationId,bdqAssessmentType} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
 
 export const UC_INDICATORS=['Recursos multimídia','Taxonomia da neuroaprendizagem','Fundamentação científica','Recursos inovadores','Atualização dos referenciais','Competências profissionais','Jornada integrada à UC'];
 

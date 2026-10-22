@@ -1,4 +1,5 @@
--- V6.6.11 · Responsáveis da Monday: limitar materiais ANTES de enriquecer.
+-- V6.6.11 · Cursor numérico corrigido em 22/10/2026.
+-- Responsáveis da Monday: limitar materiais ANTES de enriquecer.
 -- Execute COMPLETO no projeto Supabase atual. Não é necessário repetir o SQL 13.
 -- Preserva comentários, perfis, dados sincronizados e as views já instaladas.
 begin;
@@ -116,8 +117,8 @@ begin
   select jsonb_build_object('versao',1,
     'registros',coalesce((select jsonb_agg(to_jsonb(r) order by r.monday_board_id::bigint,r.monday_item_id::bigint) from registros r),'[]'::jsonb),
     'lidos',(select count(*) from pagina),
-    'proximo_board',(select board_id::text from pagina order by board_id desc,item_id desc limit 1),
-    'proximo_item',(select item_id::text from pagina order by board_id desc,item_id desc limit 1),
+    'proximo_board',(select p.board_id::text from pagina p order by p.board_id desc,p.item_id desc limit 1),
+    'proximo_item',(select p.item_id::text from pagina p order by p.board_id desc,p.item_id desc limit 1),
     'tem_mais',(select count(*) from candidatos)>p_limite
   ) into v_result;
   return v_result;

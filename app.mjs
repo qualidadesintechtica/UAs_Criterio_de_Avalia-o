@@ -1,24 +1,24 @@
-import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {applyMondayPeople} from './monday-people.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {personValues,personNames} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {createAccessController} from './access.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {RELEASE} from './release.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {highlightHTML} from './view-model.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-12-carga-criterios-20261022';
+import {applyMondayPeople} from './monday-people.mjs?v=v6-6-12-carga-criterios-20261022';
+import {personValues,personNames} from './people-filters.mjs?v=v6-6-12-carga-criterios-20261022';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-12-carga-criterios-20261022';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-12-carga-criterios-20261022';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-12-carga-criterios-20261022';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-12-carga-criterios-20261022';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-12-carga-criterios-20261022';
+import {createAccessController} from './access.mjs?v=v6-6-12-carga-criterios-20261022';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-12-carga-criterios-20261022';
+import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-12-carga-criterios-20261022';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-12-carga-criterios-20261022';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-12-carga-criterios-20261022';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-12-carga-criterios-20261022';
+import {RELEASE} from './release.mjs?v=v6-6-12-carga-criterios-20261022';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
+import {highlightHTML} from './view-model.mjs?v=v6-6-12-carga-criterios-20261022';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-12-carga-criterios-20261022';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-12-carga-criterios-20261022';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-12-carga-criterios-20261022';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-12-carga-criterios-20261022';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -105,6 +105,8 @@ async function activate(user){
 }
 function friendly(error){
   if(error?.code==='NQ_ACCESS_STATE')return error.message;
+  if(error?.code==='NQ_LOAD_TIMEOUT')return 'O carregamento completo excedeu três minutos. Os resultados não foram atualizados.';
+  if(error?.sourceName==='critérios'&&criteriaCursorMessage(error))return criteriaCursorMessage(error);
   const m=String(error?.message||'');
   if (/invalid login|invalid_credentials/i.test(m)) return 'E-mail ou senha incorretos. Confira os dados da sua conta do BI.';
   if (/email not confirmed/i.test(m)) return 'O e-mail desta conta ainda precisa ser confirmado.';
@@ -117,7 +119,7 @@ function friendly(error){
 async function readAll(table,columns,order,signal,kind){
   const size=kind==='banks'||kind==='people'?1000:500,rows=[];
   const read=async from=>{
-    const {data,error}=await client.from(table).select(columns).order(order,{ascending:true}).range(from,from+size-1).abortSignal(signal);
+    const {data,error}=await queryWithDeadline(pageSignal=>client.from(table).select(columns).order(order,{ascending:true}).range(from,from+size-1).abortSignal(pageSignal),signal,30000);
     if(error)throw error;
     return data||[];
   };
@@ -131,13 +133,7 @@ async function readAll(table,columns,order,signal,kind){
   return rows;
 }
 async function readCriteria(signal){
-  try{return await readCriteriaPages(client,signal,n=>{if(!signal.aborted)$('updatedAt').textContent='Lendo critérios… '+nf.format(n)+' registros';});}
-  catch(error){
-    // Compatibilidade apenas quando a função ainda não existe. Uma falha real
-    // não provoca outra consulta pesada nem transforma dados parciais em sucesso.
-    if(!criteriaPagingMissing(error))throw error;
-    return readAll(window.UA_CONFIG.criteriaView,'*','subitem_id',signal,'criteria');
-  }
+  return readCriteriaCursor(client,signal,n=>{if(!signal.aborted)$('updatedAt').textContent='Lendo critérios… '+nf.format(n)+' registros';});
 }
 async function readAccessPolicy(signal){
   const {data,error}=await client.rpc('nq_painel_acesso_institucional',{}).abortSignal(signal);
@@ -147,7 +143,7 @@ async function load(){
   if(state.loading)return;
   const specialistsRun=++state.specialistsRun;
   state.loading=true;const run=++state.run;const controller=new AbortController();state.controller=controller;const signal=controller.signal;
-  const timeout=setTimeout(()=>controller.abort(),60000);
+  const timeout=setTimeout(()=>controller.abort(Object.assign(new Error('Tempo total de carregamento excedido'),{code:'NQ_LOAD_TIMEOUT'})),180000);
   $('refresh').disabled=true;$('loadError').hidden=true;$('dataWarning').hidden=true;source('Atualizando resultados');
   if(!state.loaded)$('updatedAt').textContent='Consultando avaliações e materiais…';
   try{
@@ -177,7 +173,7 @@ async function load(){
       throw Object.assign(new Error('Acesso indisponível'),{status:403});
     }
     for(let i=0;i<2;i++)if(results[i].status==='rejected'){
-      const reason=results[i].reason;const error=Object.assign(new Error(reason?.message||''),{code:reason?.code,name:reason?.name||'Error',status:reason?.status,sourceName:i===0?'critérios':'materiais'});throw error;
+      const reason=signal.aborted&&signal.reason?.code==='NQ_LOAD_TIMEOUT'?signal.reason:results[i].reason;const error=Object.assign(new Error(reason?.message||''),{code:reason?.code,name:reason?.name||'Error',status:reason?.status,sourceName:reason?.code==='NQ_LOAD_TIMEOUT'?'':i===0?'critérios':'materiais'});throw error;
     }
     const plansReady=results[6].status==='fulfilled';
     const banksReady=results[7].status==='fulfilled';

@@ -1,6 +1,6 @@
-import {personValues} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {groupUAs,csvCell} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
-import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {personValues} from './people-filters.mjs?v=v6-6-12-carga-criterios-20261022';
+import {groupUAs,csvCell} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
+import {countWorkflow,materialWorkflow,WORKFLOW_LABELS} from './workflow.mjs?v=v6-6-12-carga-criterios-20261022';
 
 // A conferência usa a mesma identidade e a mesma regra dos cartões.
 // Na PE, uaKey contém o ID exato do item do quadro de validação.

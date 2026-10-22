@@ -1,4 +1,4 @@
-import {queryWithDeadline} from './source-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {queryWithDeadline} from './source-loading.mjs?v=v6-6-12-carga-criterios-20261022';
 
 const failure=(code,message)=>Object.assign(new Error(message),{code});
 const cursor=value=>typeof value==='string'&&/^\d{1,19}$/.test(value);

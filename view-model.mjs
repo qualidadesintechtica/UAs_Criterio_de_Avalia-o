@@ -1,4 +1,4 @@
-import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {norm,groupUAs,escapeHTML} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
 
 export function uaOutcome(group) {
   if (group.summary.bad>0||group.requiresAdjustment) return 'bad';

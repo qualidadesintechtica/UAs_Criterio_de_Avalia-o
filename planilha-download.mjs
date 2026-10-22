@@ -1,4 +1,4 @@
-import {resolvePlanLink,downloadURL,fileName,dispositionName,validateFile,MAX_FILE_BYTES} from './supabase/functions/nq-baixar-planilha/links.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {resolvePlanLink,downloadURL,fileName,dispositionName,validateFile,MAX_FILE_BYTES} from './supabase/functions/nq-baixar-planilha/links.mjs?v=v6-6-12-carga-criterios-20261022';
 export {resolvePlanLink};
 export function microsoftDownloadURL(link){
   if(link?.status!=='ready'||link.assetId||!link.url)return null;

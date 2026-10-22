@@ -1,7 +1,9 @@
-# Acompanhamento da Qualidade — V6.6.11
+# Acompanhamento da Qualidade — V6.6.12
 
-Use **COMECE_AQUI.md** e **LEIA_RESPONSAVEIS_E_DOWNLOAD_V6610.md**.
+Siga **COMECE_AQUI.md** para aplicar esta atualização.
 
-Esta versão substitui a leitura integral e repetida da fonte de responsáveis por uma função paginada, com limite aplicado antes da leitura das colunas. Exige o **SQL 14**. Os filtros e a tabela continuam usando os responsáveis atribuídos na Monday, separados dos autores das avaliações. O download Microsoft mantém o fluxo da V6.6.10.
+A versão acrescenta leitura de critérios por cursor, usando a chave única monday_item_id confirmada no diagnóstico do Supabase. A página lê até 500 critérios por chamada, preserva os vínculos e mostra o avanço da carga. Exige **supabase/16_CRITERIOS_POR_CURSOR.sql** e a publicação dos módulos atualizados.
 
-Siga **COMECE_AQUI.md** e **LEIA_FILTROS_V6611.md**. Os guias anteriores documentam o histórico do projeto.
+As correções dos responsáveis da Monday e do cursor do SQL 15 permanecem incluídas. A autenticação, os perfis, os comentários, o histórico e o download Microsoft continuam no fluxo existente.
+
+O relatório com nomes e o SQL de auditoria da referência são entregues separadamente e não fazem parte dos arquivos a publicar no GitHub.
