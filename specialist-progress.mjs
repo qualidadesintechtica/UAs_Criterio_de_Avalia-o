@@ -1,4 +1,4 @@
-import {norm,escapeHTML as esc} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {norm,escapeHTML as esc} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
 
 // Mede respostas dos critérios disponíveis, sem confundir comentário com avaliação.
 export function specialistProgress(records=[]){

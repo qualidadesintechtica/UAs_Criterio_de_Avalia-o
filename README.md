@@ -1,7 +1,7 @@
-# Acompanhamento da Qualidade — V6.6.10
+# Acompanhamento da Qualidade — V6.6.11
 
 Use **COMECE_AQUI.md** e **LEIA_RESPONSAVEIS_E_DOWNLOAD_V6610.md**.
 
-Esta versão consulta responsáveis atribuídos na Monday para as colunas da tabela e os filtros, separando-os da autoria de avaliações. Exige o SQL 13. O download de arquivos Microsoft passa a usar o navegador com a sessão da pessoa que clicou.
+Esta versão substitui a leitura integral e repetida da fonte de responsáveis por uma função paginada, com limite aplicado antes da leitura das colunas. Exige o **SQL 14**. Os filtros e a tabela continuam usando os responsáveis atribuídos na Monday, separados dos autores das avaliações. O download Microsoft mantém o fluxo da V6.6.10.
 
-Os guias anteriores documentam etapas anteriores; siga o guia V6.6.10 para instalar esta atualização.
+Siga **COMECE_AQUI.md** e **LEIA_FILTROS_V6611.md**. Os guias anteriores documentam o histórico do projeto.

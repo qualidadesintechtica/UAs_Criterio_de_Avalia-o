@@ -1,5 +1,5 @@
-import {personNames,personValues,filterPeopleByMaterial} from './people-filters.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {personNames,personValues,filterPeopleByMaterial} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-11-filtros-paginados-20261022';
 export const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 export const text = value => value == null ? '' : String(value).trim();
 export const names=personNames;

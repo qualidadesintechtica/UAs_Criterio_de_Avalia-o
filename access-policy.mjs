@@ -1,4 +1,4 @@
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-11-filtros-paginados-20261022';
 
 export function validateAccessName(value){
   if(typeof value!=='string'||/[\u0000-\u001f\u007f]/.test(value))return {error:'Informe um nome válido.'};

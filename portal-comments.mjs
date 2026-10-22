@@ -1,4 +1,4 @@
-import {text} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {text} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
 
 // IDs da fonte continuam estáveis mesmo quando o vínculo ou o nome do material muda.
 export function commentSourceKey(record){

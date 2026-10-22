@@ -1,28 +1,29 @@
-import {applyMondayPeople} from './monday-people.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {personValues,personNames} from './people-filters.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {createAccessController} from './access.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {RELEASE} from './release.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {highlightHTML} from './view-model.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-10-responsaveis-monday-20261022';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-10-responsaveis-monday-20261022';
+import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {applyMondayPeople} from './monday-people.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {personValues,personNames} from './people-filters.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {createAccessController} from './access.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {readCriteriaPages,criteriaPagingMissing} from './criteria-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {RELEASE} from './release.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {highlightHTML} from './view-model.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-11-filtros-paginados-20261022';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-11-filtros-paginados-20261022';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',peopleError:null,specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
@@ -69,7 +70,7 @@ async function beginPlanDownload(id){
 function clearSensitive(resetAccess=true){
   if(resetAccess)access?.clear();
   state.download?.controller.abort();state.download=null;state.planLinks.clear();state.downloadFeedback.clear();state.planLinksState='setup';$('entryDownloadNotice').hidden=true;
-  state.peopleReady=false;state.peopleState='loading';state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
+  state.peopleReady=false;state.peopleState='loading';state.peopleError=null;state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
   state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
@@ -168,7 +169,7 @@ async function load(){
       queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000),
       queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000),
       queryWithDeadline(peopleSignal=>readSpecialists(client,peopleSignal),signal,8000),
-      queryWithDeadline(peopleSignal=>readAll('vw_ua_responsaveis_monday_autenticados','*','fonte_chave',peopleSignal,'people'),signal,15000)
+      queryWithDeadline(peopleSignal=>readMondayPeople(client,peopleSignal,n=>{if(run===state.run&&!signal.aborted&&!state.loaded)$('updatedAt').textContent='Lendo responsáveis da Monday… '+nf.format(n)+' materiais';}),signal,45000)
     ]);
     if(run!==state.run)return;
     if(results[5].status==='fulfilled'&&results[5].value===false){
@@ -185,7 +186,8 @@ async function load(){
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
     state.baseSections=entryPlanUniverse(resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials),materials,plansReady);
     state.peopleReady=results[10].status==='fulfilled';
-    state.peopleState=state.peopleReady?'ready':['42P01','PGRST205'].includes(results[10].reason?.code)?'setup':'unavailable';
+    state.peopleError=state.peopleReady?null:results[10].reason;
+    state.peopleState=state.peopleReady?'ready':['42P01','PGRST205','PGRST202','42883'].includes(results[10].reason?.code)?'setup':'unavailable';
     state.baseSections=applyMondayPeople(state.baseSections,state.peopleReady?results[10].value:[],state.peopleReady);
     if(!state.peopleReady){
       if(state.filters.specialists||state.filters.reviewers)toast('Os filtros de pessoas foram desativados porque os responsáveis da Monday estão indisponíveis.');
@@ -202,7 +204,7 @@ async function load(){
     source('Monday · base sincronizada','connected');
     const syncDates=[formData.lastSync,...materials.map(m=>m.sincronizado_validacao||m.sincronizado_esteira)].map(v=>Date.parse(v||'')).filter(Number.isFinite);
     $('updatedAt').textContent=(syncDates.length?'Sincronização Monday: '+new Date(Math.max(...syncDates)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · ':'')+'Consulta: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const warnings=[];if(!state.peopleReady)warnings.push(state.peopleState==='setup'?'Instale supabase/13_RESPONSAVEIS_MONDAY.sql para habilitar os responsáveis da Monday e os filtros de pessoas.':'Os responsáveis atribuídos na Monday não puderam ser consultados. Atualize os dados.');if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
+    const warnings=[];if(!state.peopleReady)warnings.push(mondayPeopleMessage(state.peopleError));if(formError)warnings.push('Os critérios da esteira foram consultados, mas parte dos formulários ou pareceres não está disponível nesta conexão.');
     if(!state.commentsReady)warnings.push(commentError(results[4].reason));
     if(results[1].value.length&&!Object.hasOwn(results[1].value[0],'gestor_validacao_nq'))warnings.push('Para exibir o gestor dos BDQs, execute supabase/08_GESTOR_DOS_MATERIAIS.sql e atualize os dados.');
     if(!banksReady)warnings.push('A consulta completa de A1, A2 e A3 não está disponível. '+friendly(results[7].reason)+' Aplique o SQL 08 para incluir também os bancos ausentes da consolidada. Os dados disponíveis continuam acessíveis.');
@@ -234,7 +236,7 @@ async function refreshSpecialists(){
 function renderFilters(){
   const note=$('specialistFilterNotice');
   note.hidden=state.peopleReady&&state.specialistsState==='ready'&&state.specialists.length>0;
-  note.textContent=!state.peopleReady?'Os responsáveis da Monday estão indisponíveis. Atualize os dados ou avise a administração.':state.specialistsState==='setup'?'Para habilitar o filtro de Especialistas, execute o SQL 13 de responsáveis da Monday.':state.specialistsState==='ready'?'Nenhum participante com nome cadastrado no perfil Especialista. A administração pode ajustar o perfil em Participantes.':'Não foi possível consultar os especialistas cadastrados. Clique em Atualizar dados.';
+  note.textContent=!state.peopleReady?mondayPeopleMessage(state.peopleError):state.specialistsState==='setup'?'Para habilitar o filtro de Especialistas, execute o SQL 14 de responsáveis paginados.':state.specialistsState==='ready'?'Nenhum participante com nome cadastrado no perfil Especialista. A administração pode ajustar o perfil em Participantes.':'Não foi possível consultar os especialistas cadastrados. Clique em Atualizar dados.';
 
   for(const select of document.querySelectorAll('[data-filter]')){
     const field=select.dataset.filter,{values,missing}=field==='specialists'?{values:state.specialists,missing:false}:filterOptions(state.sections,field,state.filters);
