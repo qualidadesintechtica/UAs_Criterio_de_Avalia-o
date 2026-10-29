@@ -1,3 +1,3 @@
-V6.6.13
+V6.6.14
 29/10/2026
-Atualização automática a cada 10 minutos, com sessão ativa, e tolerância ampliada na leitura paginada de responsáveis.
+Sugestão conservadora de correção manual de IDs de Plano de Produção na Monday.

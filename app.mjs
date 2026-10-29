@@ -10,6 +10,7 @@ import {createAccessController} from './access.mjs?v=v6-6-13-auto-refresh-202610
 import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-13-auto-refresh-20261029';
 import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-13-auto-refresh-20261029';
 import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-13-auto-refresh-20261029';
+import {suggestEntryPlanId} from './id-suggestions.mjs?v=v6-6-14-id-review-20261029';
 import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-13-auto-refresh-20261029';
 import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-13-auto-refresh-20261029';
 import {RELEASE} from './release.mjs?v=v6-6-13-auto-refresh-20261029';
@@ -23,7 +24,7 @@ const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
 const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',rated:'Avaliado por conceito',comment:'Parecer / registro Monday'};
-const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',peopleError:null,specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
+const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',peopleError:null,specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],officialMaterials:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
 const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
@@ -71,7 +72,7 @@ function clearSensitive(resetAccess=true){
   if(resetAccess)access?.clear();
   state.download?.controller.abort();state.download=null;state.planLinks.clear();state.downloadFeedback.clear();state.planLinksState='setup';$('entryDownloadNotice').hidden=true;
   state.peopleReady=false;state.peopleState='loading';state.peopleError=null;state.specialistsRun++;state.specialists=[];state.specialistsState='loading';$('specialistFilterNotice').hidden=true;
-  state.run++;state.controller?.abort();state.baseSections={};state.portalComments=[];state.commentsReady=false;
+  state.run++;state.controller?.abort();state.baseSections={};state.officialMaterials=[];state.portalComments=[];state.commentsReady=false;
   state.dialogKey=null;state.dialogUnit=null;state.detailRecords=[];state.detailIndex=0;state.reviewMode=false;state.editor=null;state.saving=false;state.user=null;
   state.sections={};state.sectionErrors={};state.records=[];state.filtered=[];state.groups=[];
   state.loaded=false;state.loading=false;state.filters={};state.query='';state.status='all';state.commentsOnly=false;state.page=1;
@@ -179,6 +180,7 @@ async function load(){
     const banksReady=results[7].status==='fulfilled';
     const criteria=results[0].value,materials=mergeBDQValidationMaterials(mergeEntryPlanMaterials(results[1].value,plansReady?results[6].value:[]),banksReady?results[7].value:[]);
     const formError=results.slice(2,4).some(r=>r.status==='rejected');
+    state.officialMaterials=materials;
     const formData=adaptMondayForms(results[2].status==='fulfilled'?results[2].value:[],results[3].status==='fulfilled'?results[3].value:[],materials);
     state.baseSections=entryPlanUniverse(resolveEntryPlanNames(includeMaterialInventory(mergeMondayData(buildSections(criteria,materials),formData),materials),materials),materials,plansReady);
     state.peopleReady=results[10].status==='fulfilled';
@@ -331,7 +333,7 @@ function renderNameIssues(){
   const plans=state.nameIssues.filter(x=>!x.unlinked).length,forms=state.nameIssues.length-plans;
   const counts=[plans?nf.format(plans)+' planilha(s)':'',forms?nf.format(forms)+' formulário(s) sem vínculo':''].filter(Boolean);
   $('entryNameSummary').textContent='Nome da UC pendente em '+counts.join(' e ')+'. Ver registros';
-  $('entryNameIssues').innerHTML=state.nameIssues.map((issue,index)=>'<li><div><strong>'+esc(issue.reference)+'</strong><p>'+esc(issue.reason)+'</p><small>'+esc([issue.courseId?'ID da UC: '+issue.courseId:'',issue.materialId?'ID do material: '+issue.materialId:'',issue.validationId?'Item da validação: '+issue.validationId:'',issue.formId?'Formulário Monday: '+issue.formId:''].filter(Boolean).join(' · ')||'IDs de origem não informados na fonte.')+'</small></div><button type="button" class="btn secondary" data-name-issue="'+index+'">Ver detalhes</button></li>').join('');
+  $('entryNameIssues').innerHTML=state.nameIssues.map((issue,index)=>{const suggestion=suggestEntryPlanId(issue,state.officialMaterials);return '<li><div><strong>'+esc(issue.reference)+'</strong><p>'+esc(issue.reason)+'</p>'+(suggestion?'<p><strong>Possível ID correto: '+esc(suggestion.code)+'</strong></p><p>Diferença identificada no ano. Confira a UC e a oferta antes de corrigir manualmente na Monday. Nenhuma alteração será enviada pelo sistema.</p><small>Item oficial da validação: '+esc(suggestion.validationId)+'</small>':'<p>Sem sugestão única e segura. Conferir na Monday.</p>')+'<small>'+esc([issue.courseId?'ID da UC: '+issue.courseId:'',issue.materialId?'ID do material: '+issue.materialId:'',issue.validationId?'Item da validação: '+issue.validationId:'',issue.formId?'Formulário Monday: '+issue.formId:''].filter(Boolean).join(' · ')||'IDs de origem não informados na fonte.')+'</small></div><button type="button" class="btn secondary" data-name-issue="'+index+'">Ver detalhes</button></li>'}).join('');
 }
 function render(){renderDownloadNotice();state.filtered=filteredScope(state.records,state);renderNavigation();renderFilters();renderCards(state.filtered);renderNameIssues();renderChips();renderTable();}
 function portalHistoryMarkup(note){
