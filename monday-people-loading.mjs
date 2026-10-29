@@ -1,4 +1,4 @@
-import {queryWithDeadline} from './source-loading.mjs?v=v6-6-12-carga-criterios-20261022';
+import {queryWithDeadline} from './source-loading.mjs?v=v6-6-13-auto-refresh-20261029';
 
 const failure=(code,message)=>Object.assign(new Error(message),{code});
 const cursor=value=>typeof value==='string'&&/^\d{1,19}$/.test(value);
@@ -14,7 +14,7 @@ export async function readMondayPeople(client,signal,onProgress=()=>{}){
     try{
       const result=await queryWithDeadline(pageSignal=>client.rpc('nq_painel_responsaveis_pagina',{
         p_apos_board:board,p_apos_item:item,p_limite:size
-      }).abortSignal(pageSignal),signal,10000);
+      }).abortSignal(pageSignal),signal,20000);
       if(result.error)throw result.error;
       data=result.data;
     }catch(error){

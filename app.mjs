@@ -1,24 +1,24 @@
-import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-12-carga-criterios-20261022';
-import {applyMondayPeople} from './monday-people.mjs?v=v6-6-12-carga-criterios-20261022';
-import {personValues,personNames} from './people-filters.mjs?v=v6-6-12-carga-criterios-20261022';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-12-carga-criterios-20261022';
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-12-carga-criterios-20261022';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-12-carga-criterios-20261022';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-12-carga-criterios-20261022';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-12-carga-criterios-20261022';
-import {createAccessController} from './access.mjs?v=v6-6-12-carga-criterios-20261022';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-12-carga-criterios-20261022';
-import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-12-carga-criterios-20261022';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-12-carga-criterios-20261022';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-12-carga-criterios-20261022';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-12-carga-criterios-20261022';
-import {RELEASE} from './release.mjs?v=v6-6-12-carga-criterios-20261022';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-12-carga-criterios-20261022';
-import {highlightHTML} from './view-model.mjs?v=v6-6-12-carga-criterios-20261022';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-12-carga-criterios-20261022';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-12-carga-criterios-20261022';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-12-carga-criterios-20261022';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-12-carga-criterios-20261022';
+import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-13-auto-refresh-20261029';
+import {applyMondayPeople} from './monday-people.mjs?v=v6-6-13-auto-refresh-20261029';
+import {personValues,personNames} from './people-filters.mjs?v=v6-6-13-auto-refresh-20261029';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-13-auto-refresh-20261029';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-13-auto-refresh-20261029';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-13-auto-refresh-20261029';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-13-auto-refresh-20261029';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-13-auto-refresh-20261029';
+import {createAccessController} from './access.mjs?v=v6-6-13-auto-refresh-20261029';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-13-auto-refresh-20261029';
+import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-13-auto-refresh-20261029';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-13-auto-refresh-20261029';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-13-auto-refresh-20261029';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-13-auto-refresh-20261029';
+import {RELEASE} from './release.mjs?v=v6-6-13-auto-refresh-20261029';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-13-auto-refresh-20261029';
+import {highlightHTML} from './view-model.mjs?v=v6-6-13-auto-refresh-20261029';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-13-auto-refresh-20261029';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-13-auto-refresh-20261029';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-13-auto-refresh-20261029';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-13-auto-refresh-20261029';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -144,7 +144,7 @@ async function load(){
   const specialistsRun=++state.specialistsRun;
   state.loading=true;const run=++state.run;const controller=new AbortController();state.controller=controller;const signal=controller.signal;
   const timeout=setTimeout(()=>controller.abort(Object.assign(new Error('Tempo total de carregamento excedido'),{code:'NQ_LOAD_TIMEOUT'})),180000);
-  $('refresh').disabled=true;$('loadError').hidden=true;$('dataWarning').hidden=true;source('Atualizando resultados');
+  lastAutoRefresh=Date.now();$('refresh').disabled=true;$('loadError').hidden=true;$('dataWarning').hidden=true;source('Atualizando resultados');
   if(!state.loaded)$('updatedAt').textContent='Consultando avaliações e materiais…';
   try{
     const {data:auth,error:authError}=await client.auth.getUser();
@@ -165,7 +165,7 @@ async function load(){
       queryWithDeadline(bankSignal=>readAll('vw_ua_resultados_bdq_validacao_autenticados','*','monday_item_validacao',bankSignal,'banks'),signal,12000),
       queryWithDeadline(linkSignal=>readAll('vw_ua_planilhas_links_autenticados','*','monday_item_validacao',linkSignal,'planLinks'),signal,8000),
       queryWithDeadline(peopleSignal=>readSpecialists(client,peopleSignal),signal,8000),
-      queryWithDeadline(peopleSignal=>readMondayPeople(client,peopleSignal,n=>{if(run===state.run&&!signal.aborted&&!state.loaded)$('updatedAt').textContent='Lendo responsáveis da Monday… '+nf.format(n)+' materiais';}),signal,45000)
+      queryWithDeadline(peopleSignal=>readMondayPeople(client,peopleSignal,n=>{if(run===state.run&&!signal.aborted&&!state.loaded)$('updatedAt').textContent='Lendo responsáveis da Monday… '+nf.format(n)+' materiais';}),signal,110000)
     ]);
     if(run!==state.run)return;
     if(results[5].status==='fulfilled'&&results[5].value===false){
@@ -508,9 +508,20 @@ $('loginForm').addEventListener('submit',async e=>{
 $('showPassword').addEventListener('click',()=>{const show=$('password').type==='password';$('password').type=show?'text':'password';$('showPassword').textContent=show?'Ocultar':'Mostrar';$('showPassword').setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');});
 $('logout').addEventListener('click',async()=>{clearSensitive();state.user=null;await client.auth.signOut({scope:'local'});showLogin();});
 $('refresh').addEventListener('click',load);
+// Atualização automática da base já sincronizada no Supabase, somente com sessão ativa.
+// Não interrompe edição, comentários, downloads ou consultas em andamento.
+const AUTO_REFRESH_MS=10*60*1000;
+let lastAutoRefresh=Date.now();
+async function autoRefreshIfDue(){
+  if(document.visibilityState!=='visible'||!state.user||state.loading||state.saving||state.download||$('detailDialog').open)return;
+  if(Date.now()-lastAutoRefresh<AUTO_REFRESH_MS)return;
+  lastAutoRefresh=Date.now();
+  await load();
+}
+setInterval(()=>{void autoRefreshIfDue();},60*1000);
 document.addEventListener('visibilitychange',async()=>{
   if(document.visibilityState!=='visible'||!state.user)return;
-  try{const {data,error}=await client.auth.getUser();if(error||!data?.user){showLogin('Sua sessão expirou. Entre novamente.');return;}await access.allow(data.user);}
+  try{const {data,error}=await client.auth.getUser();if(error||!data?.user){showLogin('Sua sessão expirou. Entre novamente.');return;}if(await access.allow(data.user))await autoRefreshIfDue();}
   catch{showLogin('Não foi possível verificar seu acesso. Entre novamente para continuar.');}
 });
 document.querySelectorAll('[data-filter]').forEach(select=>select.addEventListener('change',()=>{state.filters[select.dataset.filter]=select.value;state.page=1;render();}));
