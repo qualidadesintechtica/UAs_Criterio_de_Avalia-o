@@ -113,7 +113,7 @@ export function buildRecords(criteria, materials,kind='UA') {
 export function filterRecords(records, filters={}, query='', status='all', skip='') {
   const q=norm(query);
   const rows=records.filter(r=> {
-    for (const field of ['track','batch','uc','ua']) {
+    for (const field of ['track','semester','batch','uc','ua']) {
       if (field===skip || !filters[field]) continue;
       const vals=(field==='ua'?[r.displayUA||r.ua]:Array.isArray(r[field]) ? r[field] : [r[field]]).filter(v=>text(v)&&!['nao informada','nao informado'].includes(norm(v)));
       if (!vals.length && filters[field]==='__missing__') continue;

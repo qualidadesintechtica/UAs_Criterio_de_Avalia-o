@@ -27,7 +27,7 @@ const statusLabel={good:'Conforme',bad:'Inconformidade',pending:'Não avaliado',
 const state={section:'UA',sections:{},sectionErrors:{},records:[],filtered:[],groups:[],filters:{},query:'',status:'all',view:'table',commentsOnly:false,page:1,size:20,loading:false,loaded:false,run:0,user:null,controller:null,baseSections:{},peopleReady:false,peopleState:'loading',peopleError:null,specialists:[],specialistsState:'loading',specialistsRun:0,planLinks:new Map(),planLinksState:'setup',download:null,downloadFeedback:new Map(),nameIssues:[],officialMaterials:[],portalComments:[],commentsReady:false,dialogKey:null,dialogUnit:null,detailRecords:[],detailIndex:0,reviewMode:false,editor:null,saving:false};
 const uaLabels={...WORKFLOW_LABELS};
 let client,access;
-const defaults={track:'Todas as esteiras',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
+const defaults={track:'Todas as esteiras',semester:'Todos os semestres',batch:'Todos os lotes',uc:'Todas as UCs',ua:'Todas as UAs',reviewers:'Todos os revisores',specialists:'Todos os especialistas'};
 function source(label,kind=''){ $('sourceStatus').className='source-pill '+kind;$('sourceStatus').innerHTML='<i></i>'+esc(label); }
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{$('toast').hidden=true;},4000);}
 function renderDownloadNotice(){
@@ -290,7 +290,7 @@ function renderCards(scope){
   $('selectionLabel').textContent=uaLabels[state.status];
 }
 function renderChips(){
-  const labels={track:'Esteira',batch:'Lote',uc:'UC',ua:SECTIONS[state.section].itemLabel,reviewers:'Revisor',specialists:'Especialista'};
+  const labels={track:'Esteira',semester:'Semestre de Oferta',batch:'Lote',uc:'UC',ua:SECTIONS[state.section].itemLabel,reviewers:'Revisor',specialists:'Especialista'};
   let html=Object.entries(state.filters).filter(([,v])=>v).map(([key,value])=>'<button data-clear-filter="'+key+'" aria-label="Remover filtro de '+esc(labels[key])+'">'+esc(labels[key])+': '+esc(value==='__missing__'?'Não informado':value)+'<span aria-hidden="true">×</span></button>').join('');
   if(state.status!=='all')html+='<button data-clear-filter="status" aria-label="Remover filtro de resultado">'+esc(uaLabels[state.status])+'<span aria-hidden="true">×</span></button>';
   if(state.query)html+='<button data-clear-filter="query" aria-label="Limpar pesquisa">Busca: '+esc(state.query)+'<span aria-hidden="true">×</span></button>';
