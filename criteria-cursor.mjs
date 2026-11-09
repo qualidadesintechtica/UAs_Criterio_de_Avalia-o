@@ -10,7 +10,7 @@ export async function readCriteriaCursor(client,signal,onProgress=()=>{}){
     try{
       const result=await queryWithDeadline(pageSignal=>client.rpc('nq_criterios_cursor',{
         p_apos_id:after,p_limite:size
-      }).abortSignal(pageSignal),signal,15000);
+      }).abortSignal(pageSignal),signal,30000);
       if(result.error)throw result.error;
       data=result.data;
     }catch(error){

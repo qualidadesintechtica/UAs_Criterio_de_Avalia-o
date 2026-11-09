@@ -1,25 +1,25 @@
-import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-13-auto-refresh-20261029';
-import {applyMondayPeople} from './monday-people.mjs?v=v6-6-13-auto-refresh-20261029';
-import {personValues,personNames} from './people-filters.mjs?v=v6-6-13-auto-refresh-20261029';
-import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-13-auto-refresh-20261029';
-import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-13-auto-refresh-20261029';
-import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-13-auto-refresh-20261029';
-import {filteredScope} from './filter-scope.mjs?v=v6-6-13-auto-refresh-20261029';
-import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-13-auto-refresh-20261029';
-import {createAccessController} from './access.mjs?v=v6-6-13-auto-refresh-20261029';
-import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-13-auto-refresh-20261029';
-import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-13-auto-refresh-20261029';
-import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-13-auto-refresh-20261029';
-import {suggestEntryPlanId} from './id-suggestions.mjs?v=v6-6-14-id-review-20261029';
-import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-13-auto-refresh-20261029';
-import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-13-auto-refresh-20261029';
-import {RELEASE} from './release.mjs?v=v6-6-13-auto-refresh-20261029';
-import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-13-auto-refresh-20261029';
-import {highlightHTML} from './view-model.mjs?v=v6-6-13-auto-refresh-20261029';
-import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-13-auto-refresh-20261029';
-import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-13-auto-refresh-20261029';
-import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-13-auto-refresh-20261029';
-import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-13-auto-refresh-20261029';
+import {readMondayPeople,mondayPeopleMessage} from './monday-people-loading.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {applyMondayPeople} from './monday-people.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {personValues,personNames} from './people-filters.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {collectEntryPlanComments} from './entry-plan-comments.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {readSpecialists,registeredSpecialistSelection} from './specialist-directory.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {resolvePlanLink,requestPlanDownload,savePlanDownload,microsoftDownloadURL,requestMicrosoftDownload} from './planilha-download.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {filteredScope} from './filter-scope.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {materialCounts,materialAuditCSV} from './material-counts.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {createAccessController} from './access.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {specialistProgress,progressMarkup,materialProgressMarkup,progressLabel,progressRecordsForUnit} from './specialist-progress.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {readCriteriaCursor,criteriaCursorMessage} from './criteria-cursor.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {resolveEntryPlanNames,entryPlanNameIssues} from './pe-names.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {suggestEntryPlanId} from './id-suggestions.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {queryWithDeadline,connectionMessage} from './source-loading.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {isInstitutionalEmail} from './auth-policy.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {RELEASE} from './release.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {norm,groupUAs,escapeHTML as esc,exportCSV} from './core.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {highlightHTML} from './view-model.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {WORKFLOW_LABELS,countWorkflow,filterOptions,includeMaterialInventory,materialWorkflow,materialTableRows,entryPlanUniverse,mergeEntryPlanMaterials,mergeBDQValidationMaterials} from './workflow.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {SECTIONS,buildSections} from './navigation.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {adaptMondayForms,mergeMondayData} from './monday-data.mjs?v=v6-6-16-timeout-criterios-20261109';
+import {commentSourceKey,applyPortalComments,validateComment,commentError} from './portal-comments.mjs?v=v6-6-16-timeout-criterios-20261109';
 const $=id=>document.getElementById(id);
 function tableHeaders(section){return ['UC',section==='PE'?'Plano de Produção':section==='BDQ'?'BDQ':'UA','Unidade da UA','Revisor na Monday','Especialista na Monday',...(section==='PE'?['Esteira']:section==='BDQ'?['Gestor']:[])];}
 const nf=new Intl.NumberFormat('pt-BR');
@@ -106,7 +106,7 @@ async function activate(user){
 }
 function friendly(error){
   if(error?.code==='NQ_ACCESS_STATE')return error.message;
-  if(error?.code==='NQ_LOAD_TIMEOUT')return 'O carregamento completo excedeu três minutos. Os resultados não foram atualizados.';
+  if(error?.code==='NQ_LOAD_TIMEOUT')return 'O carregamento completo excedeu seis minutos. Os resultados não foram atualizados.';
   if(error?.sourceName==='critérios'&&criteriaCursorMessage(error))return criteriaCursorMessage(error);
   const m=String(error?.message||'');
   if (/invalid login|invalid_credentials/i.test(m)) return 'E-mail ou senha incorretos. Confira os dados da sua conta do BI.';
@@ -144,7 +144,7 @@ async function load(){
   if(state.loading)return;
   const specialistsRun=++state.specialistsRun;
   state.loading=true;const run=++state.run;const controller=new AbortController();state.controller=controller;const signal=controller.signal;
-  const timeout=setTimeout(()=>controller.abort(Object.assign(new Error('Tempo total de carregamento excedido'),{code:'NQ_LOAD_TIMEOUT'})),180000);
+  const timeout=setTimeout(()=>controller.abort(Object.assign(new Error('Tempo total de carregamento excedido'),{code:'NQ_LOAD_TIMEOUT'})),360000);
   lastAutoRefresh=Date.now();$('refresh').disabled=true;$('loadError').hidden=true;$('dataWarning').hidden=true;source('Atualizando resultados');
   if(!state.loaded)$('updatedAt').textContent='Consultando avaliações e materiais…';
   try{

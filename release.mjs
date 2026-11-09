@@ -1,1 +1,1 @@
-export const RELEASE={version:'V6.6.13',date:'29/10/2026',build:'v6-6-13-auto-refresh-20261029'};
+export const RELEASE={version:'V6.6.16',date:'09/11/2026',build:'v6-6-16-timeout-criterios-20261109'};

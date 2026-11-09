@@ -1,3 +1,1 @@
-V6.6.15
-03/11/2026
-Filtro global Semestre de Oferta, integrado às abas e demais filtros.
+V6.6.16 — 09/11/2026 — ajuste de prazos do carregamento de critérios
